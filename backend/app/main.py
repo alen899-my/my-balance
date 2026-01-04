@@ -147,6 +147,7 @@ async def get_insights(user = Depends(get_current_user)):
     
     pipeline = [
         {"$match": {"user_id": user_id}},
+        {"$sort": {"date": 1}}, # Ensure chronological order for calculations
         {
             "$facet": {
                 "totals": [
@@ -160,45 +161,30 @@ async def get_insights(user = Depends(get_current_user)):
                 ],
                 "payee_stats": [
                     {"$match": {"debit": {"$gt": 0}}},
-                    {"$group": {
-                        "_id": "$payee",
-                        "total": {"$sum": "$debit"},
-                        "count": {"$sum": 1}
-                    }},
-                    {"$sort": {"total": -1}},
-                    {"$limit": 10}
+                    {"$group": {"_id": "$payee", "total": {"$sum": "$debit"}, "count": {"$sum": 1}}},
+                    {"$sort": {"total": -1}}, {"$limit": 10}
                 ],
                 "daily_trend": [
-                    {"$group": {
-                        "_id": "$date",
-                        "daily_spend": {"$sum": "$debit"}
-                    }},
-                    {"$group": {
-                        "_id": None,
-                        "avg_daily": {"$avg": "$daily_spend"}
-                    }}
-                ], # <--- ADDED COMMA HERE
+                    {"$group": {"_id": "$date", "daily_spend": {"$sum": "$debit"}}},
+                    {"$group": {"_id": None, "avg_daily": {"$avg": "$daily_spend"}}}
+                ],
                 "monthly_trend": [
-                    {
-                        "$project": {
-                            "debit": 1,
-                            "month": { "$arrayElemAt": [{ "$split": ["$date", "/"] }, 1] },
-                            "year": { "$arrayElemAt": [{ "$split": ["$date", "/"] }, 2] }
-                        }
-                    },
-                    {
-                        "$group": {
-                            "_id": { "$concat": ["$month", "-", "$year"] },
-                            "total": { "$sum": "$debit" }
-                        }
-                    },
-                    { "$sort": { "_id": 1 } }
+                    {"$group": {
+                        "_id": { 
+                            "month": {"$month": "$date"}, 
+                            "year": {"$year": "$date"} 
+                        },
+                        "total": {"$sum": "$debit"}
+                    }},
+                    {"$sort": {"_id.year": 1, "_id.month": 1}}
                 ],
                 "category_spending": [
-                    {"$group": {
-                        "_id": "$payee",
-                        "total": {"$sum": "$debit"}
-                    }}
+                    {"$group": {"_id": "$payee", "total": {"$sum": "$debit"}}}
+                ],
+                "latest_balance": [
+                    {"$sort": {"date": -1}},
+                    {"$limit": 1},
+                    {"$project": {"balance": 1}}
                 ]
             }
         }
@@ -206,14 +192,16 @@ async def get_insights(user = Depends(get_current_user)):
 
     agg = list(transactions.aggregate(pipeline))
     res = agg[0] if agg else {}
+    
+    # 1. Correct Balance Calculation
+    actual_balance = res.get("latest_balance", [{}])[0].get("balance", 0)
+    
+    # 2. Category Logic
     cat_map = {}
     for item in res.get("category_spending", []):
         cat = classify_category(item["_id"])
         cat_map[cat] = cat_map.get(cat, 0) + item["total"]
 
-    category_data = [{"category": k, "amount": v} for k, v in cat_map.items()]
-    
-    # Safely extract totals
     summary_data = res.get("totals", [{}])[0]
     income = summary_data.get("income", 0) or 0
     expense = summary_data.get("expense", 0) or 0
@@ -222,24 +210,21 @@ async def get_insights(user = Depends(get_current_user)):
         "summary": {
             "income": income,
             "expense": expense,
-            "balance": round(income - expense, 2),
+            "balance": actual_balance, # FIXED: Shows actual bank balance
             "savings_rate": round(((income - expense) / income * 100), 2) if income > 0 else 0,
             "avg_transaction": round(summary_data.get("avg_txn", 0) or 0, 2),
             "total_transactions": summary_data.get("count", 0) or 0,
             "daily_avg": round(res.get("daily_trend", [{}])[0].get("avg_daily", 0) or 0, 2)
         },
         "top_payees": [
-            {
-                "name": extract_clean_name(p["_id"]),
-                "amount": p["total"],
-                "count": p["count"]
-            } for p in res.get("payee_stats", [])
+            {"name": extract_clean_name(p["_id"]), "amount": p["total"], "count": p["count"]} 
+            for p in res.get("payee_stats", [])
         ],
         "monthly_data": [
-            {"month": m["_id"], "amount": m["total"]} 
+            {"month": f"{m['_id']['month']}/{m['_id']['year']}", "amount": m["total"]} 
             for m in res.get("monthly_trend", [])
         ],
-        "category_data": sorted(category_data, key=lambda x: x['amount'], reverse=True)
+        "category_data": sorted([{"category": k, "amount": v} for k, v in cat_map.items()], key=lambda x: x['amount'], reverse=True)
     }
 @app.get("/transactions")
 def get_transactions(
@@ -279,40 +264,70 @@ async def clear_all_transactions(user = Depends(get_current_user)):
 @app.get("/insights/advanced")
 async def get_advanced_insights(user = Depends(get_current_user)):
     user_id = user["user_id"]
-    
-    # 1. Fetch historical data for inflation & recurring patterns
-    # (Simplified logic for brevity)
-    all_txns = list(transactions.find({"user_id": user_id}).sort("date", -1))
-    
-    # Current month data
     now = datetime.now()
-    this_month_txns = [t for t in all_txns if t['date'].split('/')[1] == f"{now.month:02d}"]
     
-    total_income = sum(t['credit'] for t in this_month_txns)
-    total_expense = sum(t['debit'] for t in this_month_txns)
+    # 1. Fetch all transactions to calculate historical averages
+    all_txns = list(transactions.find({"user_id": user_id}).sort("date", -1))
+    if not all_txns:
+        return {
+            "savings_rate": 0, "fixed_variable_ratio": {"fixed": 0, "variable": 0},
+            "safety_net_score": 0, "lifestyle_inflation": 0, "runway_days": 0,
+            "weekend_intensity": 0, "recurring_total": 0, "payday_velocity": "N/A",
+            "burn_variance": 0, "predicted_end_balance": 0
+        }
+
+    # 2. Filter for Current Month (Matches Month AND Year)
+    # Using the date objects we standardized in the normalize step
+    this_month_txns = [
+        t for t in all_txns 
+        if t['date'].month == now.month and t['date'].year == now.year
+    ]
     
-    # 1. Savings Rate
+    # 3. Basic Financial Totals
+    total_income = sum(t.get('credit', 0) for t in this_month_txns)
+    total_expense = sum(t.get('debit', 0) for t in this_month_txns)
+    current_balance = all_txns[0].get('balance', 0) # Real latest balance
+    
+    # 4. Savings Rate %
     savings_rate = round(((total_income - total_expense) / total_income * 100), 1) if total_income > 0 else 0
     
-    # 2. Fixed vs Variable (using our previous categories)
-    fixed_cats = ["Bills & Utilities", "Medical"]
-    fixed_spend = sum(t['debit'] for t in this_month_txns if classify_category(t['payee']) in fixed_cats)
-    variable_spend = total_expense - fixed_spend
+    # 5. Fixed vs Variable Split
+    fixed_cats = ["Bills & Utilities", "Medical", "Health & Fitness"]
+    fixed_spend = sum(t.get('debit', 0) for t in this_month_txns if classify_category(t.get('payee', '')) in fixed_cats)
+    variable_spend = max(0, total_expense - fixed_spend)
     
-    # 3. Safety Net (Emergency Fund)
-    # Assume 1 month needs = fixed_spend (or average fixed)
-    safety_net_months = round(all_txns[0]['balance'] / fixed_spend, 1) if fixed_spend > 0 else 0
+    # 6. Safety Net (How many months of 'fixed needs' covered by current balance)
+    # If no fixed spend this month, use 1 to avoid division by zero
+    safety_net_months = round(current_balance / max(fixed_spend, 1), 1)
+    
+    # 7. Weekend Intensity (Spending on Sat/Sun)
+    weekend_spend = sum(t.get('debit', 0) for t in this_month_txns if t['date'].weekday() >= 5)
+    weekend_intensity = round((weekend_spend / total_expense * 100), 1) if total_expense > 0 else 0
+
+    # 8. Burn Rate & Runway (Days until balance hits 0)
+    days_passed = now.day
+    daily_burn = total_expense / days_passed if days_passed > 0 else 0
+    runway_days = int(current_balance / daily_burn) if daily_burn > 0 else 99
+    
+    # 9. Predicted End Balance
+    remaining_days = 30 - days_passed
+    predicted_end_balance = round(current_balance - (daily_burn * remaining_days), 2)
+
+    # 10. Burn Variance (Are you spending more or less than your overall average?)
+    total_days_historical = (all_txns[-1]['date'] - all_txns[0]['date']).days
+    avg_historical_burn = sum(t.get('debit', 0) for t in all_txns) / max(abs(total_days_historical), 1)
+    burn_variance = round(((daily_burn - avg_historical_burn) / avg_historical_burn * 100), 1) if avg_historical_burn > 0 else 0
 
     return {
         "savings_rate": savings_rate,
-        "fixed_variable_ratio": {"fixed": fixed_spend, "variable": variable_spend},
+        "fixed_variable_ratio": {"fixed": round(fixed_spend, 2), "variable": round(variable_spend, 2)},
         "safety_net_score": safety_net_months,
-        "lifestyle_inflation": 12.5, # Placeholder: logic requires 3-month avg
-        "runway_days": 14, # Calculated in previous step
-        "weekend_intensity": 42.0,
-        "recurring_total": 3200,
-        "payday_velocity": "High",
-        "burn_variance": -5.2, # Spent 5% less than usual today
-        "predicted_end_balance": 12400.0
+        "lifestyle_inflation": 12.5, # Static placeholder unless you fetch previous month
+        "runway_days": min(runway_days, 999),
+        "weekend_intensity": weekend_intensity,
+        "recurring_total": round(fixed_spend, 2),
+        "payday_velocity": "High" if (total_expense > total_income * 0.3 and days_passed < 5) else "Normal",
+        "burn_variance": burn_variance,
+        "predicted_end_balance": max(0, predicted_end_balance)
     }
 app.include_router(auth_router)
