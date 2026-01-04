@@ -21,9 +21,14 @@ import re
 router = APIRouter()
 app = FastAPI()
 
+origins = [
+    "https://my-balance-five.vercel.app",  # Your new live URL
+    "http://localhost:3000",              # Keep this for local dev
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
