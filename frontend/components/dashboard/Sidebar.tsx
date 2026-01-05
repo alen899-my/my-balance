@@ -14,7 +14,7 @@ export default function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean, setIsO
 
   const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-   { icon: FileText, label: "Statements", href: "/statements" },
+    { icon: FileText, label: "Statements", href: "/statements" },
     { icon: BarChart3, label: "Analytics", href: "/analytics" },
     { icon: Users, label: "Team", href: "/team" },
     { icon: Settings, label: "Settings", href: "/settings" },
@@ -37,10 +37,13 @@ export default function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean, setIsO
           {/* Logo Section */}
           <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-3">
-              <div className="bg-blue-600 p-1.5 rounded-lg">
+              {/* Violet themed logo box */}
+              <div className="bg-violet-600 p-1.5 rounded-lg shadow-lg shadow-violet-500/20">
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
-              <span className={`font-bold text-lg dark:text-white ${isCollapsed ? "lg:hidden" : "block"}`}>FinTrack</span>
+              <span className={`font-bold text-lg dark:text-white tracking-tight ${isCollapsed ? "lg:hidden" : "block"}`}>
+                FinTrack
+              </span>
             </div>
             <button onClick={() => setIsOpen(false)} className="lg:hidden p-1">
               <X className="w-5 h-5 text-slate-500" />
@@ -56,10 +59,13 @@ export default function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean, setIsO
                   key={item.href}
                   href={item.href}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group
-                    ${isActive ? "bg-blue-600 text-white shadow-md shadow-blue-200 dark:shadow-none" : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
+                    ${isActive 
+                      ? "bg-violet-600 text-white shadow-lg shadow-violet-500/20" 
+                      : "text-slate-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-600 dark:hover:text-violet-400"
+                    }`}
                 >
-                  <item.icon className="w-5 h-5 shrink-0" />
-                  <span className={`text-sm font-medium transition-all ${isCollapsed ? "lg:hidden" : "block"}`}>
+                  <item.icon className={`w-5 h-5 shrink-0 transition-colors ${isActive ? "text-white" : "group-hover:text-violet-600 dark:group-hover:text-violet-400"}`} />
+                  <span className={`text-sm font-semibold transition-all ${isCollapsed ? "lg:hidden" : "block"}`}>
                     {item.label}
                   </span>
                 </Link>
@@ -71,7 +77,7 @@ export default function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean, setIsO
           <div className="p-4 border-t border-slate-100 dark:border-slate-800 hidden lg:block">
             <button 
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="w-full flex items-center justify-center p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400"
+              className="w-full flex items-center justify-center p-2 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg text-slate-400 hover:text-violet-600 transition-colors"
             >
               <ChevronRight className={`w-5 h-5 transition-transform ${!isCollapsed && "rotate-180"}`} />
             </button>

@@ -17,7 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.utils.dependencies import get_current_user
 from app.database import transactions
 import re
-
+from fastapi import Query
 router = APIRouter()
 app = FastAPI()
 
@@ -229,21 +229,60 @@ async def get_insights(user = Depends(get_current_user)):
 @app.get("/transactions")
 def get_transactions(
     page: int = 1,
-    limit: int = 100,
+    limit: int = 10,
+    search: str | None = Query(None), # Search term
+    type: str = Query("all"),         # all, debit, or credit
+    sort: str = Query("desc"),        # asc or desc
     user = Depends(get_current_user)
 ):
     user_id = user["user_id"]
     skip = (page - 1) * limit
 
-    # Query DB
-    cursor = transactions.find({"user_id": user_id}, {"_id": 0}).sort("date", -1).skip(skip).limit(limit)
-    total = transactions.count_documents({"user_id": user_id})
+    # 1. Build the Dynamic Query
+    query = {"user_id": user_id}
+
+    # Search logic (UPI IDs, Descriptions, Payees)
+    if search:
+        query["$or"] = [
+            {"description": {"$regex": search, "$options": "i"}},
+            {"payee": {"$regex": search, "$options": "i"}}
+        ]
+
+    # Type logic
+    if type == "debit":
+        query["debit"] = {"$gt": 0}
+    elif type == "credit":
+        query["credit"] = {"$gt": 0}
+
+    # Sort logic
+    sort_dir = -1 if sort == "desc" else 1
+    sort_criteria = [("date", sort_dir), ("_id", sort_dir)]
+
+    # 3. Execute Query with Compound Sort
+    # We pass the sort_criteria list here
+    cursor = transactions.find(query).sort(sort_criteria).skip(skip).limit(limit)
+    total = transactions.count_documents(query)
+
+    formatted_data = []
+    for txn in cursor:
+        display_date = txn["date"].strftime("%d %b %Y") if isinstance(txn["date"], datetime) else str(txn["date"])
+        formatted_data.append({
+            "date": display_date,
+            "description": txn.get("description"),
+            "payee": txn.get("payee"),
+            "debit": txn.get("debit"),
+            "credit": txn.get("credit"),
+            "balance": txn.get("balance"),
+            "bank": txn.get("bank"),
+            "type": txn.get("type")
+        })
 
     return {
-        "data": list(cursor),
+        "data": formatted_data,
         "total": total,
         "totalPages": (total + limit - 1) // limit
     }
+
 @app.delete("/transactions/clear")
 async def clear_all_transactions(user = Depends(get_current_user)):
     user_id = user["user_id"]
