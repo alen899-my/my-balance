@@ -22,8 +22,9 @@ router = APIRouter()
 app = FastAPI()
 
 origins = [
-    "https://my-balance-five.vercel.app",  # Your new live URL
-    "http://localhost:3000",              # Keep this for local dev
+    "https://my-balance-five.vercel.app",
+    "https://my-balance-brdn.vercel.app",  # Add this one!
+    "http://localhost:3000",
 ]
 
 app.add_middleware(
