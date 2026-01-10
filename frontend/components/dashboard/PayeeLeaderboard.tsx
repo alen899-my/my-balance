@@ -27,7 +27,7 @@ export default function PayeeLeaderboard({ startDate, endDate }: PayeeLeaderboar
 
         const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/insights?${params.toString()}`);
         const json = await res.json();
-        setData(json.leaderboard || []);
+       setData(json.top_payees || json.leaderboard || []);
       } catch (err) {
         console.error("Leaderboard error:", err);
       } finally {
