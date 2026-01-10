@@ -41,7 +41,10 @@ async def get_insights(
         if start_date:
             date_filter["$gte"] = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
         if end_date:
-            date_filter["$lte"] = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+            # Set end_date to end of day: 23:59:59.999999
+            dt_end = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+            dt_end = dt_end.replace(hour=23, minute=59, second=59, microsecond=999999)
+            date_filter["$lte"] = dt_end
         match_stage["date"] = date_filter
 
     pipeline = [
@@ -66,7 +69,11 @@ async def get_insights(
                             "total_received": {"$sum": "$credit"},
                             "txn_count": {"$sum": 1}
                         }
-                    }
+                    },
+                    # Add simple total activity field for sorting
+                    {"$addFields": {"activity": {"$add": ["$total_spent", "$total_received"]}}},
+                    {"$sort": {"activity": -1}},
+                    {"$limit": 500}
                 ],
                 "daily_trend": [
                     {"$group": {"_id": "$date", "daily_spend": {"$sum": "$debit"}}},

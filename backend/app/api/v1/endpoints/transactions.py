@@ -45,6 +45,7 @@ async def get_transactions(
     
     if end_date:
         dt_end = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+        dt_end = dt_end.replace(hour=23, minute=59, second=59, microsecond=999999)
         find_query = find_query.find(Transaction.date <= dt_end)
 
     # Sort
