@@ -58,13 +58,13 @@ async def process_statement_pipeline(file_path: str, bank: str, password: str | 
         with pdfplumber.open(io.BytesIO(unlocked_bytes)) as pdf_temp:
              total_pages = len(pdf_temp.pages)
         
-        if job_id: update_job(job_id, status="processing", total_pages=total_pages, message="Parsing pages...")
+        if job_id: await update_job(job_id, status="processing", total_pages=total_pages, message="Parsing pages...")
         
         # Re-open or use the bytes depending on parser implementation. 
         # Our BaseParser usually takes a pdfplumber object.
         with pdfplumber.open(io.BytesIO(unlocked_bytes)) as pdf:
             for i, page in enumerate(pdf.pages):
-                if job_id: update_job(job_id, processed_pages=i+1, message=f"Processing page {i+1}/{total_pages}")
+                if job_id: await update_job(job_id, processed_pages=i+1, message=f"Processing page {i+1}/{total_pages}")
                 
                 # Extract using the specific parser strategy (stateless or stateful)
                 if hasattr(parser, 'parse_page'):
@@ -123,9 +123,9 @@ async def process_statement_pipeline(file_path: str, bank: str, password: str | 
                     await Transaction.get_pymongo_collection().bulk_write(valid_batch, ordered=False)
                     
                     if job_id: 
-                        job = get_job(job_id)
-                        current_count = job.get("processed_txns", 0) + len(valid_batch)
-                        update_job(job_id, processed_txns=current_count)
+                        job = await get_job(job_id)
+                        current_count = (job.processed_txns if job else 0) + len(valid_batch)
+                        await update_job(job_id, processed_txns=current_count)
                         
                     valid_batch = []
                 
@@ -134,10 +134,10 @@ async def process_statement_pipeline(file_path: str, bank: str, password: str | 
 
     except Exception as e:
         logger.error(f"❌ PIPELINE ERROR: {str(e)}", exc_info=True)
-        if job_id: update_job(job_id, status="failed", message=str(e))
+        if job_id: await update_job(job_id, status="failed", message=str(e))
     finally:
         # 4. Cleanup
         if os.path.exists(file_path):
             os.remove(file_path)
             logger.info(f"🧹 Cleaned up temp file: {file_path}")
-        if job_id: update_job(job_id, status="completed", message="Done")
+        if job_id: await update_job(job_id, status="completed", message="Done")

@@ -1,20 +1,22 @@
-# Simple in-memory job store
-# In a production app, use Redis.
-jobs = {}
+from app.models.job import JobStatus
+from datetime import datetime
 
-def create_job(job_id: str):
-    jobs[job_id] = {
-        "status": "processing",
-        "total_pages": 0,
-        "processed_pages": 0,
-        "total_txns": 0,
-        "processed_txns": 0,
-        "message": "Starting..."
-    }
+async def create_job(job_id: str):
+    job = JobStatus(
+        job_id=job_id,
+        status="processing",
+        message="Starting..."
+    )
+    await job.insert()
 
-def update_job(job_id: str, **kwargs):
-    if job_id in jobs:
-        jobs[job_id].update(kwargs)
+async def update_job(job_id: str, **kwargs):
+    job = await JobStatus.find_one(JobStatus.job_id == job_id)
+    if job:
+        # Update the fields dynamically
+        for key, value in kwargs.items():
+            setattr(job, key, value)
+        job.updated_at = datetime.utcnow()
+        await job.save()
 
-def get_job(job_id: str):
-    return jobs.get(job_id)
+async def get_job(job_id: str):
+    return await JobStatus.find_one(JobStatus.job_id == job_id)

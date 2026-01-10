@@ -51,7 +51,8 @@ export default function StatementUploadForm() {
     xhr.upload.addEventListener("progress", (event) => {
       if (event.lengthComputable) {
         const percent = Math.round((event.loaded / event.total) * 100);
-        setUploadProgress(Math.min(percent, 98));
+        // Map 0-100% of upload to 0-25% of the total UI progress
+        setUploadProgress(Math.min(Math.round(percent * 0.25), 25));
       }
     });
 
@@ -59,10 +60,8 @@ export default function StatementUploadForm() {
       if (xhr.status >= 200 && xhr.status < 300) {
         const data = JSON.parse(xhr.responseText);
 
-        // If we got a Job ID, start polling for progress
         if (data.jobId) {
           const jobId = data.jobId;
-
           const pollInterval = setInterval(async () => {
             try {
               const token = localStorage.getItem("token");
@@ -73,61 +72,43 @@ export default function StatementUploadForm() {
               if (res.status === 404) {
                 clearInterval(pollInterval);
                 setIsLoading(false);
-                setStatus({ type: 'error', message: "Session expired (Server Restarted). Please retry." });
+                setStatus({ type: 'error', message: "Session expired. Please retry." });
                 return;
               }
 
               const job = await res.json();
 
               if (job.status === 'processing') {
-                // Update UI with detailed progress if available
+                // Map page processing to 25%-99% of UI progress
                 if (job.total_pages > 0) {
-                  const percent = Math.round((job.processed_pages / job.total_pages) * 100);
-                  // Scale the "Parsing" phase from 0-100 mapped to UI visual if needed
-                  // For now, let's just stick to 99% until done or reuse the circular progress
-                  setUploadProgress(percent);
+                  const parsePercent = Math.round((job.processed_pages / job.total_pages) * 74);
+                  setUploadProgress(25 + parsePercent);
+                } else {
+                  setUploadProgress(prev => Math.min(prev + 1, 98));
                 }
               } else if (job.status === 'completed') {
                 clearInterval(pollInterval);
                 setUploadProgress(100);
-                setIsLoading(false);
-                setProcessData({
-                  total: job.processed_txns || 0, // Ensure backend sends totals in job object
-                  new: job.processed_txns || 0, // Simplify for now
-                  updated: 0
-                });
+                setTimeout(() => {
+                    setIsLoading(false);
+                    setProcessData({
+                      total: job.processed_txns || 0,
+                      new: job.processed_txns || 0,
+                      updated: 0
+                    });
+                }, 500);
               } else if (job.status === 'failed') {
                 clearInterval(pollInterval);
                 setIsLoading(false);
                 setStatus({ type: 'error', message: job.message || "Processing failed" });
               }
-            } catch (e) {
-              console.error("Polling error", e);
-              // Don't stop polling on transient error? Or stop?
-              // Let's count errors? For now, ignore transient.
-            }
+            } catch (e) { console.error("Polling error", e); }
           }, 1000);
-
-          return; // Exit here, let polling handle the "Done" state
+          return;
         }
-
-        // Fallback for instant / legacy response
-        setUploadProgress(100);
-        setTimeout(() => {
-          setIsLoading(false);
-          setProcessData({
-            total: data.total_processed,
-            new: data.new_transactions,
-            updated: data.updated_transactions
-          });
-        }, 800);
       } else {
-        try {
-          const errorData = JSON.parse(xhr.responseText);
-          setStatus({ type: 'error', message: errorData.detail || "Upload failed" });
-        } catch {
-          setStatus({ type: 'error', message: "An unexpected error occurred" });
-        }
+        const errorData = JSON.parse(xhr.responseText);
+        setStatus({ type: 'error', message: errorData.detail || "Upload failed" });
         setIsLoading(false);
       }
     });
@@ -139,11 +120,10 @@ export default function StatementUploadForm() {
   };
 
   return (
-    <div className="relative w-full max-w-md mx-auto">
-      {/* --- PREMIUM VIOLET PROCESSING MODAL --- */}
+    <div className="relative w-full max-w-md mx-auto p-4">
+      {/* --- PROGRESS MODAL --- */}
       {isLoading && (
-        <div className="absolute inset-0 z-50 bg-white/95 dark:bg-slate-950/98 backdrop-blur-xl flex flex-col items-center justify-center p-8 rounded-[2.5rem] animate-in fade-in zoom-in-95 duration-300 border border-violet-500/20">
-
+        <div className="absolute inset-0 z-50 bg-white/95 dark:bg-slate-950/98 backdrop-blur-xl flex flex-col items-center justify-center p-8 rounded-[2.5rem] animate-in fade-in zoom-in-95 duration-300 border border-violet-500/20 shadow-2xl">
           <div className="relative w-32 h-32 mb-8">
             <svg className="w-full h-full -rotate-90">
               <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-slate-100 dark:text-slate-800" />
@@ -152,108 +132,67 @@ export default function StatementUploadForm() {
                 strokeDasharray="364.4"
                 strokeDashoffset={364.4 - (364.4 * uploadProgress) / 100}
                 strokeLinecap="round"
-                className="text-violet-600 transition-all duration-700 ease-out shadow-[0_0_15px_rgba(124,58,237,0.5)]"
+                className="text-violet-600 transition-all duration-500 ease-out"
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              {uploadProgress < 100 ? (
-                <Loader2 className="w-8 h-8 text-violet-500 animate-spin mb-1 opacity-50" />
-              ) : (
-                <Zap className="w-8 h-8 text-emerald-500 animate-bounce mb-1" />
-              )}
               <span className="text-2xl font-black text-slate-900 dark:text-white leading-none">{uploadProgress}%</span>
               <span className="text-[10px] font-bold text-violet-500 mt-1 uppercase tracking-tighter">Syncing</span>
             </div>
           </div>
 
-          <div className="w-full space-y-4">
+          <div className="w-full space-y-6">
             <div className="flex justify-between px-4">
               {steps.map((step, i) => (
                 <div key={i} className={`flex flex-col items-center transition-all duration-500 ${activeStep >= i ? 'text-violet-600' : 'text-slate-300 dark:text-slate-700'}`}>
                   <step.icon className={`w-5 h-5 ${activeStep === i ? 'animate-bounce' : ''}`} />
-                  <div className={`h-1 w-1 rounded-full mt-2 ${activeStep >= i ? 'bg-violet-600' : 'bg-slate-200 dark:bg-slate-800'}`} />
+                  <div className={`h-1.5 w-1.5 rounded-full mt-2 ${activeStep >= i ? 'bg-violet-600' : 'bg-slate-200 dark:bg-slate-800'}`} />
                 </div>
               ))}
             </div>
             <div className="text-center">
-              <h3 className="text-lg font-black uppercase tracking-tighter text-slate-900 dark:text-white">
-                {steps[activeStep].label}
-              </h3>
-              <p className="text-xs font-medium text-slate-500 italic mt-1 text-center">Analyzing financial patterns...</p>
+              <h3 className="text-lg font-black uppercase tracking-tighter text-slate-900 dark:text-white">{steps[activeStep].label}</h3>
+              <p className="text-xs font-medium text-slate-500 mt-1">Please keep this window open...</p>
             </div>
           </div>
         </div>
       )}
 
-      {/* --- SUCCESS "VICTORY" SCREEN (For Finished Tasks) --- */}
+      {/* --- SUCCESS SCREEN --- */}
       {processData && (
-        <div className="absolute inset-0 z-50 bg-white dark:bg-slate-950 flex flex-col items-center justify-center p-8 rounded-[2.5rem] animate-in zoom-in-95 duration-500 border-2 border-emerald-500/20 shadow-2xl shadow-emerald-500/10">
-          <div className="w-20 h-20 bg-emerald-500 text-white rounded-3xl flex items-center justify-center mb-6 rotate-12 shadow-xl shadow-emerald-500/40">
-            <Zap className="w-10 h-10 fill-current" />
+        <div className="absolute inset-0 z-50 bg-white dark:bg-slate-950 flex flex-col items-center justify-center p-8 rounded-[2.5rem] animate-in zoom-in-95 duration-500 border-2 border-emerald-500/20 shadow-2xl">
+          <div className="w-16 h-16 bg-emerald-500 text-white rounded-2xl flex items-center justify-center mb-6 shadow-xl shadow-emerald-500/40">
+            <Zap className="w-8 h-8 fill-current" />
           </div>
           <h4 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em] mb-2">Sync Successful</h4>
-          <div className="flex items-baseline gap-2">
-            <span className="text-6xl font-black text-slate-900 dark:text-white tracking-tighter">{processData.total}</span>
-            <span className="text-lg font-bold text-slate-400">Lines</span>
+          <div className="flex items-baseline gap-2 mb-8">
+            <span className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter">{processData.total}</span>
+            <span className="text-sm font-bold text-slate-400">Lines</span>
           </div>
-
-          <div className="grid grid-cols-2 gap-4 w-full mt-8">
-            <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-3xl border border-slate-100 dark:border-slate-800">
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">New</p>
-              <p className="text-xl font-black text-emerald-500">+{processData.new}</p>
-            </div>
-            <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-3xl border border-slate-100 dark:border-slate-800">
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Updated</p>
-              <p className="text-xl font-black text-violet-500">{processData.updated}</p>
-            </div>
-          </div>
-
-          <button
-            onClick={() => window.location.reload()}
-            className="w-full mt-8 py-4 bg-violet-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-violet-500/30 hover:bg-violet-700 transition-all active:scale-95"
-          >
-            Refresh Records
-          </button>
-        </div>
-      )}
-
-      {/* --- BACKGROUND SYNC SCREEN (For 700+ Page Tasks) --- */}
-      {status.type === 'success' && !processData && (
-        <div className="absolute inset-0 z-50 bg-white dark:bg-slate-950 flex flex-col items-center justify-center p-8 rounded-[2.5rem] animate-in zoom-in-95 duration-500 border-2 border-violet-500/20 shadow-2xl">
-          <div className="w-20 h-20 bg-violet-600 text-white rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-violet-500/40">
-            <Clock className="w-10 h-10 animate-pulse" />
-          </div>
-          <h4 className="text-[10px] font-black text-violet-500 uppercase tracking-[0.4em] mb-2 text-center">Background Sync Active</h4>
-          <p className="text-xs font-bold text-slate-500 dark:text-slate-400 text-center leading-relaxed">
-            Large file detected. Our engine is indexing your transactions in the background. Check your dashboard in a few minutes.
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="w-full mt-8 py-4 bg-violet-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-violet-500/30 hover:bg-violet-700 transition-all active:scale-95"
-          >
-            I Understand
+          <button onClick={() => window.location.reload()} className="w-full py-4 bg-violet-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg hover:bg-violet-700 transition-all active:scale-95">
+            Done
           </button>
         </div>
       )}
 
       {/* --- THE MAIN FORM --- */}
-      <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-2xl shadow-violet-500/5 transition-all duration-300">
-        <div className="mb-8 space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 text-[10px] font-black uppercase tracking-widest">
-            <ShieldCheck className="w-3 h-3" /> Secure AI Engine
+      <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-6 md:p-8 shadow-2xl">
+        <div className="mb-8">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 text-[10px] font-black uppercase tracking-widest mb-4">
+            <ShieldCheck className="w-3 h-3" /> Secure Sync
           </div>
-          <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-none">Import Assets</h2>
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Import Statement</h2>
         </div>
 
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Source Bank</label>
-            <div className="relative group">
+        <div className="space-y-5">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">Select Bank</label>
+            <div className="relative">
               <select
                 value={bank} onChange={(e) => setBank(e.target.value)}
-                className="w-full appearance-none px-5 py-4 bg-slate-50 dark:bg-slate-900 border-2 border-transparent focus:border-violet-500/20 focus:ring-4 focus:ring-violet-500/5 rounded-2xl text-sm font-bold outline-none transition-all cursor-pointer"
+                className="w-full appearance-none px-5 py-4 bg-slate-50 dark:bg-slate-900 border-2 border-transparent focus:border-violet-500/20 rounded-2xl text-sm font-bold outline-none transition-all cursor-pointer text-slate-900 dark:text-white"
               >
-                <option value="HDFC">HDFC Bank Limited</option>
+                <option value="HDFC">HDFC Bank</option>
                 <option value="SBI">State Bank of India</option>
                 <option value="ICICI">ICICI Bank</option>
                 <option value="FEDERAL">Federal Bank</option>
@@ -264,55 +203,45 @@ export default function StatementUploadForm() {
 
           <div
             onClick={() => fileInputRef.current?.click()}
-            className={`group relative h-40 rounded-4xl border-2 border-dashed flex flex-col items-center justify-center transition-all cursor-pointer overflow-hidden
-              ${file ? 'border-violet-500 bg-violet-50/30 dark:bg-violet-900/20' : 'border-slate-200 dark:border-slate-800 hover:border-violet-500/40 hover:bg-violet-50/50'}`}
+            className={`group relative h-36 rounded-3xl border-2 border-dashed flex flex-col items-center justify-center transition-all cursor-pointer 
+              ${file ? 'border-violet-500 bg-violet-50/20 dark:bg-violet-900/10' : 'border-slate-200 dark:border-slate-800 hover:border-violet-500/40'}`}
           >
             <input ref={fileInputRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => setFile(e.target.files?.[0] || null)} />
             {file ? (
-              <div className="text-center animate-in zoom-in-90">
-                <div className="w-12 h-12 bg-violet-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-violet-500/40">
-                  <FileText className="w-6 h-6 text-white" />
-                </div>
-                <p className="text-xs font-black truncate max-w-55 dark:text-white uppercase tracking-tighter px-4">{file.name}</p>
-                <p className="text-[10px] text-violet-500 font-bold mt-1 italic">Replace document</p>
+              <div className="text-center">
+                <FileText className="w-8 h-8 text-violet-600 mx-auto mb-2" />
+                <p className="text-[11px] font-black text-slate-900 dark:text-white truncate max-w-[200px] uppercase">{file.name}</p>
               </div>
             ) : (
-              <div className="text-center px-4">
-                <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 group-hover:bg-violet-50 dark:group-hover:bg-violet-900/30 transition-all">
-                  <Upload className="w-6 h-6 text-slate-400 group-hover:text-violet-600" />
-                </div>
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Drop Statement</p>
-                <p className="text-[10px] text-slate-400 mt-1 uppercase font-black opacity-60">Encrypted PDF only</p>
+              <div className="text-center">
+                <Upload className="w-8 h-8 text-slate-400 group-hover:text-violet-600 mx-auto mb-2 transition-all" />
+                <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Select PDF</p>
               </div>
             )}
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Access Pin</label>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">PDF Password</label>
             <div className="relative">
               <KeyRound className="absolute left-5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
-                type="password" placeholder="PDF Password (if any)" value={password} onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-12 pr-5 py-4 bg-slate-50 dark:bg-slate-900 border-2 border-transparent focus:border-violet-500/20 focus:ring-4 focus:ring-violet-500/5 rounded-2xl text-sm font-bold outline-none transition-all"
+                type="password" placeholder="Leave blank if none" value={password} onChange={(e) => setPassword(e.target.value)}
+                className="w-full pl-12 pr-5 py-4 bg-slate-50 dark:bg-slate-900 border-2 border-transparent focus:border-violet-500/20 rounded-2xl text-sm font-bold outline-none transition-all text-slate-900 dark:text-white"
               />
             </div>
           </div>
 
           <button
             onClick={handleUpload} disabled={!file || isLoading}
-            className="w-full h-16 bg-violet-600 hover:bg-violet-700 text-white rounded-3xl font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-violet-500/40 transition-all active:scale-95 disabled:opacity-20 flex items-center justify-center gap-3 group"
+            className="w-full h-14 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-violet-500/30 transition-all active:scale-95 disabled:opacity-30 flex items-center justify-center gap-2"
           >
-            {isLoading ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> PROCESSING...</>
-            ) : (
-              <><Zap className="w-4 h-4 fill-current group-hover:animate-pulse" /> INITIALIZE SYNC</>
-            )}
+            <Zap className="w-4 h-4 fill-current" /> Initialize Sync
           </button>
         </div>
       </div>
 
       {status.type === 'error' && (
-        <div className="mt-4 bg-rose-600 text-white p-4 rounded-2xl flex items-center gap-3 animate-in slide-in-from-bottom-2 shadow-xl shadow-rose-500/20">
+        <div className="mt-4 bg-rose-600 text-white p-4 rounded-2xl flex items-center gap-3 animate-in slide-in-from-bottom-2">
           <AlertCircle className="w-5 h-5 shrink-0" />
           <p className="text-[10px] font-black uppercase tracking-tight flex-1">{status.message}</p>
           <button onClick={() => setStatus({ type: 'idle', message: '' })}><X className="w-4 h-4" /></button>
