@@ -64,6 +64,9 @@ async def get_insights(user = Depends(get_current_user)):
                     }},
                     {"$sort": {"_id.year": 1, "_id.month": 1}}
                 ],
+                "category_spending": [
+                    {"$group": {"_id": "$category", "total": {"$sum": "$debit"}}}
+                ],
                 "latest_balance": [
                     {"$sort": {"date": -1, "_id": -1}},
                     {"$limit": 1},
@@ -133,7 +136,12 @@ async def get_insights(user = Depends(get_current_user)):
         "monthly_data": [
             {"month": f"{m['_id']['month']}/{m['_id']['year']}", "amount": m["total"]} 
             for m in res.get("monthly_trend", [])
-        ]
+        ],
+        "category_data": sorted([
+            {"category": item["_id"] or "Uncategorized", "amount": item["total"]}
+            for item in res.get("category_spending", [])
+            if item["total"] > 0
+        ], key=lambda x: x['amount'], reverse=True)
     }
 
 
