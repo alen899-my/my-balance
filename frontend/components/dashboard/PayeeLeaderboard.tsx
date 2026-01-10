@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import { authFetch } from "@/lib/authFetch";
-import { 
-  Crown, Medal, Receipt, ArrowUpRight, ArrowDownLeft, 
-  Search, Wallet, HandCoins 
+import {
+  Crown, Medal, Receipt, ArrowUpRight, ArrowDownLeft,
+  Search, Wallet, HandCoins
 } from "lucide-react";
 
 export default function PayeeLeaderboard() {
@@ -57,29 +57,27 @@ export default function PayeeLeaderboard() {
       {/* Header Section */}
       <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30">
         <div className="flex flex-col gap-4">
-          <div className="flex justify-between items-start">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0">
             <div>
               <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                 Payee Leaderboard
               </h2>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Individual UPI & Bank Analysis</p>
             </div>
-            
+
             {/* View Switcher */}
-            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
-              <button 
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 w-full md:w-auto">
+              <button
                 onClick={() => setView("spent")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all ${
-                  view === 'spent' ? 'bg-white dark:bg-slate-700 shadow-sm text-red-500' : 'text-slate-500'
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all ${view === 'spent' ? 'bg-white dark:bg-slate-700 shadow-sm text-red-500' : 'text-slate-500'
+                  }`}
               >
                 <Wallet className="w-3 h-3" /> Outflow
               </button>
-              <button 
+              <button
                 onClick={() => setView("received")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all ${
-                  view === 'received' ? 'bg-white dark:bg-slate-700 shadow-sm text-emerald-500' : 'text-slate-500'
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all ${view === 'received' ? 'bg-white dark:bg-slate-700 shadow-sm text-emerald-500' : 'text-slate-500'
+                  }`}
               >
                 <HandCoins className="w-3 h-3" /> Inflow
               </button>
@@ -89,7 +87,7 @@ export default function PayeeLeaderboard() {
           {/* Search Bar */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-            <input 
+            <input
               type="text"
               placeholder="Search UPI ID or Name..."
               value={searchTerm}
@@ -106,29 +104,27 @@ export default function PayeeLeaderboard() {
         [&::-webkit-scrollbar-thumb]:bg-slate-200
         dark:[&::-webkit-scrollbar-thumb]:bg-slate-800
         [&::-webkit-scrollbar-thumb]:rounded-full">
-        
+
         {filteredList.length > 0 ? (
           filteredList.map((item, index) => {
             const isTop3 = index < 3;
             const amount = view === "spent" ? item.spent : item.received;
 
             return (
-              <div 
+              <div
                 key={item.id}
-                className={`flex items-center justify-between p-3 rounded-2xl transition-all border ${
-                  index === 0 && searchTerm === "" 
-                    ? 'bg-amber-50/50 dark:bg-amber-900/5 border-amber-100 dark:border-amber-900/20' 
-                    : 'bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/40'
-                }`}
+                className={`flex items-center justify-between p-3 rounded-2xl transition-all border ${index === 0 && searchTerm === ""
+                  ? 'bg-amber-50/50 dark:bg-amber-900/5 border-amber-100 dark:border-amber-900/20'
+                  : 'bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                  }`}
               >
                 <div className="flex items-center gap-4">
                   {/* Rank Badge */}
                   <div className="relative">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm ${
-                      index === 0 ? 'bg-amber-500 text-white' : 
-                      index === 1 ? 'bg-slate-400 text-white' : 
-                      index === 2 ? 'bg-orange-400 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
-                    }`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm ${index === 0 ? 'bg-amber-500 text-white' :
+                      index === 1 ? 'bg-slate-400 text-white' :
+                        index === 2 ? 'bg-orange-400 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                      }`}>
                       {index + 1}
                     </div>
                     {index === 0 && <Crown className="w-3.5 h-3.5 text-amber-500 absolute -top-1.5 -right-1 rotate-12 fill-amber-500" />}
@@ -149,9 +145,8 @@ export default function PayeeLeaderboard() {
                   <p className={`font-black text-base ${view === "spent" ? "text-slate-900 dark:text-white" : "text-emerald-500"}`}>
                     ₹{amount.toLocaleString()}
                   </p>
-                  <div className={`flex items-center justify-end gap-1 text-[9px] font-black uppercase tracking-tighter ${
-                    view === "spent" ? "text-red-400" : "text-emerald-400"
-                  }`}>
+                  <div className={`flex items-center justify-end gap-1 text-[9px] font-black uppercase tracking-tighter ${view === "spent" ? "text-red-400" : "text-emerald-400"
+                    }`}>
                     {view === "spent" ? <ArrowUpRight className="w-2.5 h-2.5" /> : <ArrowDownLeft className="w-2.5 h-2.5" />}
                     {view === "spent" ? "Total Paid" : "Total Received"}
                   </div>
