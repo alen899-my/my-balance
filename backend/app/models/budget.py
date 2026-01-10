@@ -1,6 +1,6 @@
 from typing import Optional, List
 from datetime import datetime
-from beanie import Document, Indexed
+from beanie import Document, Indexed, PydanticObjectId
 from pydantic import Field, BaseModel
 
 class CalculationRow(BaseModel):
@@ -8,7 +8,7 @@ class CalculationRow(BaseModel):
     value: float
 
 class BudgetEntry(Document):
-    user_id: Indexed(str)
+    user_id: Indexed(PydanticObjectId)
     category: str
     title: Optional[str] = None
     type: str = "expense"  # "income" or "expense"

@@ -27,7 +27,7 @@ async def get_budgets(
     year: int = Query(...),
     user = Depends(get_current_user)
 ):
-    user_id = str(user["user_id"])
+    user_id = PydanticObjectId(user["user_id"])
     items = await BudgetEntry.find(
         BudgetEntry.user_id == user_id,
         BudgetEntry.month == month,
@@ -35,12 +35,14 @@ async def get_budgets(
     ).to_list()
     return {"items": items}
 
+from beanie import PydanticObjectId
+
 @router.post("/")
 async def add_budget_item(
     payload: BudgetPayload,
     user = Depends(get_current_user)
 ):
-    user_id = str(user["user_id"])
+    user_id = PydanticObjectId(user["user_id"])
     
     budget_item = BudgetEntry(
         user_id=user_id,
@@ -61,7 +63,7 @@ async def upsert_income(
     payload: IncomePayload,
     user = Depends(get_current_user)
 ):
-    user_id = str(user["user_id"])
+    user_id = PydanticObjectId(user["user_id"])
     
     existing_income = await BudgetEntry.find_one(
         BudgetEntry.user_id == user_id,
@@ -95,7 +97,7 @@ async def update_budget_item(
     user = Depends(get_current_user)
 ):
     item = await BudgetEntry.get(id)
-    if not item or item.user_id != str(user["user_id"]):
+    if not item or item.user_id != PydanticObjectId(user["user_id"]):
         raise HTTPException(status_code=404, detail="Item not found")
     
     item.category = payload.category
@@ -112,7 +114,7 @@ async def update_budget_item(
 @router.patch("/{id}/toggle")
 async def toggle_status(id: str, user = Depends(get_current_user)):
     item = await BudgetEntry.get(id)
-    if not item or item.user_id != str(user["user_id"]):
+    if not item or item.user_id != PydanticObjectId(user["user_id"]):
         raise HTTPException(status_code=404, detail="Item not found")
     
     item.is_completed = not item.is_completed
@@ -122,7 +124,7 @@ async def toggle_status(id: str, user = Depends(get_current_user)):
 @router.delete("/{id}")
 async def delete_budget_item(id: str, user = Depends(get_current_user)):
     item = await BudgetEntry.get(id)
-    if not item or item.user_id != str(user["user_id"]):
+    if not item or item.user_id != PydanticObjectId(user["user_id"]):
         raise HTTPException(status_code=404, detail="Item not found")
     
     await item.delete()

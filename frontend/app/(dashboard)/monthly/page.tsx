@@ -92,14 +92,18 @@ export default function MonthlyPage() {
           title: data.title,
           amount: data.amount,
           calculation_rows: data.calculation_rows,
-          month: selectedMonth, // Uses the selected filter month
-          year: selectedYear,   // Uses the selected filter year
+          month: Number(selectedMonth),
+          year: Number(selectedYear),
           type: "expense"
         })
       });
+      console.log("Item saved for:", selectedMonth, selectedYear);
       fetchBudgetList();
       setIsModalOpen(false);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save item. Please check console.");
+    }
   }
 
   async function handleSaveIncome() {
