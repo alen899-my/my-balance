@@ -20,7 +20,65 @@ class BudgetPayload(BaseModel):
     type: str = "expense"
     month: int
     year: int
+class ClonePayload(BaseModel):
+    from_month: int
+    from_year: int
+    to_month: int
+    to_year: int
+@router.delete("/purge")
+async def purge_monthly_expenses(
+    month: int = Query(...),
+    year: int = Query(...),
+    user = Depends(get_current_user)
+):
+    user_id = PydanticObjectId(user["user_id"])
+    
+    # Delete only expenses, leave the 'income' intact
+    result = await BudgetEntry.find(
+        BudgetEntry.user_id == user_id,
+        BudgetEntry.month == month,
+        BudgetEntry.year == year,
+        BudgetEntry.type == "expense"
+    ).delete()
+    
+    return {"status": "success", "deleted_count": result.deleted_count}
+@router.post("/clone")
+async def clone_monthly_plan(
+    payload: ClonePayload,
+    user = Depends(get_current_user)
+):
+    user_id = PydanticObjectId(user["user_id"])
+    
+    # 1. Fetch items from previous month (only expenses)
+    previous_items = await BudgetEntry.find(
+        BudgetEntry.user_id == user_id,
+        BudgetEntry.month == payload.from_month,
+        BudgetEntry.year == payload.from_year,
+        BudgetEntry.type == "expense"
+    ).to_list()
 
+    if not previous_items:
+        raise HTTPException(status_code=404, detail="No items found in previous month to clone")
+
+    # 2. Prepare new items (resetting IDs and completion status)
+    new_entries = []
+    for item in previous_items:
+        new_entries.append(BudgetEntry(
+            user_id=user_id,
+            category=item.category,
+            title=item.title,
+            type=item.type,
+            amount=item.amount,
+            calculation_rows=item.calculation_rows,
+            month=payload.to_month,
+            year=payload.to_year,
+            is_completed=False  # Important: New month starts unpaid
+        ))
+
+    # 3. Batch insert
+    await BudgetEntry.insert_many(new_entries)
+    
+    return {"status": "success", "cloned_count": len(new_entries)}
 @router.get("/list")
 async def get_budgets(
     month: int = Query(...),

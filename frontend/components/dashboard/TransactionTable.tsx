@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react"; // Added useCallback
+import { useEffect, useState, useCallback } from "react";
 import { authFetch } from "@/lib/authFetch";
 import { ChevronLeft, ChevronRight, Banknote, Calendar, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 
@@ -13,7 +13,6 @@ type Transaction = {
   bank: string;
 };
 
-// 1. Define the props interface
 interface TransactionTableProps {
   filters: {
     search: string;
@@ -24,7 +23,7 @@ interface TransactionTableProps {
   endDate?: Date;
 }
 
-export default function TransactionTable({ filters, startDate, endDate }: TransactionTableProps) { // 2. Receive filters prop
+export default function TransactionTable({ filters, startDate, endDate }: TransactionTableProps) {
   const [data, setData] = useState<Transaction[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -32,7 +31,6 @@ export default function TransactionTable({ filters, startDate, endDate }: Transa
 
   const limit = 10;
 
-  // 3. Use useCallback to prevent unnecessary re-renders
   const fetchTransactions = useCallback(async (p = page) => {
     setIsLoading(true);
     try {
@@ -59,13 +57,12 @@ export default function TransactionTable({ filters, startDate, endDate }: Transa
     } finally {
       setIsLoading(false);
     }
-  }, [page, filters, limit, startDate, endDate]); // dependencies for the fetch
+  }, [page, filters, limit, startDate, endDate]);
 
   useEffect(() => {
     fetchTransactions();
   }, [fetchTransactions]);
 
-  // Reset page to 1 when filters change
   useEffect(() => {
     setPage(1);
   }, [filters]);
@@ -75,79 +72,104 @@ export default function TransactionTable({ filters, startDate, endDate }: Transa
       {/* Header Info */}
       <div className="flex items-center justify-between px-1">
         <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400">
-          Transaction History
+          Statement Details
         </h3>
         <div className="text-[10px] font-black uppercase tracking-tight text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/30 px-3 py-1 rounded-full border border-violet-100 dark:border-violet-800">
-          {data.length} Records Found
+          {data.length} Records In View
         </div>
       </div>
 
-      {/* Table Body */}
-      <div className="space-y-3">
-        {isLoading ? (
-          Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-24 w-full bg-slate-100 dark:bg-slate-800/50 rounded-3xl animate-pulse border border-slate-200 dark:border-slate-800" />
-          ))
-        ) : data.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800">
-            <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl mb-4">
-              <Banknote className="w-10 h-10 text-slate-300" />
-            </div>
-            <p className="text-slate-500 font-bold uppercase text-xs tracking-widest">No results found.</p>
-          </div>
-        ) : (
-          data.map((txn, idx) => (
-            <div
-              key={idx}
-              className="group relative flex flex-col md:flex-row md:items-center justify-between p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl hover:border-violet-500/50 dark:hover:border-violet-400/50 transition-all shadow-sm hover:shadow-xl hover:shadow-violet-500/5"
-            >
-              <div className="flex items-center gap-4">
-                <div className={`p-4 rounded-2xl transition-all shadow-sm ${txn.credit > 0
-                  ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600"
-                  : "bg-rose-50 dark:bg-rose-900/20 text-rose-600"
-                  }`}>
-                  {txn.credit > 0 ? <ArrowDownLeft className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-900 dark:text-slate-100 leading-tight group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
-                    {txn.description}
-                  </h4>
-                  <div className="flex items-center gap-3 mt-1.5">
-                    <span className="flex items-center gap-1 text-[11px] font-medium text-slate-400">
-                      <Calendar className="w-3 h-3" /> {txn.date}
-                    </span>
-                    <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
-                      {txn.bank}
-                    </span>
-                  </div>
-                </div>
-              </div>
+      {/* Table Container */}
+      <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden">
+        
+        {/* --- FIXED HEIGHT SCROLLABLE AREA WITH CUSTOM SCROLLBAR --- */}
+        <div className="overflow-x-auto overflow-y-auto h-[500px] 
+          [&::-webkit-scrollbar]:w-1.5 
+          [&::-webkit-scrollbar-track]:bg-transparent 
+          [&::-webkit-scrollbar-thumb]:bg-slate-100 
+          dark:[&::-webkit-scrollbar-thumb]:bg-slate-800 
+          [&::-webkit-scrollbar-thumb]:rounded-full 
+          hover:[&::-webkit-scrollbar-thumb]:bg-violet-500/50 
+          transition-all">
+          
+          <table className="w-full text-left border-collapse min-w-[800px]">
+            <thead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 shadow-sm">
+              <tr>
+                <th className="p-5 text-[9px] font-black uppercase text-violet-600 dark:text-violet-400 tracking-widest">Type</th>
+                <th className="p-5 text-[9px] font-black uppercase text-violet-600 dark:text-violet-400 tracking-widest">Transaction Info</th>
+                <th className="p-5 text-[9px] font-black uppercase text-violet-600 dark:text-violet-400 tracking-widest text-right">Debit/Credit</th>
+                <th className="p-5 text-[9px] font-black uppercase text-violet-600 dark:text-violet-400 tracking-widest text-right">Net Balance</th>
+              </tr>
+            </thead>
+            
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td colSpan={4} className="p-8"><div className="h-4 bg-slate-100 dark:bg-slate-800 rounded-full w-full" /></td>
+                  </tr>
+                ))
+              ) : data.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="p-20 text-center">
+                    <div className="flex flex-col items-center">
+                      <Banknote className="w-10 h-10 text-slate-300 mb-4" />
+                      <p className="text-slate-500 font-bold uppercase text-xs tracking-widest">No matching records found.</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                data.map((txn, idx) => (
+                  <tr key={idx} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
+                    <td className="p-5 w-20">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                        txn.credit > 0 
+                        ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 shadow-sm shadow-emerald-500/10" 
+                        : "bg-rose-50 dark:bg-rose-900/20 text-rose-600 shadow-sm shadow-rose-500/10"
+                      }`}>
+                        {txn.credit > 0 ? <ArrowDownLeft className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
+                      </div>
+                    </td>
 
-              <div className="flex items-center justify-between md:justify-end gap-10 mt-5 md:mt-0 border-t md:border-t-0 pt-4 md:pt-0 border-slate-50 dark:border-slate-800">
-                <div className="text-right">
-                  <p className={`text-xl font-black tabular-nums tracking-tight ${txn.credit > 0 ? "text-emerald-500" : "text-rose-500"
-                    }`}>
-                    {txn.credit > 0 ? `+${txn.credit.toLocaleString()}` : `-${txn.debit.toLocaleString()}`}
-                  </p>
-                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-tighter mt-0.5">
-                    Balance: <span className="text-slate-700 dark:text-slate-200">{txn.balance.toLocaleString()}</span>
-                  </p>
-                </div>
-                <div className="hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 group-hover:bg-violet-600 group-hover:text-white transition-all">
-                  <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-                </div>
-              </div>
-            </div>
-          ))
-        )}
+                    <td className="p-5">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-bold text-slate-900 dark:text-slate-100 group-hover:text-violet-600 transition-colors">
+                          {txn.description}
+                        </span>
+                        <div className="flex items-center gap-3">
+                          <span className="flex items-center gap-1 text-[10px] font-black uppercase text-slate-400">
+                            <Calendar className="w-3 h-3" /> {txn.date}
+                          </span>
+                          <span className="text-[8px] font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700">
+                            {txn.bank}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="p-5 text-right font-black tabular-nums tracking-tighter">
+                      <span className={txn.credit > 0 ? "text-emerald-500 text-base" : "text-rose-500 text-base"}>
+                        {txn.credit > 0 ? `+${txn.credit.toLocaleString()}` : `-${txn.debit.toLocaleString()}`}
+                      </span>
+                    </td>
+
+                    <td className="p-5 text-right font-black tabular-nums text-slate-900 dark:text-white tracking-tighter">
+                      ₹{txn.balance.toLocaleString()}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Pagination */}
+      {/* Pagination Container */}
       <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 p-4 rounded-3xl border border-slate-200 dark:border-slate-800">
         <button
           disabled={page === 1 || isLoading}
           onClick={() => setPage(p => p - 1)}
-          className="flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 rounded-2xl transition-all disabled:opacity-30 shadow-sm border border-slate-200 dark:border-slate-700 hover:text-violet-600 dark:hover:text-violet-400"
+          className="flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 rounded-2xl transition-all disabled:opacity-30 shadow-sm border border-slate-200 dark:border-slate-700 hover:text-violet-600 dark:hover:text-violet-400 active:scale-95"
         >
           <ChevronLeft className="w-4 h-4" /> Prev
         </button>
@@ -159,7 +181,7 @@ export default function TransactionTable({ filters, startDate, endDate }: Transa
         <button
           disabled={page === totalPages || isLoading}
           onClick={() => setPage(p => p + 1)}
-          className="flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 rounded-2xl transition-all disabled:opacity-30 shadow-sm border border-slate-200 dark:border-slate-700 hover:text-violet-600 dark:hover:text-violet-400"
+          className="flex items-center gap-2 px-5 py-2.5 text-xs font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 rounded-2xl transition-all disabled:opacity-30 shadow-sm border border-slate-200 dark:border-slate-700 hover:text-violet-600 dark:hover:text-violet-400 active:scale-95"
         >
           Next <ChevronRight className="w-4 h-4" />
         </button>
