@@ -25,7 +25,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0f172a;
-    --foreground: #f8fafc;
+  
     --card-bg: #1e293b;
     --card-border: #334155;
     --primary: #3b82f6;
@@ -52,40 +52,4 @@ pre::-webkit-scrollbar-track {
 pre::-webkit-scrollbar-thumb {
   background-color: #94a3b8;
   border-radius: 4px;
-}
-.table-container {
-  max-height: 70vh;
-  overflow: auto;
-  border: 1px solid #ddd;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-thead th {
-  position: sticky;
-  top: 0;
-  background: #f9fafb;
-  z-index: 10;
-  border-bottom: 1px solid #ccc;
-}
-
-th, td {
-  padding: 8px 12px;
-  border-bottom: 1px solid #eee;
-  text-align: left;
-  font-size: 14px;
-}
-
-tr:hover {
-  background: #f3f4f6;
-}
-
-.pagination {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 16px;
 }

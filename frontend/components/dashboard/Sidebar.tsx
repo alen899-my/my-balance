@@ -15,7 +15,7 @@ export default function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean, setIsO
   const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
     { icon: FileText, label: "Statements", href: "/statements" },
-    { icon: BarChart3, label: "Analytics", href: "/analytics" },
+    { icon: BarChart3, label: "Monthly", href: "/monthly" },
     { icon: Users, label: "Team", href: "/team" },
     { icon: Settings, label: "Settings", href: "/settings" },
   ];
