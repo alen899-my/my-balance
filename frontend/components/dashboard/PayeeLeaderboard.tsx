@@ -1,21 +1,26 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { authFetch } from "@/lib/authFetch";
-import { Crown, Medal, TrendingUp, Receipt } from "lucide-react";
+import { 
+  Crown, Medal, Receipt, ArrowUpRight, ArrowDownLeft, 
+  Search, Wallet, HandCoins 
+} from "lucide-react";
 
 export default function PayeeLeaderboard() {
-  const [payees, setPayees] = useState<any[]>([]);
+  const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<"spent" | "received">("spent");
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     async function fetchLeaderboard() {
       try {
         const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/insights`);
         const json = await res.json();
-        setPayees(json.top_payees || []);
+        setData(json.leaderboard || []);
       } catch (err) {
-        console.error("Leaderboard load error:", err);
+        console.error("Leaderboard error:", err);
       } finally {
         setLoading(false);
       }
@@ -23,88 +28,143 @@ export default function PayeeLeaderboard() {
     fetchLeaderboard();
   }, []);
 
-  if (loading) return (
-    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 h-full animate-pulse">
-      <div className="h-6 w-32 bg-slate-200 rounded mb-6" />
-      {[...Array(5)].map((_, i) => (
-        <div key={i} className="flex items-center gap-4 mb-4">
-          <div className="w-10 h-10 rounded-full bg-slate-100" />
-          <div className="flex-1 h-4 bg-slate-100 rounded" />
+  // Filter and Sort Logic
+  const filteredList = useMemo(() => {
+    return data
+      .filter(item => {
+        const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const hasValue = view === "spent" ? item.spent > 0 : item.received > 0;
+        return matchesSearch && hasValue;
+      })
+      .sort((a, b) => (view === "spent" ? b.spent - a.spent : b.received - a.received));
+  }, [data, view, searchTerm]);
+
+  if (loading) {
+    return (
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 h-[500px] animate-pulse">
+        <div className="h-8 w-48 bg-slate-100 dark:bg-slate-800 rounded-lg mb-6" />
+        <div className="space-y-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-16 bg-slate-50 dark:bg-slate-800/50 rounded-2xl" />
+          ))}
         </div>
-      ))}
-    </div>
-  );
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col h-full">
-      <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
-        <div>
-          <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter flex items-center gap-2">
-            Top Payees
-          </h2>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Spending Leaderboard</p>
+    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col h-[500px]">
+      {/* Header Section */}
+      <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30">
+        <div className="flex flex-col gap-4">
+          <div className="flex justify-between items-start">
+            <div>
+              <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                Payee Leaderboard
+              </h2>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Individual UPI & Bank Analysis</p>
+            </div>
+            
+            {/* View Switcher */}
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+              <button 
+                onClick={() => setView("spent")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all ${
+                  view === 'spent' ? 'bg-white dark:bg-slate-700 shadow-sm text-red-500' : 'text-slate-500'
+                }`}
+              >
+                <Wallet className="w-3 h-3" /> Outflow
+              </button>
+              <button 
+                onClick={() => setView("received")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all ${
+                  view === 'received' ? 'bg-white dark:bg-slate-700 shadow-sm text-emerald-500' : 'text-slate-500'
+                }`}
+              >
+                <HandCoins className="w-3 h-3" /> Inflow
+              </button>
+            </div>
+          </div>
+
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+            <input 
+              type="text"
+              placeholder="Search UPI ID or Name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+            />
+          </div>
         </div>
-        <TrendingUp className="w-5 h-5 text-blue-500" />
       </div>
 
-      {/* CUSTOM SCROLLBAR APPLIED HERE */}
-      <div className="p-4 space-y-3 overflow-y-auto max-h-[400px] 
-        scrollbar-thin 
-        scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800 
-        scrollbar-track-transparent 
-        hover:scrollbar-thumb-slate-300 dark:hover:scrollbar-thumb-slate-700
+      {/* Leaderboard List */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-2 
         [&::-webkit-scrollbar]:w-1.5
-        [&::-webkit-scrollbar-track]:bg-transparent
-        [&::-webkit-scrollbar-thumb]:rounded-full
         [&::-webkit-scrollbar-thumb]:bg-slate-200
         dark:[&::-webkit-scrollbar-thumb]:bg-slate-800
-        hover:[&::-webkit-scrollbar-thumb]:bg-slate-300
-        dark:hover:[&::-webkit-scrollbar-thumb]:bg-slate-700">
+        [&::-webkit-scrollbar-thumb]:rounded-full">
         
-        {payees.map((payee, index) => {
-          const isFirst = index === 0;
-          const isSecond = index === 1;
-          const isThird = index === 2;
+        {filteredList.length > 0 ? (
+          filteredList.map((item, index) => {
+            const isTop3 = index < 3;
+            const amount = view === "spent" ? item.spent : item.received;
 
-          return (
-            <div 
-              key={index} 
-              className={`flex items-center justify-between p-3 rounded-2xl transition-all ${
-                isFirst ? 'bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
-              }`}
-            >
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm ${
-                    isFirst ? 'bg-amber-500 text-white' : 
-                    isSecond ? 'bg-slate-400 text-white' : 
-                    isThird ? 'bg-orange-400 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+            return (
+              <div 
+                key={item.id}
+                className={`flex items-center justify-between p-3 rounded-2xl transition-all border ${
+                  index === 0 && searchTerm === "" 
+                    ? 'bg-amber-50/50 dark:bg-amber-900/5 border-amber-100 dark:border-amber-900/20' 
+                    : 'bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  {/* Rank Badge */}
+                  <div className="relative">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm ${
+                      index === 0 ? 'bg-amber-500 text-white' : 
+                      index === 1 ? 'bg-slate-400 text-white' : 
+                      index === 2 ? 'bg-orange-400 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    {index === 0 && <Crown className="w-3.5 h-3.5 text-amber-500 absolute -top-1.5 -right-1 rotate-12 fill-amber-500" />}
+                  </div>
+
+                  <div>
+                    <h4 className="font-bold text-slate-900 dark:text-white text-sm tracking-tight truncate max-w-[150px]">
+                      {item.name}
+                    </h4>
+                    <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase">
+                      <Receipt className="w-3 h-3" />
+                      {item.count} Transactions
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <p className={`font-black text-base ${view === "spent" ? "text-slate-900 dark:text-white" : "text-emerald-500"}`}>
+                    ₹{amount.toLocaleString()}
+                  </p>
+                  <div className={`flex items-center justify-end gap-1 text-[9px] font-black uppercase tracking-tighter ${
+                    view === "spent" ? "text-red-400" : "text-emerald-400"
                   }`}>
-                    {index + 1}
-                  </div>
-                  {isFirst && <Crown className="w-4 h-4 text-amber-500 absolute -top-2 -right-1 rotate-12 fill-amber-500" />}
-                  {(isSecond || isThird) && <Medal className={`w-4 h-4 absolute -top-2 -right-1 rotate-12 ${isSecond ? 'text-slate-400' : 'text-orange-400'}`} />}
-                </div>
-
-                <div>
-                  <h4 className="font-black text-slate-900 dark:text-white text-sm tracking-tight capitalize">
-                    {payee.name}
-                  </h4>
-                  <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase">
-                    <Receipt className="w-3 h-3" />
-                    {payee.count} Transactions
+                    {view === "spent" ? <ArrowUpRight className="w-2.5 h-2.5" /> : <ArrowDownLeft className="w-2.5 h-2.5" />}
+                    {view === "spent" ? "Total Paid" : "Total Received"}
                   </div>
                 </div>
               </div>
-
-              <div className="text-right">
-                <p className="font-black text-slate-900 dark:text-white">
-                  ₹{payee.amount.toLocaleString()}
-                </p>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })
+        ) : (
+          <div className="h-full flex flex-col items-center justify-center text-slate-400 opacity-50">
+            <Search className="w-8 h-8 mb-2" />
+            <p className="text-xs font-bold uppercase">No payees found</p>
+          </div>
+        )}
       </div>
     </div>
   );

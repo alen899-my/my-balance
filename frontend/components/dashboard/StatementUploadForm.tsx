@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { 
-  Upload, ShieldCheck, ChevronDown, FileText, 
-  X, AlertCircle, KeyRound, 
-  Database, Zap, Lock, Search
+import {
+  Upload, ShieldCheck, ChevronDown, FileText,
+  X, AlertCircle, KeyRound,
+  Database, Zap, Lock, Search, Clock, Loader2
 } from "lucide-react";
 
 export default function StatementUploadForm() {
@@ -13,10 +13,10 @@ export default function StatementUploadForm() {
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<{ type: 'idle' | 'success' | 'error', message: string }>({ type: 'idle', message: '' });
   const [isLoading, setIsLoading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0); 
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [activeStep, setActiveStep] = useState(0);
-  const [processData, setProcessData] = useState<{total: number, new: number, updated: number} | null>(null);
-  
+  const [processData, setProcessData] = useState<{ total: number, new: number, updated: number } | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const steps = [
@@ -55,21 +55,79 @@ export default function StatementUploadForm() {
       }
     });
 
-    xhr.addEventListener("load", () => {
+    xhr.addEventListener("load", async () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         const data = JSON.parse(xhr.responseText);
+
+        // If we got a Job ID, start polling for progress
+        if (data.jobId) {
+          const jobId = data.jobId;
+
+          const pollInterval = setInterval(async () => {
+            try {
+              const token = localStorage.getItem("token");
+              const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/status/${jobId}`, {
+                headers: token ? { "Authorization": `Bearer ${token}` } : {}
+              });
+
+              if (res.status === 404) {
+                clearInterval(pollInterval);
+                setIsLoading(false);
+                setStatus({ type: 'error', message: "Session expired (Server Restarted). Please retry." });
+                return;
+              }
+
+              const job = await res.json();
+
+              if (job.status === 'processing') {
+                // Update UI with detailed progress if available
+                if (job.total_pages > 0) {
+                  const percent = Math.round((job.processed_pages / job.total_pages) * 100);
+                  // Scale the "Parsing" phase from 0-100 mapped to UI visual if needed
+                  // For now, let's just stick to 99% until done or reuse the circular progress
+                  setUploadProgress(percent);
+                }
+              } else if (job.status === 'completed') {
+                clearInterval(pollInterval);
+                setUploadProgress(100);
+                setIsLoading(false);
+                setProcessData({
+                  total: job.processed_txns || 0, // Ensure backend sends totals in job object
+                  new: job.processed_txns || 0, // Simplify for now
+                  updated: 0
+                });
+              } else if (job.status === 'failed') {
+                clearInterval(pollInterval);
+                setIsLoading(false);
+                setStatus({ type: 'error', message: job.message || "Processing failed" });
+              }
+            } catch (e) {
+              console.error("Polling error", e);
+              // Don't stop polling on transient error? Or stop?
+              // Let's count errors? For now, ignore transient.
+            }
+          }, 1000);
+
+          return; // Exit here, let polling handle the "Done" state
+        }
+
+        // Fallback for instant / legacy response
         setUploadProgress(100);
         setTimeout(() => {
-          setProcessData({ 
-            total: data.total_processed, 
-            new: data.new_transactions,
-            updated: data.updated_transactions 
-          });
           setIsLoading(false);
-        }, 600);
+          setProcessData({
+            total: data.total_processed,
+            new: data.new_transactions,
+            updated: data.updated_transactions
+          });
+        }, 800);
       } else {
-        const errorData = JSON.parse(xhr.responseText);
-        setStatus({ type: 'error', message: errorData.detail || "Upload failed" });
+        try {
+          const errorData = JSON.parse(xhr.responseText);
+          setStatus({ type: 'error', message: errorData.detail || "Upload failed" });
+        } catch {
+          setStatus({ type: 'error', message: "An unexpected error occurred" });
+        }
         setIsLoading(false);
       }
     });
@@ -85,7 +143,7 @@ export default function StatementUploadForm() {
       {/* --- PREMIUM VIOLET PROCESSING MODAL --- */}
       {isLoading && (
         <div className="absolute inset-0 z-50 bg-white/95 dark:bg-slate-950/98 backdrop-blur-xl flex flex-col items-center justify-center p-8 rounded-[2.5rem] animate-in fade-in zoom-in-95 duration-300 border border-violet-500/20">
-          
+
           <div className="relative w-32 h-32 mb-8">
             <svg className="w-full h-full -rotate-90">
               <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-slate-100 dark:text-slate-800" />
@@ -98,11 +156,16 @@ export default function StatementUploadForm() {
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
+              {uploadProgress < 100 ? (
+                <Loader2 className="w-8 h-8 text-violet-500 animate-spin mb-1 opacity-50" />
+              ) : (
+                <Zap className="w-8 h-8 text-emerald-500 animate-bounce mb-1" />
+              )}
               <span className="text-2xl font-black text-slate-900 dark:text-white leading-none">{uploadProgress}%</span>
               <span className="text-[10px] font-bold text-violet-500 mt-1 uppercase tracking-tighter">Syncing</span>
             </div>
           </div>
-          
+
           <div className="w-full space-y-4">
             <div className="flex justify-between px-4">
               {steps.map((step, i) => (
@@ -116,13 +179,13 @@ export default function StatementUploadForm() {
               <h3 className="text-lg font-black uppercase tracking-tighter text-slate-900 dark:text-white">
                 {steps[activeStep].label}
               </h3>
-              <p className="text-xs font-medium text-slate-500 italic mt-1">Analyzing financial patterns...</p>
+              <p className="text-xs font-medium text-slate-500 italic mt-1 text-center">Analyzing financial patterns...</p>
             </div>
           </div>
         </div>
       )}
 
-      {/* --- SUCCESS "VICTORY" SCREEN --- */}
+      {/* --- SUCCESS "VICTORY" SCREEN (For Finished Tasks) --- */}
       {processData && (
         <div className="absolute inset-0 z-50 bg-white dark:bg-slate-950 flex flex-col items-center justify-center p-8 rounded-[2.5rem] animate-in zoom-in-95 duration-500 border-2 border-emerald-500/20 shadow-2xl shadow-emerald-500/10">
           <div className="w-20 h-20 bg-emerald-500 text-white rounded-3xl flex items-center justify-center mb-6 rotate-12 shadow-xl shadow-emerald-500/40">
@@ -145,11 +208,30 @@ export default function StatementUploadForm() {
             </div>
           </div>
 
-          <button 
+          <button
             onClick={() => window.location.reload()}
             className="w-full mt-8 py-4 bg-violet-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-violet-500/30 hover:bg-violet-700 transition-all active:scale-95"
           >
             Refresh Records
+          </button>
+        </div>
+      )}
+
+      {/* --- BACKGROUND SYNC SCREEN (For 700+ Page Tasks) --- */}
+      {status.type === 'success' && !processData && (
+        <div className="absolute inset-0 z-50 bg-white dark:bg-slate-950 flex flex-col items-center justify-center p-8 rounded-[2.5rem] animate-in zoom-in-95 duration-500 border-2 border-violet-500/20 shadow-2xl">
+          <div className="w-20 h-20 bg-violet-600 text-white rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-violet-500/40">
+            <Clock className="w-10 h-10 animate-pulse" />
+          </div>
+          <h4 className="text-[10px] font-black text-violet-500 uppercase tracking-[0.4em] mb-2 text-center">Background Sync Active</h4>
+          <p className="text-xs font-bold text-slate-500 dark:text-slate-400 text-center leading-relaxed">
+            Large file detected. Our engine is indexing your transactions in the background. Check your dashboard in a few minutes.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="w-full mt-8 py-4 bg-violet-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-violet-500/30 hover:bg-violet-700 transition-all active:scale-95"
+          >
+            I Understand
           </button>
         </div>
       )}
@@ -167,7 +249,7 @@ export default function StatementUploadForm() {
           <div className="space-y-2">
             <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Source Bank</label>
             <div className="relative group">
-              <select 
+              <select
                 value={bank} onChange={(e) => setBank(e.target.value)}
                 className="w-full appearance-none px-5 py-4 bg-slate-50 dark:bg-slate-900 border-2 border-transparent focus:border-violet-500/20 focus:ring-4 focus:ring-violet-500/5 rounded-2xl text-sm font-bold outline-none transition-all cursor-pointer"
               >
@@ -180,7 +262,7 @@ export default function StatementUploadForm() {
             </div>
           </div>
 
-          <div 
+          <div
             onClick={() => fileInputRef.current?.click()}
             className={`group relative h-40 rounded-[2rem] border-2 border-dashed flex flex-col items-center justify-center transition-all cursor-pointer overflow-hidden
               ${file ? 'border-violet-500 bg-violet-50/30 dark:bg-violet-900/20' : 'border-slate-200 dark:border-slate-800 hover:border-violet-500/40 hover:bg-violet-50/50'}`}
@@ -216,11 +298,15 @@ export default function StatementUploadForm() {
             </div>
           </div>
 
-          <button 
+          <button
             onClick={handleUpload} disabled={!file || isLoading}
             className="w-full h-16 bg-violet-600 hover:bg-violet-700 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-violet-500/40 transition-all active:scale-95 disabled:opacity-20 flex items-center justify-center gap-3 group"
           >
-            <Zap className="w-4 h-4 fill-current group-hover:animate-pulse" /> Initialize Sync
+            {isLoading ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> PROCESSING...</>
+            ) : (
+              <><Zap className="w-4 h-4 fill-current group-hover:animate-pulse" /> INITIALIZE SYNC</>
+            )}
           </button>
         </div>
       </div>
@@ -229,7 +315,7 @@ export default function StatementUploadForm() {
         <div className="mt-4 bg-rose-600 text-white p-4 rounded-2xl flex items-center gap-3 animate-in slide-in-from-bottom-2 shadow-xl shadow-rose-500/20">
           <AlertCircle className="w-5 h-5 shrink-0" />
           <p className="text-[10px] font-black uppercase tracking-tight flex-1">{status.message}</p>
-          <button onClick={() => setStatus({type:'idle', message:''})}><X className="w-4 h-4"/></button>
+          <button onClick={() => setStatus({ type: 'idle', message: '' })}><X className="w-4 h-4" /></button>
         </div>
       )}
     </div>

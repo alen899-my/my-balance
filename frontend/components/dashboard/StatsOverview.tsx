@@ -34,35 +34,35 @@ export default function StatsOverview() {
     const topPayee = summary?.top_payees?.[0];
 
     return [
-      { 
-        label: "Balance", 
-        value: `₹${(data[0]?.balance || 0).toLocaleString()}`, 
-        icon: Wallet, color: "text-blue-600" 
+      {
+        label: "Balance",
+        value: `₹${(s?.balance || 0).toLocaleString()}`,
+        icon: Wallet, color: "text-blue-600"
       },
-      { 
-        label: "Expense", 
-        value: `₹${(s?.expense || 0).toLocaleString()}`, 
-        icon: TrendingDown, color: "text-red-500" 
+      {
+        label: "Expense",
+        value: `₹${(s?.expense || 0).toLocaleString()}`,
+        icon: TrendingDown, color: "text-red-500"
       },
-      { 
-        label: "Top Payee", 
-        value: topPayee?.name || "No Data", 
-        icon: Trophy, color: "text-amber-500" 
+      {
+        label: "Top Payee",
+        value: topPayee?.name || "No Data",
+        icon: Trophy, color: "text-amber-500"
       },
-      { 
-        label: "Daily Avg", 
-        value: `₹${(s?.daily_avg || 0).toLocaleString()}`, 
-        icon: Zap, color: "text-purple-500" 
+      {
+        label: "Daily Avg",
+        value: `₹${(s?.daily_avg || 0).toLocaleString()}`,
+        icon: Zap, color: "text-purple-500"
       },
-      { 
-        label: "Savings", 
-        value: `${s?.savings_rate || 0}%`, 
-        icon: Target, color: "text-emerald-500" 
+      {
+        label: "Savings",
+        value: `${s?.savings_rate || 0}%`,
+        icon: Target, color: "text-emerald-500"
       },
-      { 
-        label: "Txns", 
-        value: s?.total_transactions || 0, 
-        icon: Repeat, color: "text-slate-500" 
+      {
+        label: "Txns",
+        value: s?.total_transactions || 0,
+        icon: Repeat, color: "text-slate-500"
       },
     ];
   }, [data, summary]);

@@ -1,0 +1,44 @@
+2026-01-09 00:06:10,218 - pikepdf._core - INFO - pikepdf C++ to Python logger bridge initialized
+2026-01-09 00:06:10,871 - app.main - INFO - Application startup complete
+2026-01-09 00:06:15,526 - app.main - INFO - Upload request from user 693ee61197c143440f0eaacd, filename: LATEST.pdf, bank: FEDERAL
+2026-01-09 00:06:15,532 - app.main - INFO - File size: 449,560 bytes
+2026-01-09 00:06:15,535 - app.main - INFO - Task 693ee61197c143440f0eaacd_1767877575532 created and started processing
+2026-01-09 00:06:15,565 - app.main - INFO - [693ee61197c143440f0eaacd_1767877575532] Starting PDF processing for user 693ee61197c143440f0eaacd, bank: FEDERAL
+2026-01-09 00:06:15,583 - app.main - INFO - [693ee61197c143440f0eaacd_1767877575532] File size: 449,560 bytes
+2026-01-09 00:06:15,592 - app.main - INFO - [693ee61197c143440f0eaacd_1767877575532] Memory before unlock: 0.00 MB
+2026-01-09 00:06:15,837 - app.main - INFO - [693ee61197c143440f0eaacd_1767877575532] PDF unlocked in 0.24s, size: 449,273 bytes
+2026-01-09 00:06:16,061 - app.main - INFO - [693ee61197c143440f0eaacd_1767877575532] Memory after unlock cleanup: 0.00 MB
+2026-01-09 00:06:16,074 - app.main - INFO - [693ee61197c143440f0eaacd_1767877575532] Using parser: FederalBankParser
+2026-01-09 00:06:16,221 - app.main - INFO - [693ee61197c143440f0eaacd_1767877575532] PDF has 26 pages
+2026-01-09 00:06:20,053 - app.main - WARNING - [693ee61197c143440f0eaacd_1767877575532] Page 1 took 3.83s (slow)
+2026-01-09 00:06:22,393 - app.main - WARNING - [693ee61197c143440f0eaacd_1767877575532] Page 2 took 2.33s (slow)
+2026-01-09 00:06:24,630 - app.main - WARNING - [693ee61197c143440f0eaacd_1767877575532] Page 3 took 2.23s (slow)
+2026-01-09 00:06:27,026 - app.main - WARNING - [693ee61197c143440f0eaacd_1767877575532] Page 4 took 2.32s (slow)
+2026-01-09 00:06:41,760 - app.main - WARNING - [693ee61197c143440f0eaacd_1767877575532] Page 13 took 2.06s (slow)
+2026-01-09 00:06:43,832 - app.main - WARNING - [693ee61197c143440f0eaacd_1767877575532] Page 14 took 2.06s (slow)
+2026-01-09 00:06:45,848 - app.main - WARNING - [693ee61197c143440f0eaacd_1767877575532] Page 15 took 2.00s (slow)
+2026-01-09 00:06:50,066 - app.main - WARNING - [693ee61197c143440f0eaacd_1767877575532] Page 16 took 4.21s (slow)
+2026-01-09 00:06:52,979 - app.main - WARNING - [693ee61197c143440f0eaacd_1767877575532] Page 17 took 2.88s (slow)
+2026-01-09 00:06:59,151 - app.main - WARNING - [693ee61197c143440f0eaacd_1767877575532] Page 20 took 2.50s (slow)
+2026-01-09 00:07:08,266 - app.main - INFO - [693ee61197c143440f0eaacd_1767877575532] Processing completed in 52.70s
+2026-01-09 00:07:08,267 - app.main - INFO - [693ee61197c143440f0eaacd_1767877575532] Summary: 0 parsed, 0 inserted, 739 skipped
+2026-01-09 00:07:08,267 - app.main - INFO - [693ee61197c143440f0eaacd_1767877575532] Final memory usage: 0.00 MB
+2026-01-09 00:10:27,734 - app.main - INFO - Application shutdown initiated
+2026-01-09 00:10:27,740 - app.main - INFO - Cancelling task 693ee61197c143440f0eaacd_1767877575532
+2026-01-09 00:10:27,742 - app.main - INFO - Application shutdown complete
+2026-01-09 00:10:53,168 - app.main - INFO - [SYSTEM] Application startup complete
+2026-01-09 00:10:59,328 - app.main - INFO - [SYSTEM] Application startup complete
+2026-01-09 00:12:26,360 - app.main - INFO - [SYSTEM] Application shutdown initiated
+2026-01-09 00:12:26,365 - app.main - INFO - [SYSTEM] Application shutdown complete
+2026-01-09 00:12:33,979 - app.main - INFO - [SYSTEM] Application startup complete
+2026-01-09 00:13:05,904 - app.main - INFO - [UPLOAD] Upload request from user 693ee61197c143440f0eaacd, filename: AC_STATEMENT_100601XXXX0659_07DEC2025_06JAN2026_0601202683736.pdf, bank: FEDERAL
+2026-01-09 00:13:05,905 - app.main - INFO - [UPLOAD] File size: 352,858 bytes
+2026-01-09 00:13:05,906 - app.main - INFO - [UPLOAD] Task 693ee61197c143440f0eaacd_1767877985905 created and started processing
+2026-01-09 00:13:05,909 - app.main - INFO - [693ee61197c143440f0eaacd_1767877985905] Starting PDF processing for user 693ee61197c143440f0eaacd, bank: FEDERAL
+2026-01-09 00:13:05,910 - app.main - INFO - [693ee61197c143440f0eaacd_1767877985905] File size: 352,858 bytes
+2026-01-09 00:13:05,913 - app.main - INFO - [693ee61197c143440f0eaacd_1767877985905] Memory before unlock: 0.00 MB
+2026-01-09 00:13:16,344 - app.main - INFO - [693ee61197c143440f0eaacd_1767877985905] PDF unlocked in 10.43s, size: 350,480 bytes
+2026-01-09 00:13:16,388 - app.main - INFO - [693ee61197c143440f0eaacd_1767877985905] Memory after unlock cleanup: 0.00 MB
+2026-01-09 00:13:16,389 - app.main - INFO - [693ee61197c143440f0eaacd_1767877985905] Using parser: FederalBankParser
+2026-01-09 00:13:42,678 - app.main - INFO - [693ee61197c143440f0eaacd_1767877985905] PDF has 4 pages
+2026-01-09 00:13:42,679 - app.main - DEBUG - [693ee61197c143440f0eaacd_1767877985905] Processing page 1/4

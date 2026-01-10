@@ -6,7 +6,7 @@ import StatementUploadForm from "@/components/dashboard/StatementUploadForm";
 import TransactionTable from "@/components/dashboard/TransactionTable";
 import DeleteAllDataButton from "@/components/dashboard/DeleteAllDataButton";
 import TransactionFilters from "@/components/dashboard/TransactionFilters";
-
+import BackgroundSyncProgress from "@/components/dashboard/BackgroundSyncProgress";
 export default function StatementsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -54,6 +54,7 @@ export default function StatementsPage() {
           </button>
         </div>
       </div>
+      <BackgroundSyncProgress />
 
       {/* --- COLLAPSIBLE FILTERS --- */}
       {showFilters && (
