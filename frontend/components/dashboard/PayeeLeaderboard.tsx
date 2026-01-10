@@ -7,7 +7,12 @@ import {
   Search, Wallet, HandCoins
 } from "lucide-react";
 
-export default function PayeeLeaderboard() {
+interface PayeeLeaderboardProps {
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export default function PayeeLeaderboard({ startDate, endDate }: PayeeLeaderboardProps) {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"spent" | "received">("spent");
@@ -16,7 +21,11 @@ export default function PayeeLeaderboard() {
   useEffect(() => {
     async function fetchLeaderboard() {
       try {
-        const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/insights`);
+        const params = new URLSearchParams();
+        if (startDate) params.append("start_date", startDate.toISOString());
+        if (endDate) params.append("end_date", endDate.toISOString());
+
+        const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/insights?${params.toString()}`);
         const json = await res.json();
         setData(json.leaderboard || []);
       } catch (err) {
@@ -26,7 +35,7 @@ export default function PayeeLeaderboard() {
       }
     }
     fetchLeaderboard();
-  }, []);
+  }, [startDate, endDate]);
 
   // Filter and Sort Logic
   const filteredList = useMemo(() => {

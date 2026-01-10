@@ -5,14 +5,23 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { authFetch } from "@/lib/authFetch";
 import { BarChart3 } from "lucide-react";
 
-export default function MonthlySpendingChart() {
+interface MonthlySpendingChartProps {
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export default function MonthlySpendingChart({ startDate, endDate }: MonthlySpendingChartProps) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchChartData() {
       try {
-        const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/insights`);
+        const params = new URLSearchParams();
+        if (startDate) params.append("start_date", startDate.toISOString());
+        if (endDate) params.append("end_date", endDate.toISOString());
+
+        const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/insights?${params.toString()}`);
         const json = await res.json();
         setData(json.monthly_data || []);
       } catch (err) {
@@ -22,7 +31,7 @@ export default function MonthlySpendingChart() {
       }
     }
     fetchChartData();
-  }, []);
+  }, [startDate, endDate]);
 
   if (loading) return <div className="h-[400px] w-full bg-slate-50 dark:bg-slate-900 animate-pulse rounded-3xl border border-slate-200" />;
 
@@ -41,33 +50,33 @@ export default function MonthlySpendingChart() {
           <AreaChart data={data}>
             <defs>
               <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-            <XAxis 
-              dataKey="month" 
-              axisLine={false} 
-              tickLine={false} 
-              tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 'bold'}}
+            <XAxis
+              dataKey="month"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 'bold' }}
             />
-            <YAxis 
-              axisLine={false} 
-              tickLine={false} 
-              tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 'bold'}}
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 'bold' }}
               tickFormatter={(value) => `₹${value}`}
             />
-            <Tooltip 
+            <Tooltip
               contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
             />
-            <Area 
-              type="monotone" 
-              dataKey="amount" 
-              stroke="#3b82f6" 
+            <Area
+              type="monotone"
+              dataKey="amount"
+              stroke="#3b82f6"
               strokeWidth={3}
-              fillOpacity={1} 
-              fill="url(#colorTotal)" 
+              fillOpacity={1}
+              fill="url(#colorTotal)"
             />
           </AreaChart>
         </ResponsiveContainer>

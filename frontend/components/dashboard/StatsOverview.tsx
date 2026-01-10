@@ -4,7 +4,12 @@ import { useEffect, useState, useMemo } from "react";
 import { authFetch } from "@/lib/authFetch";
 import { TrendingDown, Wallet, Trophy, Zap, Target, Repeat } from "lucide-react";
 
-export default function StatsOverview() {
+interface StatsOverviewProps {
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export default function StatsOverview({ startDate, endDate }: StatsOverviewProps) {
   const [data, setData] = useState<any[]>([]);
   const [summary, setSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -12,9 +17,13 @@ export default function StatsOverview() {
   useEffect(() => {
     async function loadStats() {
       try {
+        const params = new URLSearchParams();
+        if (startDate) params.append("start_date", startDate.toISOString());
+        if (endDate) params.append("end_date", endDate.toISOString());
+
         const [resData, resInsights] = await Promise.all([
           authFetch(`${process.env.NEXT_PUBLIC_API_URL}/transactions?limit=1`),
-          authFetch(`${process.env.NEXT_PUBLIC_API_URL}/insights`)
+          authFetch(`${process.env.NEXT_PUBLIC_API_URL}/insights?${params.toString()}`)
         ]);
         const jsonD = await resData.json();
         const jsonI = await resInsights.json();
@@ -27,7 +36,7 @@ export default function StatsOverview() {
       }
     }
     loadStats();
-  }, []);
+  }, [startDate, endDate]);
 
   const cards = useMemo(() => {
     const s = summary?.summary;

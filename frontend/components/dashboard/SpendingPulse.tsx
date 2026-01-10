@@ -4,19 +4,27 @@ import React, { useEffect, useState } from "react";
 import { authFetch } from "@/lib/authFetch";
 import { Activity } from "lucide-react";
 
-export default function SpendingPulse() {
+interface SpendingPulseProps {
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export default function SpendingPulse({ startDate, endDate }: SpendingPulseProps) {
   const [days, setDays] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    authFetch(`${process.env.NEXT_PUBLIC_API_URL}/insights`)
+    const params = new URLSearchParams();
+    if (startDate) params.append("start_date", startDate.toISOString());
+    if (endDate) params.append("end_date", endDate.toISOString());
+
+    authFetch(`${process.env.NEXT_PUBLIC_API_URL}/insights?${params.toString()}`)
       .then(res => res.json())
       .then(json => {
-        // Assume daily_trend returns [{_id: "01/01/2025", daily_spend: 500}, ...]
-        setDays(json.summary.daily_trend || []);
+        setDays(json.summary?.daily_trend || []); // Ensure we access the correct path
         setLoading(false);
       });
-  }, []);
+  }, [startDate, endDate]);
 
   const getIntensity = (amount: number) => {
     if (amount === 0) return "bg-slate-100 dark:bg-slate-800";
@@ -41,21 +49,21 @@ export default function SpendingPulse() {
       <div className="flex flex-wrap gap-2">
         {/* Generating a 30-day grid */}
         {[...Array(30)].map((_, i) => (
-          <div 
+          <div
             key={i}
             className={`w-8 h-8 rounded-md transition-all hover:scale-110 cursor-pointer ${getIntensity(Math.random() * 6000)}`} // Replace Math.random with real data
-            title={`Day ${i+1}`}
+            title={`Day ${i + 1}`}
           />
         ))}
       </div>
-      
+
       <div className="mt-6 flex items-center justify-between text-[10px] font-black uppercase text-slate-400">
         <span>Low Spend</span>
         <div className="flex gap-1">
-            <div className="w-2 h-2 bg-blue-200 rounded-sm" />
-            <div className="w-2 h-2 bg-blue-400 rounded-sm" />
-            <div className="w-2 h-2 bg-blue-600 rounded-sm" />
-            <div className="w-2 h-2 bg-blue-800 rounded-sm" />
+          <div className="w-2 h-2 bg-blue-200 rounded-sm" />
+          <div className="w-2 h-2 bg-blue-400 rounded-sm" />
+          <div className="w-2 h-2 bg-blue-600 rounded-sm" />
+          <div className="w-2 h-2 bg-blue-800 rounded-sm" />
         </div>
         <span>High Spend</span>
       </div>

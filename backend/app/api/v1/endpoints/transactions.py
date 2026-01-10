@@ -3,6 +3,7 @@ from typing import Optional, List
 from app.utils.dependencies import get_current_user
 from app.models.transaction import Transaction
 from app.db.session import init_db
+from datetime import datetime
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
 
@@ -12,7 +13,9 @@ async def get_transactions(
     limit: int = 20, 
     search: Optional[str] = None,
     type: str = "all", 
-    sort: str = "desc", 
+    sort: str = "desc",
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None), 
     user = Depends(get_current_user)
 ):
     skip = (page - 1) * limit
@@ -34,6 +37,15 @@ async def get_transactions(
         find_query = find_query.find(Transaction.debit > 0)
     elif type == "credit":
         find_query = find_query.find(Transaction.credit > 0)
+
+    # Date Filter
+    if start_date:
+        dt_start = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+        find_query = find_query.find(Transaction.date >= dt_start)
+    
+    if end_date:
+        dt_end = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+        find_query = find_query.find(Transaction.date <= dt_end)
 
     # Sort
     sort_direction = -1 if sort == "desc" else 1

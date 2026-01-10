@@ -1,12 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
+import DateRangeFilter from "@/components/ui/DateRangeFilter";
 import StatsOverview from "@/components/dashboard/StatsOverview";
 import PayeeLeaderboard from "@/components/dashboard/PayeeLeaderboard";
 import MonthlySpendingChart from "@/components/dashboard/MonthlySpendingChart";
 import CategorySpending from "@/components/dashboard/CategorySpending";
 import AdvancedInsights from "@/components/dashboard/AdvancedInsights";
-import SpendingPulse from "@/components/dashboard/SpendingPulse"; 
+import SpendingPulse from "@/components/dashboard/SpendingPulse";
 import { Sparkles, Calendar, Activity } from "lucide-react";
 
 export default function DashboardPage() {
@@ -14,9 +15,12 @@ export default function DashboardPage() {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   });
 
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
+
   return (
     <div className="p-6 space-y-8 animate-in fade-in duration-700">
-      
+
       {/* --- HEADER --- */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -30,15 +34,23 @@ export default function DashboardPage() {
           </h1>
         </div>
 
-        <div className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
-          <Calendar className="w-4 h-4 text-slate-400" />
-          <span className="text-xs font-bold text-slate-500">{currentDate}</span>
+        <div className="flex items-center gap-3">
+          <DateRangeFilter
+            startDate={startDate}
+            endDate={endDate}
+            setStartDate={setStartDate}
+            setEndDate={setEndDate}
+          />
+          <div className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+            <Calendar className="w-4 h-4 text-slate-400" />
+            <span className="text-xs font-bold text-slate-500">{currentDate}</span>
+          </div>
         </div>
       </div>
 
       {/* --- TOP ROW STATS (BASIC) --- */}
       <section>
-        <StatsOverview />
+        <StatsOverview startDate={startDate} endDate={endDate} />
       </section>
 
       {/* --- ADVANCED HEALTH METRICS --- */}
@@ -55,25 +67,25 @@ export default function DashboardPage() {
 
       {/* --- MAIN GRID (LEADERBOARD & MONTHLY CHART) --- */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1">
-            <PayeeLeaderboard />
-          </div>
+        <div className="lg:col-span-1">
+          <PayeeLeaderboard startDate={startDate} endDate={endDate} />
+        </div>
 
-          <div className="lg:col-span-2">
-            <MonthlySpendingChart />
-          </div>
+        <div className="lg:col-span-2">
+          <MonthlySpendingChart startDate={startDate} endDate={endDate} />
+        </div>
       </div>
 
       {/* --- LOWER GRID (CATEGORY & HEATMAP) --- */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="w-full">
-           <CategorySpending />
+          <CategorySpending startDate={startDate} endDate={endDate} />
         </div>
         <div className="w-full">
-           <SpendingPulse /> 
+          <SpendingPulse startDate={startDate} endDate={endDate} />
         </div>
       </div>
-      
+
     </div>
   );
 }

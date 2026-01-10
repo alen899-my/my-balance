@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
+from typing import Optional
 from bson import ObjectId
 from app.utils.dependencies import get_current_user
 from app.models.transaction import Transaction
@@ -26,11 +27,25 @@ def extract_clean_name(payee_str: str) -> str:
     return clean.strip().title()
 
 @router.get("/insights")
-async def get_insights(user = Depends(get_current_user)):
+async def get_insights(
+    user = Depends(get_current_user),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None)
+):
     user_id = str(user["user_id"])
     
+    match_stage = {"user_id": user_id}
+    
+    if start_date or end_date:
+        date_filter = {}
+        if start_date:
+            date_filter["$gte"] = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+        if end_date:
+            date_filter["$lte"] = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+        match_stage["date"] = date_filter
+
     pipeline = [
-        {"$match": {"user_id": user_id}},
+        {"$match": match_stage},
         {
             "$facet": {
                 "totals": [

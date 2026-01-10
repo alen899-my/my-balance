@@ -20,9 +20,11 @@ interface TransactionTableProps {
     type: string;
     sort: string;
   };
+  startDate?: Date;
+  endDate?: Date;
 }
 
-export default function TransactionTable({ filters }: TransactionTableProps) { // 2. Receive filters prop
+export default function TransactionTable({ filters, startDate, endDate }: TransactionTableProps) { // 2. Receive filters prop
   const [data, setData] = useState<Transaction[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -42,10 +44,13 @@ export default function TransactionTable({ filters }: TransactionTableProps) { /
         sort: filters?.sort || "desc"
       });
 
+      if (startDate) queryParams.append("start_date", startDate.toISOString());
+      if (endDate) queryParams.append("end_date", endDate.toISOString());
+
       const res = await authFetch(
         `${process.env.NEXT_PUBLIC_API_URL}/transactions?${queryParams.toString()}`
       );
-      
+
       const json = await res.json();
       setData(json.data || []);
       setTotalPages(json.totalPages || 1);
@@ -54,7 +59,7 @@ export default function TransactionTable({ filters }: TransactionTableProps) { /
     } finally {
       setIsLoading(false);
     }
-  }, [page, filters, limit]); // dependencies for the fetch
+  }, [page, filters, limit, startDate, endDate]); // dependencies for the fetch
 
   useEffect(() => {
     fetchTransactions();
@@ -92,16 +97,15 @@ export default function TransactionTable({ filters }: TransactionTableProps) { /
           </div>
         ) : (
           data.map((txn, idx) => (
-            <div 
-              key={idx} 
+            <div
+              key={idx}
               className="group relative flex flex-col md:flex-row md:items-center justify-between p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl hover:border-violet-500/50 dark:hover:border-violet-400/50 transition-all shadow-sm hover:shadow-xl hover:shadow-violet-500/5"
             >
               <div className="flex items-center gap-4">
-                <div className={`p-4 rounded-2xl transition-all shadow-sm ${
-                  txn.credit > 0 
-                    ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600" 
-                    : "bg-rose-50 dark:bg-rose-900/20 text-rose-600"
-                }`}>
+                <div className={`p-4 rounded-2xl transition-all shadow-sm ${txn.credit > 0
+                  ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600"
+                  : "bg-rose-50 dark:bg-rose-900/20 text-rose-600"
+                  }`}>
                   {txn.credit > 0 ? <ArrowDownLeft className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
                 </div>
                 <div>
@@ -121,9 +125,8 @@ export default function TransactionTable({ filters }: TransactionTableProps) { /
 
               <div className="flex items-center justify-between md:justify-end gap-10 mt-5 md:mt-0 border-t md:border-t-0 pt-4 md:pt-0 border-slate-50 dark:border-slate-800">
                 <div className="text-right">
-                  <p className={`text-xl font-black tabular-nums tracking-tight ${
-                    txn.credit > 0 ? "text-emerald-500" : "text-rose-500"
-                  }`}>
+                  <p className={`text-xl font-black tabular-nums tracking-tight ${txn.credit > 0 ? "text-emerald-500" : "text-rose-500"
+                    }`}>
                     {txn.credit > 0 ? `+${txn.credit.toLocaleString()}` : `-${txn.debit.toLocaleString()}`}
                   </p>
                   <p className="text-[11px] text-slate-400 font-bold uppercase tracking-tighter mt-0.5">
@@ -148,7 +151,7 @@ export default function TransactionTable({ filters }: TransactionTableProps) { /
         >
           <ChevronLeft className="w-4 h-4" /> Prev
         </button>
-        
+
         <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
           Page <span className="text-violet-600 dark:text-violet-400">{page}</span> / {totalPages}
         </span>
