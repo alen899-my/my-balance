@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from app.utils.dependencies import get_current_user
 from app.database import db
 from app.models.user import UserCreate, UserLogin
 from app.utils.security import hash_password, verify_password
@@ -43,4 +44,18 @@ def login(data: UserLogin):
         "email": user["email"]
     })
 
-    return {"token": token}
+    return {
+        "token": token,
+        "user": {
+            "name": user["name"],
+            "email": user["email"]
+        }
+    }
+
+@router.get("/me")
+async def get_me(user = Depends(get_current_user)):
+    return {
+        "user_id": str(user["_id"]),
+        "name": user["name"],
+        "email": user["email"]
+    }
