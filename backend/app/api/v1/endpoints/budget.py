@@ -25,6 +25,42 @@ class ClonePayload(BaseModel):
     from_year: int
     to_month: int
     to_year: int
+
+
+@router.get("/stats/summary")
+async def get_monthly_summary_stats(
+    month: int = Query(...),
+    year: int = Query(...),
+    user = Depends(get_current_user)
+):
+    """
+    Returns aggregated income, expenses, and savings rate 
+    specifically for the Speedometer and Summary Cards.
+    """
+    user_id = PydanticObjectId(user["user_id"])
+    
+    # Fetch all items for the month
+    items = await BudgetEntry.find(
+        BudgetEntry.user_id == user_id,
+        BudgetEntry.month == month,
+        BudgetEntry.year == year
+    ).to_list()
+
+    income = sum(item.amount for item in items if item.type == "income")
+    expenses = sum(item.amount for item in items if item.type == "expense")
+    
+    # Calculate savings logic
+    savings = max(0, income - expenses)
+    savings_rate = (savings / income * 100) if income > 0 else 0
+
+    return {
+        "income": income,
+        "expenses": expenses,
+        "savings": savings,
+        "savings_rate": round(savings_rate, 2),
+        "item_count": len(items)
+    }
+        
 @router.delete("/purge")
 async def purge_monthly_expenses(
     month: int = Query(...),
