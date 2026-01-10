@@ -51,9 +51,7 @@ async def get_insights(user = Depends(get_current_user)):
                             "total_received": {"$sum": "$credit"},
                             "txn_count": {"$sum": 1}
                         }
-                    },
-                    {"$sort": {"total_spent": -1}},
-                    {"$limit": 100} # Increased limit to catch more raw entries for merging
+                    }
                 ],
                 "daily_trend": [
                     {"$group": {"_id": "$date", "daily_spend": {"$sum": "$debit"}}},
@@ -67,7 +65,7 @@ async def get_insights(user = Depends(get_current_user)):
                     {"$sort": {"_id.year": 1, "_id.month": 1}}
                 ],
                 "latest_balance": [
-                    {"$sort": {"date": -1}},
+                    {"$sort": {"date": -1, "_id": -1}},
                     {"$limit": 1},
                     {"$project": {"balance": 1}}
                 ]
@@ -114,9 +112,12 @@ async def get_insights(user = Depends(get_current_user)):
     actual_balance = latest_bal_list[0].get("balance", 0) if latest_bal_list else 0
     totals_list = res.get("totals", [])
     summary_data = totals_list[0] if totals_list else {}
-    
+    daily_trend_list = res.get("daily_trend", [])
+    daily_avg = daily_trend_list[0].get("avg_daily", 0) if daily_trend_list else 0
+
     income = summary_data.get("income", 0) or 0
     expense = summary_data.get("expense", 0) or 0
+    avg_txn = summary_data.get("avg_txn", 0) or 0
 
     return {
         "summary": {
@@ -125,8 +126,10 @@ async def get_insights(user = Depends(get_current_user)):
             "balance": actual_balance,
             "savings_rate": round(((income - expense) / income * 100), 2) if income > 0 else 0,
             "total_transactions": summary_data.get("count", 0) or 0,
+            "daily_avg": round(daily_avg, 2),
+            "avg_transaction": round(avg_txn, 2)
         },
-        "leaderboard": leaderboard[:50], # Send top 50 unique people
+        "leaderboard": leaderboard, # Send full list so frontend can filter Inflow vs Outflow
         "monthly_data": [
             {"month": f"{m['_id']['month']}/{m['_id']['year']}", "amount": m["total"]} 
             for m in res.get("monthly_trend", [])
@@ -141,7 +144,7 @@ async def get_advanced_insights(user = Depends(get_current_user)):
     first_of_month = datetime(now.year, now.month, 1)
     
     # 1. Get Latest Balance
-    latest_txn = await Transaction.find(Transaction.user_id == user_id).sort("-date").limit(1).to_list()
+    latest_txn = await Transaction.find(Transaction.user_id == user_id).sort("-date", "-_id").limit(1).to_list()
     current_balance = latest_txn[0].balance if latest_txn else 0
 
     # 2. Comprehensive Aggregation Pipeline

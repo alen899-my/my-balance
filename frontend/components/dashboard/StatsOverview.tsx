@@ -31,7 +31,7 @@ export default function StatsOverview() {
 
   const cards = useMemo(() => {
     const s = summary?.summary;
-    const topPayee = summary?.top_payees?.[0];
+    const topPayee = summary?.leaderboard?.[0];
 
     return [
       {
