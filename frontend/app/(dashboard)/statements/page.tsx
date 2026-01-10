@@ -39,7 +39,7 @@ export default function StatementsPage() {
 
         {/* Action Controls - Grid for mobile, Flex for desktop */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:items-center gap-3 w-full xl:w-auto">
-          
+
           <div className="sm:col-span-2 lg:col-span-1 w-full lg:w-auto">
             <DateRangeFilter
               startDate={startDate}
@@ -52,18 +52,17 @@ export default function StatementsPage() {
           <div className="flex gap-2 w-full">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex-1 sm:flex-none p-3 rounded-2xl border transition-all flex items-center justify-center gap-2 ${
-                showFilters
+              className={`flex-1 sm:flex-none p-3 rounded-2xl border transition-all flex items-center justify-center gap-2 ${showFilters
                   ? "bg-violet-100 border-violet-200 text-violet-600 dark:bg-violet-900/30 dark:border-violet-800"
                   : "bg-white border-slate-200 text-slate-600 dark:bg-slate-900 dark:border-slate-800 hover:border-violet-300"
-              }`}
+                }`}
             >
               <ListFilter className="w-5 h-5" />
               <span className="text-[10px] font-black uppercase sm:hidden">Filters</span>
             </button>
 
             <div className="flex-1 sm:flex-none">
-                <DeleteAllDataButton />
+              <DeleteAllDataButton />
             </div>
           </div>
 
@@ -87,23 +86,23 @@ export default function StatementsPage() {
       )}
 
       {/* --- TABLE CONTENT --- */}
-      <div className="bg-white dark:bg-slate-900/50 rounded-[2rem] md:rounded-[2.5rem] border border-slate-200 dark:border-slate-800 p-2 sm:p-6 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="bg-white dark:bg-slate-900/50 rounded-4xl md:rounded-[2.5rem] border border-slate-200 dark:border-slate-800 p-2 sm:p-6 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div className="overflow-x-auto">
-            <TransactionTable filters={filters} startDate={startDate} endDate={endDate} />
+          <TransactionTable filters={filters} startDate={startDate} endDate={endDate} />
         </div>
       </div>
 
       {/* --- UPLOAD MODAL --- */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[140] flex items-center justify-center p-4 sm:p-6">
-          <div 
-            className="absolute inset-0 bg-slate-950/60 backdrop-blur-xl animate-in fade-in duration-500" 
-            onClick={() => setIsModalOpen(false)} 
+        <div className="fixed inset-0 z-140 flex items-center justify-center p-4 sm:p-6">
+          <div
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-xl animate-in fade-in duration-500"
+            onClick={() => setIsModalOpen(false)}
           />
           <div className="relative w-full max-w-lg animate-in zoom-in-95 duration-300">
             <div className="flex justify-end mb-4">
-              <button 
-                onClick={() => setIsModalOpen(false)} 
+              <button
+                onClick={() => setIsModalOpen(false)}
                 className="flex items-center gap-2 text-white/50 hover:text-white transition-all text-[10px] font-black uppercase tracking-[0.2em] bg-white/10 px-4 py-2 rounded-full"
               >
                 Dismiss <X className="w-4 h-4" />

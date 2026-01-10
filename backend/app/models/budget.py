@@ -1,20 +1,20 @@
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from beanie import Document, Indexed
-from pydantic import Field
+from pydantic import Field, BaseModel
 
-class MonthlyBudget(Document):
+class CalculationRow(BaseModel):
+    label: str
+    value: float
+
+class BudgetEntry(Document):
     user_id: Indexed(str)
     category: str
-    
-    
+    title: Optional[str] = None
     type: str = "expense"  # "income" or "expense"
-    note: Optional[str] = None
-  
-
-    amount_per_unit: float
-    units: int = 1
-    total_amount: float
+    
+    amount: float
+    calculation_rows: Optional[List[CalculationRow]] = None
     
     is_completed: bool = False
     
@@ -25,4 +25,4 @@ class MonthlyBudget(Document):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Settings:
-        name = "monthly_budgets"
+        name = "budget_entries"

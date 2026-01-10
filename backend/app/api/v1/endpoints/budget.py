@@ -1,11 +1,25 @@
 from fastapi import APIRouter, Depends, Query, Body, HTTPException
 from typing import List, Optional
 from app.utils.dependencies import get_current_user
-from app.models.budget import MonthlyBudget
+from app.models.budget import BudgetEntry, CalculationRow
 from datetime import datetime
-from bson import ObjectId
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/budget", tags=["budget"])
+
+class IncomePayload(BaseModel):
+    amount: float
+    month: int
+    year: int
+
+class BudgetPayload(BaseModel):
+    category: str
+    title: Optional[str] = None
+    amount: float
+    calculation_rows: Optional[List[CalculationRow]] = None
+    type: str = "expense"
+    month: int
+    year: int
 
 @router.get("/list")
 async def get_budgets(
@@ -13,73 +27,91 @@ async def get_budgets(
     year: int = Query(...),
     user = Depends(get_current_user)
 ):
-    """Get all items and a summary of income vs expenses"""
     user_id = str(user["user_id"])
-    
-    # Fetch all items (both income and expense)
-    items = await MonthlyBudget.find(
-        MonthlyBudget.user_id == user_id,
-        MonthlyBudget.month == month,
-        MonthlyBudget.year == year
+    items = await BudgetEntry.find(
+        BudgetEntry.user_id == user_id,
+        BudgetEntry.month == month,
+        BudgetEntry.year == year
     ).to_list()
-    
     return {"items": items}
 
 @router.post("/")
 async def add_budget_item(
-    payload: dict = Body(...),
+    payload: BudgetPayload,
     user = Depends(get_current_user)
 ):
-    """Add a new item (Handles both Income and Expense)"""
     user_id = str(user["user_id"])
     
-    # Math logic
-    amount = float(payload.get("amount_per_unit", 0))
-    units = int(payload.get("units", 1))
-    total = amount * units
-    
-    budget_item = MonthlyBudget(
+    budget_item = BudgetEntry(
         user_id=user_id,
-        category=payload.get("category"),
-        type=payload.get("type", "expense"), # New: income or expense
-        note=payload.get("note"),             # New: Optional notes
-        amount_per_unit=amount,
-        units=units,
-        total_amount=total,
-        month=int(payload.get("month")),
-        year=int(payload.get("year")),
+        category=payload.category,
+        title=payload.title,
+        type=payload.type,
+        amount=payload.amount,
+        calculation_rows=payload.calculation_rows,
+        month=payload.month,
+        year=payload.year,
         is_completed=False
     )
-    
     await budget_item.insert()
     return budget_item
+
+@router.post("/income")
+async def upsert_income(
+    payload: IncomePayload,
+    user = Depends(get_current_user)
+):
+    user_id = str(user["user_id"])
+    
+    existing_income = await BudgetEntry.find_one(
+        BudgetEntry.user_id == user_id,
+        BudgetEntry.month == payload.month,
+        BudgetEntry.year == payload.year,
+        BudgetEntry.type == "income"
+    )
+
+    if existing_income:
+        existing_income.amount = payload.amount
+        await existing_income.save()
+        return existing_income
+    
+    new_income = BudgetEntry(
+        user_id=user_id,
+        category="Monthly Income",
+        title="Income",
+        type="income",
+        amount=payload.amount,
+        month=payload.month,
+        year=payload.year,
+        is_completed=True 
+    )
+    await new_income.insert()
+    return new_income
 
 @router.put("/{id}")
 async def update_budget_item(
     id: str,
-    payload: dict = Body(...),
+    payload: BudgetPayload,
     user = Depends(get_current_user)
 ):
-    """Full update for the Edit functionality"""
-    item = await MonthlyBudget.get(id)
+    item = await BudgetEntry.get(id)
     if not item or item.user_id != str(user["user_id"]):
         raise HTTPException(status_code=404, detail="Item not found")
     
-    # Update fields
-    item.category = payload.get("category", item.category)
-    item.type = payload.get("type", item.type)
-    item.note = payload.get("note", item.note)
-    item.amount_per_unit = float(payload.get("amount_per_unit", item.amount_per_unit))
-    item.units = int(payload.get("units", item.units))
-    item.total_amount = item.amount_per_unit * item.units
+    item.category = payload.category
+    item.title = payload.title
+    item.type = payload.type
+    item.amount = payload.amount
+    item.calculation_rows = payload.calculation_rows
+    item.month = payload.month
+    item.year = payload.year
     
     await item.save()
     return item
 
 @router.patch("/{id}/toggle")
 async def toggle_status(id: str, user = Depends(get_current_user)):
-    """Toggle the checkmark status"""
-    item = await MonthlyBudget.get(id)
+    item = await BudgetEntry.get(id)
     if not item or item.user_id != str(user["user_id"]):
         raise HTTPException(status_code=404, detail="Item not found")
     
@@ -89,8 +121,7 @@ async def toggle_status(id: str, user = Depends(get_current_user)):
 
 @router.delete("/{id}")
 async def delete_budget_item(id: str, user = Depends(get_current_user)):
-    """Remove item from inventory"""
-    item = await MonthlyBudget.get(id)
+    item = await BudgetEntry.get(id)
     if not item or item.user_id != str(user["user_id"]):
         raise HTTPException(status_code=404, detail="Item not found")
     

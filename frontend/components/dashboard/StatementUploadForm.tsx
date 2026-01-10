@@ -264,7 +264,7 @@ export default function StatementUploadForm() {
 
           <div
             onClick={() => fileInputRef.current?.click()}
-            className={`group relative h-40 rounded-[2rem] border-2 border-dashed flex flex-col items-center justify-center transition-all cursor-pointer overflow-hidden
+            className={`group relative h-40 rounded-4xl border-2 border-dashed flex flex-col items-center justify-center transition-all cursor-pointer overflow-hidden
               ${file ? 'border-violet-500 bg-violet-50/30 dark:bg-violet-900/20' : 'border-slate-200 dark:border-slate-800 hover:border-violet-500/40 hover:bg-violet-50/50'}`}
           >
             <input ref={fileInputRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => setFile(e.target.files?.[0] || null)} />
@@ -273,7 +273,7 @@ export default function StatementUploadForm() {
                 <div className="w-12 h-12 bg-violet-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-violet-500/40">
                   <FileText className="w-6 h-6 text-white" />
                 </div>
-                <p className="text-xs font-black truncate max-w-[220px] dark:text-white uppercase tracking-tighter px-4">{file.name}</p>
+                <p className="text-xs font-black truncate max-w-55 dark:text-white uppercase tracking-tighter px-4">{file.name}</p>
                 <p className="text-[10px] text-violet-500 font-bold mt-1 italic">Replace document</p>
               </div>
             ) : (
@@ -300,7 +300,7 @@ export default function StatementUploadForm() {
 
           <button
             onClick={handleUpload} disabled={!file || isLoading}
-            className="w-full h-16 bg-violet-600 hover:bg-violet-700 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-violet-500/40 transition-all active:scale-95 disabled:opacity-20 flex items-center justify-center gap-3 group"
+            className="w-full h-16 bg-violet-600 hover:bg-violet-700 text-white rounded-3xl font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-violet-500/40 transition-all active:scale-95 disabled:opacity-20 flex items-center justify-center gap-3 group"
           >
             {isLoading ? (
               <><Loader2 className="w-4 h-4 animate-spin" /> PROCESSING...</>

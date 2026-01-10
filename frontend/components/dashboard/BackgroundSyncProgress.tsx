@@ -15,7 +15,7 @@ export default function BackgroundSyncProgress() {
       setTimeout(() => {
         setIsComplete(true);
         setTimeout(() => setIsVisible(false), 5000);
-      }, 120000); 
+      }, 120000);
     };
 
     window.addEventListener("sync-started", handleSyncStart);
@@ -26,15 +26,14 @@ export default function BackgroundSyncProgress() {
 
   return (
     <div className="w-full mb-6 animate-in slide-in-from-top-4 duration-500">
-      <div className={`relative overflow-hidden p-4 rounded-3xl border transition-all duration-500 ${
-        isComplete 
-        ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800" 
-        : "bg-violet-50 border-violet-200 dark:bg-violet-900/20 dark:border-violet-800"
-      }`}>
-        
+      <div className={`relative overflow-hidden p-4 rounded-3xl border transition-all duration-500 ${isComplete
+          ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800"
+          : "bg-violet-50 border-violet-200 dark:bg-violet-900/20 dark:border-violet-800"
+        }`}>
+
         {/* Animated Background Pulse */}
         {!isComplete && (
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 dark:via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+          <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/40 dark:via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
         )}
 
         <div className="flex items-center justify-between gap-4">
@@ -51,20 +50,19 @@ export default function BackgroundSyncProgress() {
               </h4>
             </div>
           </div>
-          
+
           <div className="hidden sm:flex items-center gap-2">
-             <span className="text-[10px] font-bold text-violet-500 bg-violet-100 dark:bg-violet-900/50 px-2 py-1 rounded-lg">
-                Page-by-Page Indexing
-             </span>
+            <span className="text-[10px] font-bold text-violet-500 bg-violet-100 dark:bg-violet-900/50 px-2 py-1 rounded-lg">
+              Page-by-Page Indexing
+            </span>
           </div>
         </div>
 
         {/* The Progress Bar Line */}
         <div className="mt-4 h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-          <div 
-            className={`h-full transition-all duration-1000 ease-out rounded-full ${
-              isComplete ? "w-full bg-emerald-500" : "w-1/2 bg-violet-600 animate-[pulse_2s_infinite]"
-            }`} 
+          <div
+            className={`h-full transition-all duration-1000 ease-out rounded-full ${isComplete ? "w-full bg-emerald-500" : "w-1/2 bg-violet-600 animate-[pulse_2s_infinite]"
+              }`}
           />
         </div>
       </div>
