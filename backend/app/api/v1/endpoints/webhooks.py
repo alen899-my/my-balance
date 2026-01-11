@@ -7,7 +7,7 @@ from app.models.transaction import Transaction
 
 router = APIRouter()
 
-# SECURITY: This must match the X-Webhook-Secret you set in MacroDroid
+
 WEBHOOK_SECRET = "MyBankSync2026" 
 
 def clean_amount(text: str) -> float:
