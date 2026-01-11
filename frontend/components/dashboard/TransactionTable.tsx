@@ -21,9 +21,10 @@ interface TransactionTableProps {
   };
   startDate?: Date;
   endDate?: Date;
+  selectedBank?: string; // 1. Added this to the interface
 }
 
-export default function TransactionTable({ filters, startDate, endDate }: TransactionTableProps) {
+export default function TransactionTable({ filters, startDate, endDate, selectedBank }: TransactionTableProps) {
   const [data, setData] = useState<Transaction[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -42,6 +43,11 @@ export default function TransactionTable({ filters, startDate, endDate }: Transa
         sort: filters?.sort || "desc"
       });
 
+      // 2. Append bank to the API request if it's not "All Banks"
+      if (selectedBank && selectedBank !== "All Banks") {
+        queryParams.append("bank", selectedBank);
+      }
+
       if (startDate) queryParams.append("start_date", startDate.toISOString());
       if (endDate) queryParams.append("end_date", endDate.toISOString());
 
@@ -57,15 +63,17 @@ export default function TransactionTable({ filters, startDate, endDate }: Transa
     } finally {
       setIsLoading(false);
     }
-  }, [page, filters, limit, startDate, endDate]);
+    // 3. Added selectedBank to the dependency array
+  }, [page, filters, limit, startDate, endDate, selectedBank]); 
 
   useEffect(() => {
     fetchTransactions();
   }, [fetchTransactions]);
 
+  // 4. Reset to page 1 when filters OR bank selection changes
   useEffect(() => {
     setPage(1);
-  }, [filters]);
+  }, [filters, selectedBank]);
 
   return (
     <div className="space-y-6">
@@ -82,7 +90,6 @@ export default function TransactionTable({ filters, startDate, endDate }: Transa
       {/* Table Container */}
       <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden">
         
-        {/* --- FIXED HEIGHT SCROLLABLE AREA WITH CUSTOM SCROLLBAR --- */}
         <div className="overflow-x-auto overflow-y-auto h-[500px] 
           [&::-webkit-scrollbar]:w-1.5 
           [&::-webkit-scrollbar-track]:bg-transparent 

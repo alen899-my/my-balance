@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, X, FileText, ListFilter } from "lucide-react";
 import StatementUploadForm from "@/components/dashboard/StatementUploadForm";
 import TransactionTable from "@/components/dashboard/TransactionTable";
@@ -8,10 +8,16 @@ import DeleteAllDataButton from "@/components/dashboard/DeleteAllDataButton";
 import TransactionFilters from "@/components/dashboard/TransactionFilters";
 import BackgroundSyncProgress from "@/components/dashboard/BackgroundSyncProgress";
 import DateRangeFilter from "@/components/ui/DateRangeFilter";
+import BankFilter from "@/components/dashboard/BankFilter"; // Import the new component
+import { authFetch } from "@/lib/authFetch"; // Assuming you have this helper
 
 export default function StatementsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+
+  // New states for Bank Filtering
+  const [availableBanks, setAvailableBanks] = useState<string[]>([]);
+  const [selectedBank, setSelectedBank] = useState("All Banks");
 
   const [filters, setFilters] = useState({
     search: "",
@@ -21,6 +27,22 @@ export default function StatementsPage() {
 
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
+
+  // Fetch unique banks from DB on load
+  useEffect(() => {
+    const fetchUniqueBanks = async () => {
+      try {
+        const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/transactions/unique-banks`);
+        if (res.ok) {
+          const data = await res.json();
+          setAvailableBanks(data);
+        }
+      } catch (err) {
+        console.error("Error fetching banks:", err);
+      }
+    };
+    fetchUniqueBanks();
+  }, [isModalOpen]); // Re-fetch when modal closes (in case new bank was added)
 
   return (
     <div className="space-y-6 md:space-y-8 max-w-7xl mx-auto p-4 md:p-0">
@@ -37,9 +59,7 @@ export default function StatementsPage() {
           </h1>
         </div>
 
-        {/* Action Controls - Grid for mobile, Flex for desktop */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:items-center gap-3 w-full xl:w-auto">
-
           <div className="sm:col-span-2 lg:col-span-1 w-full lg:w-auto">
             <DateRangeFilter
               startDate={startDate}
@@ -60,7 +80,6 @@ export default function StatementsPage() {
               <ListFilter className="w-5 h-5" />
               <span className="text-[10px] font-black uppercase sm:hidden">Filters</span>
             </button>
-
             <div className="flex-1 sm:flex-none">
               <DeleteAllDataButton />
             </div>
@@ -80,7 +99,17 @@ export default function StatementsPage() {
 
       {/* --- COLLAPSIBLE FILTERS --- */}
       {showFilters && (
-        <div className="animate-in slide-in-from-top-4 fade-in duration-300">
+        <div className="animate-in slide-in-from-top-4 fade-in duration-300 space-y-4">
+          {/* New Bank Filter Row */}
+          <div className="px-1">
+             <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Filter by Institution</label>
+             <BankFilter 
+                selectedBank={selectedBank} 
+                onBankChange={setSelectedBank} 
+                availableBanks={availableBanks} 
+             />
+          </div>
+          
           <TransactionFilters filters={filters} setFilters={setFilters} />
         </div>
       )}
@@ -88,13 +117,19 @@ export default function StatementsPage() {
       {/* --- TABLE CONTENT --- */}
       <div className="bg-white dark:bg-slate-900/50 rounded-4xl md:rounded-[2.5rem] border border-slate-200 dark:border-slate-800 p-2 sm:p-6 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div className="overflow-x-auto">
-          <TransactionTable filters={filters} startDate={startDate} endDate={endDate} />
+          {/* Added selectedBank prop here */}
+          <TransactionTable 
+            filters={filters} 
+            startDate={startDate} 
+            endDate={endDate} 
+            selectedBank={selectedBank} 
+          />
         </div>
       </div>
 
       {/* --- UPLOAD MODAL --- */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-140 flex items-center justify-center p-4 sm:p-6">
+        <div className="fixed inset-0 z-[140] flex items-center justify-center p-4 sm:p-6">
           <div
             className="absolute inset-0 bg-slate-950/60 backdrop-blur-xl animate-in fade-in duration-500"
             onClick={() => setIsModalOpen(false)}

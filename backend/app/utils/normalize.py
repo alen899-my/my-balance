@@ -54,6 +54,76 @@ def normalize(txn):
     import logging
     logger = logging.getLogger(__name__)
 
+    date_val = txn.get("date")
+
+    # --- CHANGE 1: Handle if date is already a datetime object ---
+    if isinstance(date_val, datetime):
+        date_obj = date_val
+    elif isinstance(date_val, str):
+        # Clean and check string
+        clean_date = date_val.strip()
+        if not DATE_REGEX.search(clean_date):
+            logger.warning(f"⚠️ Validation Failed: Invalid date format '{clean_date}'")
+            return None
+        
+        # --- CHANGE 2: Expand formats to include Union Bank / ISO styles ---
+        date_obj = None
+        formats = (
+            "%d/%m/%Y", "%d-%b-%Y", "%d-%m-%Y", 
+            "%Y-%m-%d %H:%M:%S", "%Y-%m-%d", "%d/%m/%y"
+        )
+        
+        for fmt in formats:
+            try:
+                date_obj = datetime.strptime(clean_date, fmt)
+                break
+            except: continue
+        
+        if not date_obj:
+            logger.warning(f"⚠️ Date parse error '{clean_date}': No matching format")
+            return None
+    else:
+        logger.warning(f"⚠️ Validation Failed: Date missing or invalid type")
+        return None
+
+    # Helper for numbers
+    def to_float(v):
+        if v is None or v == "" or v == 0: return 0.0
+        try: 
+            return float(str(v).replace(',', '').replace(' ', '').strip())
+        except: 
+            return 0.0
+
+    debit = to_float(txn.get("debit"))
+    credit = to_float(txn.get("credit"))
+    
+    # Filter out non-transactional lines
+    if debit == 0 and credit == 0: 
+        return None
+
+    # Clean description
+    raw_description = str(txn.get("description", "")).replace("\n", " ").strip()
+    clean_description = " ".join(raw_description.split()) 
+
+    # Payee Extraction & Classification
+    from app.utils.analysis import classify_category
+    payee = extract_payee_refined(clean_description)
+
+    return {
+        "date": date_obj,              # Proper BSON Date for MongoDB
+        "description": clean_description, 
+        "payee": payee,
+        "category": classify_category(payee),
+        "debit": debit,
+        "credit": credit,
+        "balance": to_float(txn.get("balance")),
+        "bank": txn.get("bank", "UNKNOWN").upper(),
+        "type": "DEBIT" if debit > 0 else "CREDIT",
+        "updated_at": datetime.utcnow()
+    }
+    import logging
+    logger = logging.getLogger(__name__)
+
     date_str = txn.get("date")
     if not isinstance(date_str, str) or not DATE_REGEX.search(date_str):
         if date_str: 
