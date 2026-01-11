@@ -8,7 +8,7 @@ import { BarChart3 } from "lucide-react";
 interface MonthlySpendingChartProps {
   startDate?: Date;
   endDate?: Date;
-  selectedBank?: string; // 1. Added Prop
+  selectedBank?: string;
 }
 
 export default function MonthlySpendingChart({ startDate, endDate, selectedBank }: MonthlySpendingChartProps) {
@@ -23,7 +23,6 @@ export default function MonthlySpendingChart({ startDate, endDate, selectedBank 
         if (startDate) params.append("start_date", startDate.toISOString());
         if (endDate) params.append("end_date", endDate.toISOString());
         
-        // 2. Pass Bank to the API if a specific bank is selected
         if (selectedBank && selectedBank !== "All Banks") {
           params.append("bank", selectedBank);
         }
@@ -31,7 +30,6 @@ export default function MonthlySpendingChart({ startDate, endDate, selectedBank 
         const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/insights?${params.toString()}`);
         const json = await res.json();
         
-        // Match the backend response key "monthly_data"
         setData(json.monthly_data || []);
       } catch (err) {
         console.error("Chart load error:", err);
@@ -40,7 +38,6 @@ export default function MonthlySpendingChart({ startDate, endDate, selectedBank 
       }
     }
     fetchChartData();
-    // 3. Dependency array ensures refetch when bank selection changes
   }, [startDate, endDate, selectedBank]);
 
   if (loading) {
@@ -51,7 +48,6 @@ export default function MonthlySpendingChart({ startDate, endDate, selectedBank 
 
   return (
     <div className="bg-white dark:bg-slate-900 p-5 md:p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm h-full flex flex-col">
-      {/* Header */}
       <div className="flex items-center justify-between mb-6 md:mb-8">
         <div>
           <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">Monthly Spending</h2>
@@ -64,7 +60,6 @@ export default function MonthlySpendingChart({ startDate, endDate, selectedBank 
         </div>
       </div>
 
-      {/* Responsive Chart Wrapper */}
       <div className="flex-1 w-full overflow-x-auto scrollbar-hide">
         <div className="h-[300px] w-full min-w-[500px] md:min-w-full">
           <ResponsiveContainer width="100%" height="100%">
@@ -104,7 +99,8 @@ export default function MonthlySpendingChart({ startDate, endDate, selectedBank 
                 }}
                 itemStyle={{ color: '#ddd', fontSize: '12px', fontWeight: 'bold' }}
                 labelStyle={{ color: '#fff', marginBottom: '4px', fontWeight: '900' }}
-                formatter={(value: number) => [`₹${value.toLocaleString()}`, "Amount"]}
+                /* Updated formatter to handle number | undefined */
+                formatter={(value: number | string) => [`₹${Number(value || 0).toLocaleString()}`, "Amount"]}
               />
               <Area
                 type="monotone"
