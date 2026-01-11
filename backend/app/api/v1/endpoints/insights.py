@@ -30,22 +30,28 @@ def extract_clean_name(payee_str: str) -> str:
 async def get_insights(
     user = Depends(get_current_user),
     start_date: Optional[str] = Query(None),
-    end_date: Optional[str] = Query(None)
+    end_date: Optional[str] = Query(None),
+    bank: Optional[str] = Query(None)
 ):
     user_id = str(user["user_id"])
-    
     match_stage = {"user_id": user_id}
-    
+
+    # 1. Bank Filter
+    if bank and bank != "All Banks":
+        match_stage["bank"] = {"$regex": bank, "$options": "i"}
+
+    # 2. Date Filter with Safety
     if start_date or end_date:
         date_filter = {}
-        if start_date:
-            date_filter["$gte"] = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
-        if end_date:
-            # Set end_date to end of day: 23:59:59.999999
-            dt_end = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
-            dt_end = dt_end.replace(hour=23, minute=59, second=59, microsecond=999999)
-            date_filter["$lte"] = dt_end
-        match_stage["date"] = date_filter
+        try:
+            if start_date:
+                date_filter["$gte"] = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+            if end_date:
+                dt_end = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+                date_filter["$lte"] = dt_end.replace(hour=23, minute=59, second=59, microsecond=999999)
+            match_stage["date"] = date_filter
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid date format")
 
     pipeline = [
         {"$match": match_stage},
@@ -54,40 +60,36 @@ async def get_insights(
                 "totals": [
                     {"$group": {
                         "_id": None,
-                        "income": {"$sum": "$credit"},
-                        "expense": {"$sum": "$debit"},
+                        "income": {"$sum": {"$ifNull": ["$credit", 0]}}, # Safety check
+                        "expense": {"$sum": {"$ifNull": ["$debit", 0]}},  # Safety check
                         "count": {"$sum": 1},
                         "avg_txn": {"$avg": {"$cond": [{"$gt": ["$debit", 0]}, "$debit", None]}}
                     }}
                 ],
                 "payee_leaderboard": [
-                    {
-                        # We group by the raw payee first
-                        "$group": {
-                            "_id": "$payee",
-                            "total_spent": {"$sum": "$debit"},
-                            "total_received": {"$sum": "$credit"},
-                            "txn_count": {"$sum": 1}
-                        }
-                    },
-                    # Add simple total activity field for sorting
+                    {"$group": {
+                        "_id": "$payee",
+                        "total_spent": {"$sum": {"$ifNull": ["$debit", 0]}},
+                        "total_received": {"$sum": {"$ifNull": ["$credit", 0]}},
+                        "txn_count": {"$sum": 1}
+                    }},
                     {"$addFields": {"activity": {"$add": ["$total_spent", "$total_received"]}}},
                     {"$sort": {"activity": -1}},
                     {"$limit": 500}
                 ],
                 "daily_trend": [
-                    {"$group": {"_id": "$date", "daily_spend": {"$sum": "$debit"}}},
+                    {"$group": {"_id": "$date", "daily_spend": {"$sum": {"$ifNull": ["$debit", 0]}}}},
                     {"$group": {"_id": None, "avg_daily": {"$avg": "$daily_spend"}}}
                 ],
                 "monthly_trend": [
                     {"$group": {
                         "_id": { "month": {"$month": "$date"}, "year": {"$year": "$date"} },
-                        "total": {"$sum": "$debit"}
+                        "total": {"$sum": {"$ifNull": ["$debit", 0]}}
                     }},
                     {"$sort": {"_id.year": 1, "_id.month": 1}}
                 ],
                 "category_spending": [
-                    {"$group": {"_id": "$category", "total": {"$sum": "$debit"}}}
+                    {"$group": {"_id": {"$ifNull": ["$category", "Uncategorized"]}, "total": {"$sum": {"$ifNull": ["$debit", 0]}}}}
                 ],
                 "latest_balance": [
                     {"$sort": {"date": -1, "_id": -1}},
@@ -103,16 +105,12 @@ async def get_insights(
     docs = await cursor.to_list(length=1)
     res = docs[0] if docs else {}
 
-    # --- NEW MERGING LOGIC ---
-    # This dictionary will store cleaned names as keys to combine totals
+    # --- MERGING LOGIC ---
     merged_leaderboard = {}
-
     for p in res.get("payee_leaderboard", []):
         raw_name = p["_id"] or "Unknown"
         clean_name = extract_clean_name(raw_name)
         
-        # If the clean_name is just "Upi Transfer", we try to skip it or 
-        # let it be, but the merge ensures it doesn't duplicate.
         if clean_name in merged_leaderboard:
             merged_leaderboard[clean_name]["spent"] += p["total_spent"]
             merged_leaderboard[clean_name]["received"] += p["total_received"]
@@ -125,18 +123,15 @@ async def get_insights(
                 "count": p["txn_count"]
             }
 
-    # Convert dictionary back to list and sort by spent
-    leaderboard = sorted(
-        merged_leaderboard.values(), 
-        key=lambda x: x["spent"], 
-        reverse=True
-    )
+    leaderboard = sorted(merged_leaderboard.values(), key=lambda x: x["spent"], reverse=True)
 
-    # Extraction for summary
+    # 3. Safe Extraction (Prevents IndexError)
     latest_bal_list = res.get("latest_balance", [])
     actual_balance = latest_bal_list[0].get("balance", 0) if latest_bal_list else 0
+    
     totals_list = res.get("totals", [])
     summary_data = totals_list[0] if totals_list else {}
+    
     daily_trend_list = res.get("daily_trend", [])
     daily_avg = daily_trend_list[0].get("avg_daily", 0) if daily_trend_list else 0
 
@@ -154,25 +149,24 @@ async def get_insights(
             "daily_avg": round(daily_avg, 2),
             "avg_transaction": round(avg_txn, 2)
         },
-        "leaderboard": leaderboard, # Send full list so frontend can filter Inflow vs Outflow
+        "leaderboard": leaderboard,
         "monthly_data": [
             {"month": f"{m['_id']['month']}/{m['_id']['year']}", "amount": m["total"]} 
             for m in res.get("monthly_trend", [])
         ],
         "category_data": sorted([
-            {"category": item["_id"] or "Uncategorized", "amount": item["total"]}
+            {"category": item["_id"], "amount": item["total"]}
             for item in res.get("category_spending", [])
             if item["total"] > 0
         ], key=lambda x: x['amount'], reverse=True)
     }
-
 
 @router.get("/insights/advanced")
 async def get_advanced_insights(user = Depends(get_current_user)):
     user_id = str(user["user_id"])
     now = datetime.now()
     first_of_month = datetime(now.year, now.month, 1)
-    
+    bank: Optional[str] = Query(None)
     # 1. Get Latest Balance
     latest_txn = await Transaction.find(Transaction.user_id == user_id).sort("-date", "-_id").limit(1).to_list()
     current_balance = latest_txn[0].balance if latest_txn else 0

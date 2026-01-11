@@ -8,9 +8,10 @@ import { BarChart3 } from "lucide-react";
 interface MonthlySpendingChartProps {
   startDate?: Date;
   endDate?: Date;
+  selectedBank?: string; // 1. Added Prop
 }
 
-export default function MonthlySpendingChart({ startDate, endDate }: MonthlySpendingChartProps) {
+export default function MonthlySpendingChart({ startDate, endDate, selectedBank }: MonthlySpendingChartProps) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -21,9 +22,16 @@ export default function MonthlySpendingChart({ startDate, endDate }: MonthlySpen
         const params = new URLSearchParams();
         if (startDate) params.append("start_date", startDate.toISOString());
         if (endDate) params.append("end_date", endDate.toISOString());
+        
+        // 2. Pass Bank to the API if a specific bank is selected
+        if (selectedBank && selectedBank !== "All Banks") {
+          params.append("bank", selectedBank);
+        }
 
         const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/insights?${params.toString()}`);
         const json = await res.json();
+        
+        // Match the backend response key "monthly_data"
         setData(json.monthly_data || []);
       } catch (err) {
         console.error("Chart load error:", err);
@@ -32,7 +40,8 @@ export default function MonthlySpendingChart({ startDate, endDate }: MonthlySpen
       }
     }
     fetchChartData();
-  }, [startDate, endDate]);
+    // 3. Dependency array ensures refetch when bank selection changes
+  }, [startDate, endDate, selectedBank]);
 
   if (loading) {
     return (
@@ -46,7 +55,9 @@ export default function MonthlySpendingChart({ startDate, endDate }: MonthlySpen
       <div className="flex items-center justify-between mb-6 md:mb-8">
         <div>
           <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">Monthly Spending</h2>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Expense Trends</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            {selectedBank && selectedBank !== "All Banks" ? `${selectedBank} Trends` : "Total Account Trends"}
+          </p>
         </div>
         <div className="p-3 bg-violet-50 dark:bg-violet-900/20 rounded-2xl">
           <BarChart3 className="w-5 h-5 text-violet-600 dark:text-violet-400" />
@@ -55,7 +66,6 @@ export default function MonthlySpendingChart({ startDate, endDate }: MonthlySpen
 
       {/* Responsive Chart Wrapper */}
       <div className="flex-1 w-full overflow-x-auto scrollbar-hide">
-        {/* min-w-[600px] ensures the chart remains readable on mobile by triggering a scroll */}
         <div className="h-[300px] w-full min-w-[500px] md:min-w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -94,6 +104,7 @@ export default function MonthlySpendingChart({ startDate, endDate }: MonthlySpen
                 }}
                 itemStyle={{ color: '#ddd', fontSize: '12px', fontWeight: 'bold' }}
                 labelStyle={{ color: '#fff', marginBottom: '4px', fontWeight: '900' }}
+                formatter={(value: number) => [`₹${value.toLocaleString()}`, "Amount"]}
               />
               <Area
                 type="monotone"

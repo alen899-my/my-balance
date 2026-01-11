@@ -30,7 +30,7 @@ export default function TransactionTable({ filters, startDate, endDate, selected
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
 
-  const limit = 10;
+  const limit = 50;
 
   const fetchTransactions = useCallback(async (p = page) => {
     setIsLoading(true);
