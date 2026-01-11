@@ -99,8 +99,7 @@ export default function MonthlySpendingChart({ startDate, endDate, selectedBank 
                 }}
                 itemStyle={{ color: '#ddd', fontSize: '12px', fontWeight: 'bold' }}
                 labelStyle={{ color: '#fff', marginBottom: '4px', fontWeight: '900' }}
-                /* Updated formatter to handle number | undefined */
-                formatter={(value: number | string) => [`₹${Number(value || 0).toLocaleString()}`, "Amount"]}
+                formatter={(value: any) => [`₹${Number(value || 0).toLocaleString()}`, "Amount"]}
               />
               <Area
                 type="monotone"
