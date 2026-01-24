@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 # Added budget to the imports below
-from app.api.v1.endpoints import auth, transactions, upload, insights, budget ,webhooks
+from app.api.v1.endpoints import auth, transactions, upload, insights, budget ,webhooks,daily_budget
 from app.db.session import init_db
 import logging
 
@@ -39,6 +39,7 @@ app.include_router(insights.router)
 # Added the budget router inclusion
 app.include_router(budget.router) 
 app.include_router(webhooks.router, prefix="/transactions")
+app.include_router(daily_budget.router)
 
 @app.on_event("startup")
 async def on_startup():

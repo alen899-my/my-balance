@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import { 
   LayoutDashboard, FileText, BarChart3, 
-  Users, Settings, ChevronRight, Sparkles, X 
+  Users, Settings, ChevronRight, Sparkles, X,
+  CalendarDays // Added this for Daily icon
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -15,9 +16,9 @@ export default function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean, setIsO
   const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
     { icon: FileText, label: "Statements", href: "/statements" },
+    { icon: CalendarDays, label: "Daily", href: "/daily" }, // New Daily Route
     { icon: BarChart3, label: "Monthly", href: "/monthly" },
-    { icon: Users, label: "Team", href: "/team" },
-    { icon: Settings, label: "Settings", href: "/settings" },
+ 
   ];
 
   return (
@@ -37,7 +38,6 @@ export default function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean, setIsO
           {/* Logo Section */}
           <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-3">
-              {/* Violet themed logo box */}
               <div className="bg-violet-600 p-1.5 rounded-lg shadow-lg shadow-violet-500/20">
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
@@ -73,7 +73,7 @@ export default function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean, setIsO
             })}
           </nav>
 
-          {/* Collapse Toggle (Desktop Only) */}
+          {/* Collapse Toggle */}
           <div className="p-4 border-t border-slate-100 dark:border-slate-800 hidden lg:block">
             <button 
               onClick={() => setIsCollapsed(!isCollapsed)}
