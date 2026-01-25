@@ -1,6 +1,7 @@
 from .base import BaseParser
 import re
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -39,57 +40,92 @@ class FederalBankParser(BaseParser):
                 row = [str(cell).strip() if cell else "" for cell in row]
                 
                 # Skip tiny rows or header junk
-                if len(row) < 5:
+                if len(row) < 4:
                     continue
 
                 # 2. Header Detection
                 row_lower = [c.lower() for c in row]
-                if "particulars" in row_lower and "date" in row_lower:
+                
+                # Detect Date Column
+                date_idx = -1
+                for i, cell in enumerate(row_lower):
+                    if "date" in cell:
+                        date_idx = i
+                        break
+                
+                if date_idx != -1:
+                    # Look for other columns relative to this row
                     try:
+                        # Particulars
+                        desc_idx = next(i for i, h in enumerate(row_lower) if any(x in h for x in ["particulars", "description", "narration"]))
+                        
+                        # Debit / Withdrawal
+                        dr_idx = next((i for i, h in enumerate(row_lower) if any(x in h for x in ["withdrawal", "debit", "dr"])), None)
+                        
+                        # Credit / Deposit
+                        cr_idx = next((i for i, h in enumerate(row_lower) if any(x in h for x in ["deposit", "credit", "cr"])), None)
+                        
+                        # Balance
+                        bal_idx = next((i for i, h in enumerate(row_lower) if "balance" in h), None)
+
                         self.header_indices = {
-                            "date": row_lower.index("date"),
-                            "particulars": row_lower.index("particulars"),
-                            "withdrawals": next((i for i, h in enumerate(row_lower) if "withdrawal" in h), -1),
-                            "deposits": next((i for i, h in enumerate(row_lower) if "deposit" in h), -1),
-                            "balance": next((i for i, h in enumerate(row_lower) if "balance" in h), -1),
+                            "date": date_idx,
+                            "particulars": desc_idx,
+                            "debit": dr_idx,
+                            "credit": cr_idx,
+                            "balance": bal_idx
                         }
-                        logger.info(f"✅ Headers identified at indices: {self.header_indices}")
+                        logger.info(f"✅ Headers identified: {self.header_indices}")
                         continue 
-                    except (ValueError, StopIteration):
-                        continue
+                    except StopIteration:
+                        pass # Not a header row, or missing required columns
 
                 # 3. Process Transaction Data
                 if not self.header_indices:
                     continue
 
-                # Validate Date Column (Supports DD-MMM-YYYY and DD/MM/YYYY)
+                # Validate Date Column
                 date_cell = row[self.header_indices["date"]]
                 # Matches: 05-MAY-2025 OR 05/05/2025 OR 05-05-2025
-                if not re.match(r"(\d{2}[-/]\d{2}[-/]\d{4})|(\d{2}-[a-zA-Z]{3}-\d{4})", date_cell):
+                if not re.search(r"\d", date_cell): # Quick check if it has numbers
                     continue
 
                 try:
-                    # Clean the particulars (remove internal newlines for better regex matching)
+                    # Clean the particulars
                     particulars = row[self.header_indices["particulars"]].replace("\n", " ")
                     
                     # Clean numeric values
-                    def clean_num(val):
+                    def clean_num(idx):
+                        if idx is None or idx >= len(row): return 0.0
+                        val = row[idx]
                         if not val or val.lower() in ["nil", "0", "0.00", ""]: 
                             return 0.0
-                        cleaned = "".join(re.findall(r"[\d.]", val))
+                        cleaned = "".join(re.findall(r"[\d.]", val.replace(",", "")))
                         return float(cleaned) if cleaned else 0.0
 
-                    debit = clean_num(row[self.header_indices["withdrawals"]])
-                    credit = clean_num(row[self.header_indices["deposits"]])
-                    balance = clean_num(row[self.header_indices["balance"]])
+                    debit = clean_num(self.header_indices["debit"])
+                    credit = clean_num(self.header_indices["credit"])
+                    balance = clean_num(self.header_indices["balance"])
+
+                    # If both zero, check if it is a "Amount" column with Dr/Cr suffix (rare but possible)
+                    # For now, assume Federal Bank always separates Dr/Cr
 
                     # Skip only if strictly empty financial line
                     if debit == 0 and credit == 0 and "opening balance" not in particulars.lower():
                         continue
+                    
+                    # Parse Date
+                    date_obj = None
+                    clean_date = date_cell.strip()
+                    for fmt in ("%d-%m-%Y", "%d/%m/%Y", "%d-%b-%Y", "%d %b %Y"):
+                        try:
+                            date_obj = datetime.strptime(clean_date, fmt)
+                            break
+                        except: continue
 
                     txns.append({
                         "bank": "FEDERAL",
-                        "date": date_cell,
+                        "date": date_obj if date_obj else clean_date, # Let normalize handle if string
                         "description": particulars,
                         "debit": debit,
                         "credit": credit,
@@ -98,7 +134,7 @@ class FederalBankParser(BaseParser):
                     })
 
                 except Exception as e:
-                    logger.debug(f"Row skip: {e}")
+                    # logger.debug(f"Row skip: {e}")
                     continue
 
         return txns
