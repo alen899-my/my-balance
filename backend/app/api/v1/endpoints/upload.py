@@ -7,8 +7,9 @@ from app.services.pipeline import process_statement_pipeline
 
 router = APIRouter(prefix="/upload", tags=["upload"])
 
-TEMP_DIR = "temp_uploads"
-os.makedirs(TEMP_DIR, exist_ok=True)
+# /tmp is the only writable directory in serverless environments (Vercel, AWS Lambda, etc.)
+# On local dev, /tmp also works. Falls back to a local dir if /tmp is unavailable.
+TEMP_DIR = "/tmp/bank_uploads" if os.path.exists("/tmp") else "temp_uploads"
 
 import logging
 logger = logging.getLogger(__name__)
@@ -25,6 +26,9 @@ async def upload_pdf(
         raise HTTPException(status_code=400, detail="No file uploaded")
     
     logger.info(f"📥 Received file upload: {file.filename} from user {user.get('user_id')}")
+
+    # Ensure temp dir exists (important for serverless cold starts)
+    os.makedirs(TEMP_DIR, exist_ok=True)
 
     # Generate safe temp path
     file_ext = file.filename.split('.')[-1]
