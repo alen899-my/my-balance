@@ -1,20 +1,18 @@
 from .federa import FederalBankParser
-from .CommonParser import CommonBankParser
+from .smart_universal import SmartUniversalParser
+
 
 def get_parser(bank: str):
     """
-    Standardizes the bank string and maps it to the correct parser.
-    """
-    # Normalize input: "Federal Bank" -> "FEDERAL"
-    bank_key = bank.upper()
+    Route to the correct parser based on bank name.
 
-    # Map possible variations to the Federal Parser
+    - Federal Bank → dedicated FederalBankParser (tuned for its lattice grid format)
+    - Everything else → SmartUniversalParser (4 pdfplumber strategies + Gemini AI fallback)
+    """
+    bank_key = bank.upper().strip()
+
     if "FEDERAL" in bank_key:
         return FederalBankParser()
-    
-    # Add other specific mappings here if needed in the future
-    # elif "HDFC" in bank_key:
-    #     return HDFCParser()
 
-    # Default to Common Parser for everything else
-    return CommonBankParser()
+    # Universal parser carries the bank name for logging and DB storage
+    return SmartUniversalParser(bank=bank_key)
