@@ -1,89 +1,155 @@
 "use client";
 
-import React, { useState } from "react";
-import { 
-  LayoutDashboard, FileText, BarChart3, 
-  Users, Settings, ChevronRight, Sparkles, X,
-  CalendarDays // Added this for Daily icon
+import React from "react";
+import {
+  LayoutDashboard, FileText, BarChart3,
+  CalendarDays, X, Building2,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export default function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (v: boolean) => void }) {
-  const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+const navItems = [
+  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard", section: "Overview" },
+  { icon: FileText, label: "Statements", href: "/statements", section: "Management" },
+  { icon: CalendarDays, label: "Daily", href: "/daily", section: "Management" },
+  { icon: BarChart3, label: "Monthly", href: "/monthly", section: "Management" },
+];
 
-  const menuItems = [
-    { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-    { icon: FileText, label: "Statements", href: "/statements" },
-    { icon: CalendarDays, label: "Daily", href: "/daily" }, // New Daily Route
-    { icon: BarChart3, label: "Monthly", href: "/monthly" },
- 
-  ];
+const sections = ["Overview", "Management"] as const;
+
+export default function Sidebar({
+  isOpen,
+  setIsOpen,
+}: {
+  isOpen: boolean;
+  setIsOpen: (v: boolean) => void;
+}) {
+  const pathname = usePathname();
 
   return (
     <>
-      {/* Mobile Overlay */}
-      <div 
-        className={`fixed inset-0 bg-slate-900/50 z-40 transition-opacity lg:hidden ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-        onClick={() => setIsOpen(false)}
-      />
+      {/* Full-screen overlay — all screen sizes when open */}
+      {isOpen && (
+        <div
+          onClick={() => setIsOpen(false)}
+          style={{
+            position: "fixed", inset: 0,
+            background: "rgba(0,0,0,0.65)",
+            backdropFilter: "blur(6px)",
+            zIndex: 49,
+          }}
+        />
+      )}
 
-      <aside 
-        className={`fixed inset-y-0 left-0 z-50 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300 lg:sticky lg:top-0 h-screen
-          ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-          ${isCollapsed ? "lg:w-20" : "lg:w-64 w-64"}`}
+      {/* Sidebar — always fixed, always toggleable on every screen size */}
+      <aside
+        style={{
+          position: "fixed",
+          insetBlock: 0,
+          left: 0,
+          width: "240px",
+          height: "100vh",
+          background: "var(--bg-sidebar)",
+          borderRight: "1px solid var(--border-sidebar)",
+          display: "flex",
+          flexDirection: "column",
+          zIndex: 50,
+          transform: isOpen ? "translateX(0)" : "translateX(-100%)",
+          transition: "transform 0.22s cubic-bezier(0.4,0,0.2,1)",
+        }}
       >
-        <div className="flex flex-col h-full">
-          {/* Logo Section */}
-          <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-800">
-            <div className="flex items-center gap-3">
-              <div className="bg-violet-600 p-1.5 rounded-lg shadow-lg shadow-violet-500/20">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <span className={`font-bold text-lg dark:text-white tracking-tight ${isCollapsed ? "lg:hidden" : "block"}`}>
-                FinTrack
-              </span>
+        {/* ── Logo Band ── */}
+        <div
+          style={{
+            height: "60px",
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "0 16px",
+            borderBottom: "1px solid var(--border-sidebar)",
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div>
+              <p style={{
+                color: "#ededed",
+                fontWeight: 800,
+                fontSize: "18px",
+                lineHeight: 1.2,
+                letterSpacing: "-0.04em",
+                fontFamily: "var(--font-geist-sans), sans-serif",
+                background: "linear-gradient(to right, #cfd8dc, #ffffff)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent"
+              }}>
+                my<span style={{ color: "#6366f1", WebkitTextFillColor: "initial" }}>balance</span>
+              </p>
+              <p style={{ color: "#444", fontSize: "9px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                Finance System
+              </p>
             </div>
-            <button onClick={() => setIsOpen(false)} className="lg:hidden p-1">
-              <X className="w-5 h-5 text-slate-500" />
-            </button>
           </div>
+          <button
+            onClick={() => setIsOpen(false)}
+            style={{ color: "#555", padding: "4px", borderRadius: "4px", background: "none", border: "none", cursor: "pointer", display: "flex" }}
+          >
+            <X style={{ width: "16px", height: "16px" }} />
+          </button>
+        </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1">
-            {menuItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group
-                    ${isActive 
-                      ? "bg-violet-600 text-white shadow-lg shadow-violet-500/20" 
-                      : "text-slate-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-600 dark:hover:text-violet-400"
-                    }`}
-                >
-                  <item.icon className={`w-5 h-5 shrink-0 transition-colors ${isActive ? "text-white" : "group-hover:text-violet-600 dark:group-hover:text-violet-400"}`} />
-                  <span className={`text-sm font-semibold transition-all ${isCollapsed ? "lg:hidden" : "block"}`}>
-                    {item.label}
-                  </span>
-                </Link>
-              );
-            })}
-          </nav>
+        {/* ── Navigation ── */}
+        <nav style={{ flex: 1, overflowY: "auto", padding: "12px 0" }}>
+          {sections.map((section) => {
+            const items = navItems.filter((i) => i.section === section);
+            return (
+              <div key={section} style={{ marginBottom: "8px" }}>
+                <p style={{ fontSize: "9px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.12em", color: "#333", padding: "8px 16px 4px" }}>
+                  {section}
+                </p>
+                {items.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setIsOpen(false)}
+                      style={{
+                        position: "relative",
+                        display: "flex", alignItems: "center", gap: "10px",
+                        padding: "8px 16px", margin: "1px 8px", borderRadius: "6px",
+                        background: isActive ? "#6366f120" : "transparent",
+                        border: `1px solid ${isActive ? "#6366f130" : "transparent"}`,
+                        transition: "background 0.1s",
+                        textDecoration: "none",
+                      }}
+                      className={!isActive ? "sidebar-link-hover" : ""}
+                    >
+                      {isActive && (
+                        <span style={{
+                          position: "absolute", left: "-8px", top: "6px", bottom: "6px",
+                          width: "2px", background: "#6366f1", borderRadius: "0 2px 2px 0",
+                        }} />
+                      )}
+                      <item.icon style={{ width: "16px", height: "16px", flexShrink: 0, color: isActive ? "#818cf8" : "#444" }} />
+                      <span style={{ fontSize: "13px", fontWeight: isActive ? 500 : 400, color: isActive ? "#ededed" : "#666", whiteSpace: "nowrap", letterSpacing: "-0.01em" }}>
+                        {item.label}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </nav>
 
-          {/* Collapse Toggle */}
-          <div className="p-4 border-t border-slate-100 dark:border-slate-800 hidden lg:block">
-            <button 
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="w-full flex items-center justify-center p-2 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg text-slate-400 hover:text-violet-600 transition-colors"
-            >
-              <ChevronRight className={`w-5 h-5 transition-transform ${!isCollapsed && "rotate-180"}`} />
-            </button>
-          </div>
+        {/* ── Footer ── */}
+        <div style={{ borderTop: "1px solid var(--border-sidebar)", padding: "12px 16px", flexShrink: 0 }}>
+          <p style={{ fontSize: "10px", color: "#333", fontWeight: 500 }}>mybalance</p>
         </div>
       </aside>
+
+      <style>{`
+        .sidebar-link-hover:hover { background: #1a1a1a !important; border-color: #2e2e2e !important; }
+      `}</style>
     </>
   );
 }

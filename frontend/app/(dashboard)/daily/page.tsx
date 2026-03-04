@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
-    Plus, Wallet, Zap, TrendingDown,
-    Sparkles, CalendarDays, ChevronLeft,
-    ChevronRight, Loader2, CheckCircle2, History
+    Plus, Wallet, TrendingDown,
+    CalendarDays, ChevronLeft, ChevronRight,
+    Loader2, ArrowUpRight, ArrowDownRight
 } from "lucide-react";
 import { authFetch } from "@/lib/authFetch";
 import DailyBudgetModal from "@/components/daily/DailyBudgetModal";
@@ -15,12 +15,9 @@ import DeleteConfirmModal from "@/components/daily/DeleteConfirmModal";
 export default function DailyPage() {
     const [items, setItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
 
-    // Ref for the date input
     const dateInputRef = useRef<HTMLInputElement>(null);
-
-    // Modal States
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isViewOpen, setIsViewOpen] = useState(false);
     const [activeItem, setActiveItem] = useState<any>(null);
@@ -31,14 +28,13 @@ export default function DailyPage() {
     async function fetchDailyList() {
         setLoading(true);
         try {
-            const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/daily-budget/range?start_date=${selectedDate}&end_date=${selectedDate}`);
+            const res = await authFetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/daily-budget/range?start_date=${selectedDate}&end_date=${selectedDate}`
+            );
             const json = await res.json();
             setItems(json.items || []);
-        } catch (err) {
-            console.error("Fetch Error:", err);
-        } finally {
-            setLoading(false);
-        }
+        } catch (err) { console.error("Fetch Error:", err); }
+        finally { setLoading(false); }
     }
 
     const summary = useMemo(() => {
@@ -50,151 +46,226 @@ export default function DailyPage() {
     const changeDate = (days: number) => {
         const d = new Date(selectedDate);
         d.setDate(d.getDate() + days);
-        setSelectedDate(d.toISOString().split('T')[0]);
+        setSelectedDate(d.toISOString().split("T")[0]);
     };
 
-    // NEW: Function to manually open the calendar
     const handleOpenPicker = () => {
         if (dateInputRef.current) {
-            // modern browsers support showPicker()
-            if ('showPicker' in HTMLInputElement.prototype) {
+            if ("showPicker" in HTMLInputElement.prototype) {
                 dateInputRef.current.showPicker();
             } else {
                 dateInputRef.current.focus();
             }
         }
     };
+
     const initiateDelete = (itemId: string) => {
-        const itemToDelete = items.find(i => i._id === itemId);
-        setActiveItem(itemToDelete);
+        setActiveItem(items.find(i => i._id === itemId));
         setIsDeleteOpen(true);
     };
+
     async function handleConfirmDelete() {
-        if (!activeItem?._id) return; // Guard clause
-
+        if (!activeItem?._id) return;
         try {
-            const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/daily-budget/${activeItem._id}`, {
-                method: "DELETE"
-            });
-
-            if (res.ok) {
-                setIsDeleteOpen(false); // Close modal first
-                fetchDailyList();       // Refresh the list
-            }
-        } catch (err) {
-            console.error("Delete failed:", err);
-        }
+            const res = await authFetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/daily-budget/${activeItem._id}`,
+                { method: "DELETE" }
+            );
+            if (res.ok) { setIsDeleteOpen(false); fetchDailyList(); }
+        } catch (err) { console.error("Delete failed:", err); }
     }
-    return (
-        <div className="p-4 md:p-8 space-y-8 animate-in fade-in duration-700 max-w-[1200px] mx-auto pb-24">
 
-            {/* --- HEADER --- */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+    const displayDate = new Date(selectedDate).toLocaleDateString("en-IN", {
+        weekday: "long", day: "numeric", month: "long", year: "numeric",
+    });
+
+    const isNet = summary.balance >= 0;
+
+    return (
+        <div className="page-enter" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+
+            {/* ── Page Header ── */}
+            <div
+                style={{
+                    display: "flex", flexWrap: "wrap",
+                    alignItems: "flex-start", justifyContent: "space-between",
+                    gap: "12px", paddingBottom: "16px",
+                    borderBottom: "1px solid var(--border-default)",
+                }}
+            >
                 <div>
-                    <div className="flex items-center gap-2 text-orange-500 mb-1">
-                        <Zap className="w-4 h-4 fill-orange-500" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.3em]">Quick Dispatch</span>
-                    </div>
-                    <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter">
-                        Daily <span className="text-orange-500">Expenses.</span>
-                    </h1>
+                    <p className="section-label" style={{ marginBottom: "4px" }}>Daily Tracking</p>
+                    <h1 style={{ margin: 0 }}>Daily Tracking</h1>
+                    <p style={{ margin: "4px 0 0", fontSize: "12px", color: "var(--text-secondary)" }}>
+                        Log and track individual daily transactions.
+                    </p>
                 </div>
 
-                {/* --- REFACTORED DATE PICKER --- */}
-                <div className="flex items-center bg-white dark:bg-slate-900 p-1 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl">
+                {/* Date Navigator */}
+                <div
+                    style={{
+                        display: "flex", alignItems: "center",
+                        border: "1px solid var(--border-default)",
+                        borderRadius: "6px",
+                        background: "var(--bg-surface)",
+                        overflow: "hidden",
+                    }}
+                >
                     <button
                         onClick={() => changeDate(-1)}
-                        className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-slate-400 transition-colors"
+                        style={{
+                            padding: "8px 12px", border: "none",
+                            borderRight: "1px solid var(--border-light)",
+                            background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)", cursor: "pointer",
+                            color: "var(--text-secondary)", display: "flex",
+                        }}
                     >
-                        <ChevronLeft className="w-5 h-5" />
+                        <ChevronLeft style={{ width: "16px", height: "16px" }} />
                     </button>
 
-                    {/* Clickable container triggers the ref */}
                     <div
                         onClick={handleOpenPicker}
-                        className="relative px-6 flex items-center gap-3 min-w-[180px] justify-center border-x border-slate-100 dark:border-slate-800 group cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                        style={{
+                            position: "relative", padding: "8px 20px",
+                            display: "flex", alignItems: "center",
+                            gap: "6px", minWidth: "200px", justifyContent: "center",
+                            cursor: "pointer",
+                        }}
                     >
-                        <CalendarDays className="w-4 h-4 text-orange-500" />
-
-                        <span className="text-xs font-black uppercase tracking-widest text-slate-900 dark:text-white">
-                            {new Date(selectedDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        <CalendarDays style={{ width: "14px", height: "14px", color: "var(--brand)" }} />
+                        <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-primary)" }}>
+                            {new Date(selectedDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                         </span>
-
-                        {/* Hidden Input with Ref */}
                         <input
                             ref={dateInputRef}
                             type="date"
                             value={selectedDate}
                             onChange={(e) => setSelectedDate(e.target.value)}
-                            className="absolute opacity-0 w-0 h-0"
+                            style={{ position: "absolute", opacity: 0, width: 0, height: 0 }}
                         />
                     </div>
 
                     <button
                         onClick={() => changeDate(1)}
-                        className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-slate-400 transition-colors"
+                        style={{
+                            padding: "8px 12px", border: "none",
+                            borderLeft: "1px solid var(--border-light)",
+                            background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)", cursor: "pointer",
+                            color: "var(--text-secondary)", display: "flex",
+                        }}
                     >
-                        <ChevronRight className="w-5 h-5" />
+                        <ChevronRight style={{ width: "16px", height: "16px" }} />
                     </button>
                 </div>
             </div>
 
-            {/* --- STATS STRIP --- */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <DailyStatCard title="Inflow" value={summary.income} color="text-emerald-500" />
-                <DailyStatCard title="Outflow" value={summary.expenses} color="text-rose-500" />
-                <div className="bg-slate-900 dark:bg-slate-950 p-5 rounded-[1.8rem] flex justify-between items-center shadow-lg">
-                    <div>
-                        <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Daily Net</p>
-                        <h4 className="text-2xl font-black text-white">₹{summary.balance.toLocaleString()}</h4>
+            {/* ── Daily KPI Strip ── */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "12px" }}>
+
+                <div className="gov-kpi-card" style={{ borderLeft: "3px solid #abefc6" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                        <div style={{ width: "28px", height: "28px", background: "var(--success-bg)", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <Wallet style={{ width: "14px", height: "14px", color: "var(--success)" }} />
+                        </div>
+                        <p className="section-label">Daily Inflow</p>
                     </div>
-                    <TrendingDown className={`w-8 h-8 ${summary.balance >= 0 ? 'text-emerald-400 rotate-180' : 'text-rose-400'}`} />
+                    <p style={{ fontSize: "20px", fontWeight: 700, color: "var(--success)" }}>
+                        ₹{summary.income.toLocaleString()}
+                    </p>
+                </div>
+
+                <div className="gov-kpi-card" style={{ borderLeft: "3px solid #fda29b" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                        <div style={{ width: "28px", height: "28px", background: "var(--danger-bg)", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <TrendingDown style={{ width: "14px", height: "14px", color: "var(--danger)" }} />
+                        </div>
+                        <p className="section-label">Daily Outflow</p>
+                    </div>
+                    <p style={{ fontSize: "20px", fontWeight: 700, color: "var(--danger)" }}>
+                        ₹{summary.expenses.toLocaleString()}
+                    </p>
+                </div>
+
+                {/* Net Balance – highlighted */}
+                <div
+                    className="gov-kpi-card"
+                    style={{
+                        borderLeft: `3px solid ${isNet ? "#abefc6" : "#fda29b"}`,
+                        background: isNet ? "var(--success-bg)" : "var(--danger-bg)",
+                    }}
+                >
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                        <div style={{ width: "28px", height: "28px", background: "var(--bg-surface)", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            {isNet
+                                ? <ArrowUpRight style={{ width: "14px", height: "14px", color: "var(--success)" }} />
+                                : <ArrowDownRight style={{ width: "14px", height: "14px", color: "var(--danger)" }} />
+                            }
+                        </div>
+                        <p className="section-label">Daily Net</p>
+                    </div>
+                    <p style={{ fontSize: "20px", fontWeight: 700, color: isNet ? "var(--success)" : "var(--danger)" }}>
+                        {isNet ? "+" : ""}₹{summary.balance.toLocaleString()}
+                    </p>
+                    <span className={isNet ? "badge-success" : "badge-danger"} style={{ marginTop: "6px" }}>
+                        {isNet ? "Surplus" : "Deficit"}
+                    </span>
                 </div>
             </div>
 
-            <div className="flex justify-end gap-3">
+            {/* ── Action Bar ── */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
+                <div>
+                    <p style={{ fontSize: "12px", color: "var(--text-secondary)" }}>{displayDate}</p>
+                </div>
                 <button
                     onClick={() => setIsModalOpen(true)}
-                    className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-2 shadow-lg shadow-orange-500/20 transition-all active:scale-95"
+                    className="gov-btn-primary"
                 >
-                    <Plus className="w-5 h-5" /> Log Transaction
+                    <Plus style={{ width: "14px", height: "14px" }} />
+                    Log Transaction
                 </button>
             </div>
 
-            <div className="relative min-h-[400px]">
+            {/* ── Daily Transaction Table ── */}
+            <div className="gov-panel" style={{ overflow: "hidden", minHeight: "320px" }}>
+                <div className="gov-panel-header">
+                    <h2 style={{ margin: 0, fontSize: "14px" }}>
+                        Transaction Log —{" "}
+                        {new Date(selectedDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                    </h2>
+                    <span className="badge-neutral">{items.length} Entries</span>
+                </div>
+
                 {loading ? (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center space-y-4">
-                        <Loader2 className="w-10 h-10 text-orange-500 animate-spin" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Loading Dispatch...</span>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 24px", gap: "12px" }}>
+                        <Loader2 style={{ width: "28px", height: "28px", color: "var(--brand)", animation: "spin 1s linear infinite" }} />
+                        <p className="section-label">Loading Transactions...</p>
                     </div>
                 ) : (
                     <DailySurvivalTable
                         items={items}
                         onView={(i: any) => { setActiveItem(i); setIsViewOpen(true); }}
                         onDelete={initiateDelete}
-                        onToggle={(id: string) => setItems(items.map(item => item._id === id ? { ...item, is_completed: !item.is_completed } : item))}
+                        onToggle={(id: string) =>
+                            setItems(items.map(item =>
+                                item._id === id ? { ...item, is_completed: !item.is_completed } : item
+                            ))
+                        }
                     />
                 )}
             </div>
 
-            <DailyBudgetModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={fetchDailyList} selectedDate={selectedDate} />
+            <DailyBudgetModal
+                isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}
+                onSave={fetchDailyList} selectedDate={selectedDate}
+            />
             <DailyViewModal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} item={activeItem} />
             <DeleteConfirmModal
-                isOpen={isDeleteOpen}
-                onClose={() => setIsDeleteOpen(false)}
-                onConfirm={handleConfirmDelete}
-                itemName={activeItem?.category}
+                isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)}
+                onConfirm={handleConfirmDelete} itemName={activeItem?.category}
             />
 
-        </div>
-    );
-}
-
-function DailyStatCard({ title, value, color }: any) {
-    return (
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-[1.8rem] border border-slate-200 dark:border-slate-800 transition-all hover:shadow-md">
-            <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-1">{title}</p>
-            <h4 className={`text-2xl font-black ${color}`}>₹{value.toLocaleString()}</h4>
+            <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
         </div>
     );
 }

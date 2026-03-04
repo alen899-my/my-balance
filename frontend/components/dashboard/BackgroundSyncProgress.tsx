@@ -1,23 +1,21 @@
 "use client";
+
 import { useEffect, useState } from "react";
-import { Zap, Loader2, CheckCircle2 } from "lucide-react";
+import { Loader2, CheckCircle2 } from "lucide-react";
 
 export default function BackgroundSyncProgress() {
   const [isVisible, setIsVisible] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
 
-  // Listen for a custom event triggered by your UploadForm
   useEffect(() => {
     const handleSyncStart = () => {
       setIsVisible(true);
       setIsComplete(false);
-      // Auto-hide after 2 minutes (typical for 700 pages) or manual refresh
       setTimeout(() => {
         setIsComplete(true);
         setTimeout(() => setIsVisible(false), 5000);
       }, 120000);
     };
-
     window.addEventListener("sync-started", handleSyncStart);
     return () => window.removeEventListener("sync-started", handleSyncStart);
   }, []);
@@ -25,47 +23,44 @@ export default function BackgroundSyncProgress() {
   if (!isVisible) return null;
 
   return (
-    <div className="w-full mb-6 animate-in slide-in-from-top-4 duration-500">
-      <div className={`relative overflow-hidden p-4 rounded-3xl border transition-all duration-500 ${isComplete
-          ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800"
-          : "bg-violet-50 border-violet-200 dark:bg-violet-900/20 dark:border-violet-800"
-        }`}>
-
-        {/* Animated Background Pulse */}
-        {!isComplete && (
-          <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/40 dark:via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
-        )}
-
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-xl ${isComplete ? "bg-emerald-500" : "bg-violet-600"} text-white shadow-lg`}>
-              {isComplete ? <CheckCircle2 className="w-4 h-4" /> : <Loader2 className="w-4 h-4 animate-spin" />}
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                {isComplete ? "Sync Finished" : "AI Processing Active"}
-              </p>
-              <h4 className="text-sm font-black text-slate-900 dark:text-white leading-none mt-1">
-                {isComplete ? "Records Updated" : "Parsing Large Statement..."}
-              </h4>
-            </div>
-          </div>
-
-          <div className="hidden sm:flex items-center gap-2">
-            <span className="text-[10px] font-bold text-violet-500 bg-violet-100 dark:bg-violet-900/50 px-2 py-1 rounded-lg">
-              Page-by-Page Indexing
-            </span>
-          </div>
+    <div
+      style={{
+        padding: "12px 16px",
+        background: isComplete ? "var(--success-bg)" : "var(--info-bg)",
+        border: `1px solid ${isComplete ? "#abefc6" : "#b9e6fe"}`,
+        borderRadius: "6px",
+        display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <div
+          style={{
+            width: "28px", height: "28px", borderRadius: "6px",
+            background: isComplete ? "var(--success)" : "var(--info)",
+            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+          }}
+        >
+          {isComplete
+            ? <CheckCircle2 style={{ width: "14px", height: "14px", color: "var(--bg-surface)" }} />
+            : <Loader2 style={{ width: "14px", height: "14px", color: "var(--bg-surface)", animation: "spin 1s linear infinite" }} />}
         </div>
-
-        {/* The Progress Bar Line */}
-        <div className="mt-4 h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-          <div
-            className={`h-full transition-all duration-1000 ease-out rounded-full ${isComplete ? "w-full bg-emerald-500" : "w-1/2 bg-violet-600 animate-[pulse_2s_infinite]"
-              }`}
-          />
+        <div>
+          <p className="section-label">{isComplete ? "Sync Complete" : "Processing"}</p>
+          <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>
+            {isComplete ? "Statement records updated successfully." : "Parsing and indexing statement pages..."}
+          </p>
         </div>
       </div>
+
+      {!isComplete && (
+        <span className="badge-info">Page-by-page indexing</span>
+      )}
+
+      {/* Progress bar */}
+      <div style={{ display: "none" }} />
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   );
 }

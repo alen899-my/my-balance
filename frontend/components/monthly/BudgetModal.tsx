@@ -1,166 +1,132 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
-import { X, Calculator, Plus, Trash2 } from "lucide-react";
+import { X, Plus, Trash2 } from "lucide-react";
 
 export default function BudgetModal({ isOpen, onClose, onSave }: any) {
   const [category, setCategory] = useState("");
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState<number>(0);
 
-  const [showCalculator, setShowCalculator] = useState(false);
+  const [showCalc, setShowCalc] = useState(false);
   const [calcRows, setCalcRows] = useState<{ label: string; value: string }[]>([
     { label: "Rate", value: "" },
-    { label: "Qty", value: "" }
+    { label: "Qty", value: "" },
   ]);
 
   useEffect(() => {
-    if (showCalculator) {
+    if (showCalc) {
       const hasValid = calcRows.some(r => r.value && !isNaN(parseFloat(r.value)));
-      if (!hasValid) {
-        setAmount(0);
-        return;
-      }
+      if (!hasValid) { setAmount(0); return; }
       const total = calcRows.reduce((acc, row) => {
-        const val = parseFloat(row.value);
-        if (!row.value || isNaN(val)) return acc;
-        return acc * val;
+        const v = parseFloat(row.value);
+        if (!row.value || isNaN(v)) return acc;
+        return acc * v;
       }, 1);
       setAmount(total);
     }
-  }, [calcRows, showCalculator]);
+  }, [calcRows, showCalc]);
 
   if (!isOpen) return null;
 
-  function addRow() { setCalcRows([...calcRows, { label: "", value: "" }]); }
-  function removeRow(index: number) {
-    if (calcRows.length <= 1) return;
-    setCalcRows(calcRows.filter((_, i) => i !== index));
-  }
-  function updateRow(index: number, field: "label" | "value", newValue: string) {
-    const newRows = [...calcRows];
-    newRows[index] = { ...newRows[index], [field]: newValue };
-    setCalcRows(newRows);
-  }
+  const addRow = () => setCalcRows([...calcRows, { label: "", value: "" }]);
+  const removeRow = (i: number) => calcRows.length > 1 && setCalcRows(calcRows.filter((_, idx) => idx !== i));
+  const updateRow = (i: number, field: "label" | "value", v: string) => {
+    const next = [...calcRows]; next[i] = { ...next[i], [field]: v }; setCalcRows(next);
+  };
 
   function handleSave() {
-    const payload: any = {
-      category,
-      title,
-      amount
-    };
-    if (showCalculator) {
-      payload.calculation_rows = calcRows.map(r => ({
-        label: r.label || "Factor",
-        value: parseFloat(r.value) || 0
-      }));
-    }
+    const payload: any = { category, title, amount };
+    if (showCalc) payload.calculation_rows = calcRows.map(r => ({ label: r.label || "Factor", value: parseFloat(r.value) || 0 }));
     onSave(payload);
     setCategory(""); setTitle(""); setAmount(0);
     setCalcRows([{ label: "Rate", value: "" }, { label: "Qty", value: "" }]);
-    setShowCalculator(false);
+    setShowCalc(false);
   }
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6">
-      <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-300" onClick={onClose} />
+    <div style={{ position: "fixed", inset: 0, zIndex: 150, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
+      <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)" }} onClick={onClose} />
+      <div className="gov-panel" style={{ position: "relative", width: "100%", maxWidth: "480px", maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
 
-      {/* MODERN SCROLLBAR STYLING:
-          Using 'scrollbar-thin' and custom colors.
-          The overflow container is refined to hide the 'clunky' default bars.
-      */}
-      <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-300">
-
-        {/* Fixed Header */}
-        <div className="flex justify-between items-center p-6 md:p-8 pb-0 shrink-0">
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "20px 20px 0" }}>
           <div>
-            <h2 className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white leading-none">Add Budget Item</h2>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Survival Inventory</p>
+            <p className="section-label" style={{ marginBottom: "2px" }}>Budget Register</p>
+            <h2 style={{ margin: 0, fontSize: "18px" }}>Add Budget Item</h2>
           </div>
-          <button onClick={onClose} className="p-2 bg-slate-50 dark:bg-slate-800 rounded-full text-slate-400 hover:text-rose-500 transition-colors">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} style={{ padding: "6px", background: "#161616", border: "1px solid var(--border-default)", borderRadius: "6px", cursor: "pointer", display: "flex", color: "var(--text-secondary)", flexShrink: 0 }}>
+            <X style={{ width: "16px", height: "16px" }} />
           </button>
         </div>
 
-        {/* Scrollable Content */}
-        <div className="p-6 md:p-8 pt-6 space-y-5 overflow-y-auto flex-1 mr-1 mb-1 rounded-[2rem]
-          [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-100 dark:[&::-webkit-scrollbar-thumb]:bg-slate-800 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-200 dark:hover:[&::-webkit-scrollbar-thumb]:bg-slate-700 transition-all">
+        {/* Scrollable content */}
+        <div style={{ padding: "16px 20px 20px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "14px" }}>
 
+          {/* Category */}
           <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-2">Category</label>
-            <input
-              type="text" placeholder="e.g. Groceries"
-              value={category}
-              className="w-full px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 mt-1 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 font-bold"
-              onChange={(e) => setCategory(e.target.value)}
-            />
+            <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)", display: "block", marginBottom: "6px" }}>Category</label>
+            <input type="text" placeholder="e.g. Groceries" value={category} onChange={e => setCategory(e.target.value)} className="gov-input" />
           </div>
 
+          {/* Description */}
           <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-2">Description</label>
-            <input
-              type="text" placeholder="e.g. Weekly Eggs"
-              value={title}
-              className="w-full px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 mt-1 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/20"
-              onChange={(e) => setTitle(e.target.value)}
-            />
+            <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)", display: "block", marginBottom: "6px" }}>Description</label>
+            <input type="text" placeholder="e.g. Weekly Eggs" value={title} onChange={e => setTitle(e.target.value)} className="gov-input" />
           </div>
 
-          <div className="pt-2">
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-2">Total Amount (₹)</label>
+          {/* Amount */}
+          <div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+              <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)" }}>Total Amount (₹)</label>
               <button
-                onClick={() => setShowCalculator(!showCalculator)}
-                className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-xl transition-all border ${showCalculator ? "bg-violet-600 text-white border-violet-600" : "bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700"}`}
+                onClick={() => setShowCalc(!showCalc)}
+                style={{
+                  fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em",
+                  padding: "4px 10px", border: "1px solid", borderRadius: "4px", cursor: "pointer",
+                  background: showCalc ? "var(--brand)" : "var(--bg-surface)",
+                  color: showCalc ? "var(--bg-surface)" : "var(--text-secondary)",
+                  borderColor: showCalc ? "var(--brand)" : "var(--border-default)",
+                  transition: "all 0.1s",
+                }}
               >
-                {showCalculator ? "Calculator Active" : "Multiplier"}
+                {showCalc ? "Calculator Active" : "Multiplier"}
               </button>
             </div>
 
-            {!showCalculator ? (
+            {!showCalc ? (
               <input
-                type="number" placeholder="0"
-                value={amount || ""}
-                className="w-full px-5 py-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 mt-1 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 text-2xl font-black transition-all"
-                onChange={(e) => setAmount(Number(e.target.value))}
+                type="number" placeholder="0" value={amount || ""}
+                onChange={e => setAmount(Number(e.target.value))}
+                className="gov-input"
+                style={{ fontSize: "22px", fontWeight: 700, height: "52px" }}
               />
             ) : (
-              <div className="space-y-3 p-5 bg-slate-50 dark:bg-slate-950/50 rounded-3xl border border-slate-200 dark:border-slate-800/50">
+              <div style={{ background: "#161616", border: "1px solid var(--border-default)", borderRadius: "6px", padding: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
                 {calcRows.map((row, i) => (
-                  <div key={i} className="flex gap-2 items-center">
-                    <input
-                      type="text" placeholder="Factor"
-                      value={row.label}
-                      className="flex-1 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-[11px] font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/20"
-                      onChange={(e) => updateRow(i, 'label', e.target.value)}
-                    />
-                    <span className="text-xs font-black text-slate-400">×</span>
-                    <input
-                      type="number" placeholder="0"
-                      value={row.value}
-                      className="w-24 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-black text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/20"
-                      onChange={(e) => updateRow(i, 'value', e.target.value)}
-                    />
-                    <button onClick={() => removeRow(i)} className="p-2 text-slate-400 hover:text-rose-500 transition-colors">
-                      <Trash2 className="w-4 h-4" />
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <input type="text" placeholder="Factor" value={row.label} onChange={e => updateRow(i, "label", e.target.value)} className="gov-input" style={{ flex: 1 }} />
+                    <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--text-muted)" }}>×</span>
+                    <input type="number" placeholder="0" value={row.value} onChange={e => updateRow(i, "value", e.target.value)} className="gov-input" style={{ width: "80px" }} />
+                    <button onClick={() => removeRow(i)} style={{ padding: "6px", background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", display: "flex" }}>
+                      <Trash2 style={{ width: "14px", height: "14px" }} />
                     </button>
                   </div>
                 ))}
-
-              
-
-                <div className="flex justify-between items-center pt-3 border-t border-slate-200 dark:border-slate-800 mt-2">
-                  <span className="text-[10px] font-black uppercase text-slate-500">Subtotal</span>
-                  <span className="text-2xl font-black text-violet-600 dark:text-violet-400 leading-none">₹{amount.toLocaleString()}</span>
+                <button onClick={addRow} style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--brand)", background: "none", border: "1px dashed var(--brand)", borderRadius: "4px", padding: "6px", cursor: "pointer" }}>
+                  + Add Row
+                </button>
+                <div style={{ display: "flex", justifyContent: "space-between", paddingTop: "8px", borderTop: "1px solid var(--border-default)" }}>
+                  <span className="section-label">Subtotal</span>
+                  <span style={{ fontSize: "18px", fontWeight: 700, color: "var(--brand)" }}>₹{amount.toLocaleString()}</span>
                 </div>
               </div>
             )}
           </div>
 
-          <button
-            onClick={handleSave}
-            className="w-full py-5 bg-violet-600 hover:bg-violet-700 text-white rounded-[1.8rem] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-xl shadow-violet-500/25 active:scale-[0.98] mt-4"
-          >
-            <Plus className="w-5 h-5" /> Add Requirement
+          {/* Submit */}
+          <button onClick={handleSave} className="gov-btn-primary" style={{ justifyContent: "center", padding: "12px", marginTop: "4px" }}>
+            <Plus style={{ width: "14px", height: "14px" }} /> Add to Register
           </button>
         </div>
       </div>

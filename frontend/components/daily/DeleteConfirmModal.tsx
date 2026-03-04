@@ -1,37 +1,30 @@
 "use client";
+
 import React from "react";
-import { Trash2, AlertTriangle, X } from "lucide-react";
+import { Trash2, AlertTriangle } from "lucide-react";
 
 export default function DeleteConfirmModal({ isOpen, onClose, onConfirm, itemName }: any) {
   if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300" onClick={onClose} />
-      <div className="relative w-full max-w-xs bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 p-8 shadow-2xl animate-in zoom-in-95 duration-200">
-        <div className="flex flex-col items-center text-center">
-          <div className="w-16 h-16 bg-rose-50 dark:bg-rose-900/20 rounded-3xl flex items-center justify-center mb-6 border border-rose-100 dark:border-rose-900/30">
-            <AlertTriangle className="w-8 h-8 text-rose-500" />
+    <div style={{ position: "fixed", inset: 0, zIndex: 250, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
+      <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)" }} onClick={onClose} />
+      <div className="gov-panel" style={{ position: "relative", width: "100%", maxWidth: "360px", padding: "24px" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: "12px" }}>
+          <div style={{ width: "48px", height: "48px", background: "var(--danger-bg)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #fda29b" }}>
+            <AlertTriangle style={{ width: "22px", height: "22px", color: "var(--danger)" }} />
           </div>
-          <h2 className="text-xl font-black tracking-tighter text-slate-900 dark:text-white leading-none">Delete Entry?</h2>
-          <p className="text-[11px] font-bold text-slate-500 mt-3 leading-relaxed">
-            Are you sure you want to remove <span className="text-slate-900 dark:text-white">"{itemName}"</span>? This action cannot be undone.
-          </p>
+          <div>
+            <h2 style={{ margin: "0 0 6px", fontSize: "16px" }}>Delete Entry</h2>
+            <p style={{ fontSize: "13px", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+              Remove <strong style={{ color: "var(--text-primary)" }}>"{itemName}"</strong>? This action cannot be undone.
+            </p>
+          </div>
         </div>
-
-        <div className="grid grid-cols-2 gap-3 mt-8">
-          <button 
-            onClick={onClose}
-            className="py-3.5 bg-slate-100 dark:bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-          >
-            Cancel
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "20px" }}>
+          <button onClick={onClose} className="gov-btn-secondary" style={{ justifyContent: "center", padding: "10px" }}>Cancel</button>
+          <button onClick={() => onConfirm()} className="gov-btn-danger" style={{ justifyContent: "center", padding: "10px" }}>
+            <Trash2 style={{ width: "13px", height: "13px" }} /> Delete
           </button>
-        <button 
-  onClick={() => onConfirm()} // Use an arrow function here
-  className="py-3.5 bg-rose-500 hover:bg-rose-600 text-white rounded-2xl text-[10px] font-black uppercase shadow-lg shadow-rose-500/20 transition-all flex items-center justify-center gap-2 active:scale-95"
->
-  <Trash2 className="w-4 h-4" /> Delete
-</button>
         </div>
       </div>
     </div>

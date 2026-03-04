@@ -1,40 +1,40 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Search, Bell, Menu, User, LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Bell, Menu, LogOut, ChevronDown, User2 } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
 import { authFetch } from "@/lib/authFetch";
+
+const routeLabels: Record<string, string> = {
+  "/dashboard": "Executive Summary",
+  "/statements": "Statements & Transactions",
+  "/daily": "Daily Tracking",
+  "/monthly": "Monthly Budget Planner",
+};
 
 export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [userName, setUserName] = useState("User");
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
-  // Load user data on mount with API fallback
   useEffect(() => {
     async function fetchUser() {
       const storedUser = localStorage.getItem("user");
       if (storedUser) {
         try {
           const user = JSON.parse(storedUser);
-          if (user.name) {
-            setUserName(user.name);
-            return; // Found in local storage, we're good
-          }
+          if (user.name) { setUserName(user.name); return; }
         } catch (e) { console.error("Parse error", e); }
       }
-
-      // Fallback: Fetch from API
       try {
         const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`);
         if (res.ok) {
           const user = await res.json();
           setUserName(user.name);
-          // Update local storage so next time it's faster
           localStorage.setItem("user", JSON.stringify(user));
         }
-      } catch (e) {
-        console.error("Failed to load user profile", e);
-      }
+      } catch (e) { console.error("Failed to load user profile", e); }
     }
     fetchUser();
   }, []);
@@ -45,58 +45,209 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
     router.push("/login");
   };
 
+  const currentLabel = routeLabels[pathname] ?? "Dashboard";
+
   return (
-    <header className="h-16 sticky top-0 z-30 w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6">
-      <div className="h-full flex items-center justify-between gap-4">
+    <header
+      style={{
+        height: "60px",
+        background: "var(--bg-header)",
+        borderBottom: "1px solid var(--border-default)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "0 20px",
+        position: "sticky",
+        top: 0,
+        zIndex: 30,
+        flexShrink: 0,
+        gap: "12px",
+      }}
+    >
+      {/* ── Left: hamburger + Breadcrumb ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
+        {/* Hamburger — always visible, toggles sidebar */}
+        <button
+          onClick={onMenuClick}
+          style={{
+            padding: "6px",
+            borderRadius: "6px",
+            border: "1px solid var(--border-default)",
+            background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)",
+            color: "var(--text-secondary)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            flexShrink: 0,
+          }}
+        >
+          <Menu style={{ width: "18px", height: "18px" }} />
+        </button>
 
-        {/* Left: Mobile Menu & Search */}
-        <div className="flex items-center gap-4 flex-1">
-          <button
-            onClick={onMenuClick}
-            className="p-2 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg lg:hidden transition-colors"
+        {/* Page breadcrumb */}
+        <div style={{ minWidth: 0 }}>
+          <p
+            style={{
+              fontSize: "10px", fontWeight: 500,
+              textTransform: "uppercase", letterSpacing: "0.1em",
+              color: "var(--text-muted)", lineHeight: 1,
+            }}
           >
-            <Menu className="w-6 h-6 text-slate-600 dark:text-slate-300" />
-          </button>
-
-          <div className="relative max-w-xs w-full hidden md:block group">
-
-          </div>
-        </div>
-
-        {/* Right: User Actions */}
-        <div className="flex items-center gap-2 sm:gap-4">
-          {/* Notifications */}
-          <button className="p-2 text-slate-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-xl relative group transition-colors">
-            <Bell className="w-5 h-5 group-hover:text-violet-600 dark:group-hover:text-violet-400" />
-            <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-slate-900"></span>
-          </button>
-
-          <div className="h-8 w-px bg-slate-200 dark:bg-slate-800 mx-1 hidden sm:block"></div>
-
-          {/* Profile Section */}
-          <div className="flex items-center gap-3">
-            <div className="text-right hidden sm:block">
-              <p className="text-xs font-bold text-slate-700 dark:text-slate-200 leading-none">
-                {userName}
-              </p>
-              <p className="text-[10px] text-violet-500 font-bold mt-1 uppercase tracking-tighter">Premium Account</p>
-            </div>
-
-            <div className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center text-white shadow-lg shadow-violet-500/30">
-              <User className="w-5 h-5" />
-            </div>
-
-            {/* Logout Button */}
-            <button
-              onClick={handleLogout}
-              className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl transition-all group"
-              title="Logout"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
-          </div>
+            Finance System
+          </p>
+          <h1
+            style={{
+              fontSize: "14px", fontWeight: 600,
+              color: "var(--text-primary)", lineHeight: 1.3,
+              marginTop: "2px",
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            {currentLabel}
+          </h1>
         </div>
       </div>
+
+      {/* ── Right: Actions ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+
+        {/* Notification Bell */}
+        <button
+          style={{
+            position: "relative",
+            padding: "7px",
+            borderRadius: "6px",
+            border: "1px solid var(--border-default)",
+            background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)",
+            color: "var(--text-secondary)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+          }}
+          title="Notifications"
+        >
+          <Bell style={{ width: "16px", height: "16px" }} />
+          <span
+            style={{
+              position: "absolute", top: "7px", right: "7px",
+              width: "6px", height: "6px",
+              background: "var(--danger)",
+              borderRadius: "50%",
+              border: "1.5px solid var(--bg-header)",
+            }}
+          />
+        </button>
+
+        {/* Divider */}
+        <div style={{ width: "1px", height: "24px", background: "var(--border-default)" }} />
+
+        {/* User Profile Dropdown */}
+        <div style={{ position: "relative" }}>
+          <button
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "5px 10px 5px 5px",
+              borderRadius: "6px",
+              border: "1px solid var(--border-default)",
+              background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)",
+              cursor: "pointer",
+              transition: "background 0.12s",
+            }}
+            className="header-user-btn"
+          >
+            <div
+              style={{
+                width: "28px", height: "28px",
+                borderRadius: "50%",
+                background: "#0070f3",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <User2 style={{ width: "14px", height: "14px", color: "var(--bg-surface)" }} />
+            </div>
+            <div style={{ textAlign: "left" }}>
+              <p style={{ fontSize: "12px", fontWeight: 500, color: "var(--text-primary)", lineHeight: 1.2, letterSpacing: "-0.01em" }}>
+                {userName}
+              </p>
+              <p style={{ fontSize: "10px", color: "var(--text-muted)", lineHeight: 1.2 }}>
+                Account
+              </p>
+            </div>
+            <ChevronDown
+              style={{
+                width: "13px", height: "13px",
+                color: "var(--text-muted)",
+                transform: showUserMenu ? "rotate(180deg)" : "rotate(0deg)",
+                transition: "transform 0.2s",
+              }}
+            />
+          </button>
+
+          {/* Dropdown */}
+          {showUserMenu && (
+            <>
+              <div
+                style={{ position: "fixed", inset: 0, zIndex: 49 }}
+                onClick={() => setShowUserMenu(false)}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 6px)",
+                  right: 0,
+                  background: "#111",
+                  border: "1px solid var(--border-default)",
+                  borderRadius: "8px",
+                  boxShadow: "var(--shadow-dropdown)",
+                  minWidth: "180px",
+                  zIndex: 50,
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    padding: "10px 14px",
+                    borderBottom: "1px solid var(--border-light)",
+                  }}
+                >
+                  <p style={{ fontSize: "12px", fontWeight: 500, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
+                    {userName}
+                  </p>
+                  <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>Account Holder</p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  style={{
+                    width: "100%",
+                    display: "flex", alignItems: "center", gap: "8px",
+                    padding: "10px 14px",
+                    background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)", border: "none",
+                    cursor: "pointer",
+                    fontSize: "13px", fontWeight: 500,
+                    color: "var(--danger)",
+                    transition: "background 0.1s",
+                    textAlign: "left",
+                  }}
+                  className="logout-btn-hover"
+                >
+                  <LogOut style={{ width: "14px", height: "14px" }} />
+                  Sign Out
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      <style>{`
+        .header-user-btn:hover { background: #1a1a1a !important; }
+        .logout-btn-hover:hover { background: var(--danger-bg) !important; }
+      `}</style>
     </header>
   );
 }

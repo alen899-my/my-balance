@@ -78,23 +78,29 @@ async def get_insights(
                     {"$limit": 500}
                 ],
                 "daily_trend": [
-                    {"$group": {"_id": "$date", "daily_spend": {"$sum": {"$ifNull": ["$debit", 0]}}}},
-                    {"$group": {"_id": None, "avg_daily": {"$avg": "$daily_spend"}}}
+                    {"$group": {
+                        "_id": { "$dateToString": {"format": "%Y-%m-%d", "date": "$date"} }, 
+                        "daily_spend": {"$sum": {"$ifNull": ["$debit", 0]}}
+                    }},
+                    {"$sort": {"_id": 1}}
                 ],
                 "monthly_trend": [
                     {"$group": {
                         "_id": { "month": {"$month": "$date"}, "year": {"$year": "$date"} },
-                        "total": {"$sum": {"$ifNull": ["$debit", 0]}}
+                        "total": {"$sum": {"$ifNull": ["$debit", 0]}},
+                        "income": {"$sum": {"$ifNull": ["$credit", 0]}}
                     }},
                     {"$sort": {"_id.year": 1, "_id.month": 1}}
                 ],
+                "day_of_week_trend": [
+                    {"$group": {
+                        "_id": {"$dayOfWeek": "$date"},
+                        "expense": {"$sum": {"$ifNull": ["$debit", 0]}}
+                    }},
+                    {"$sort": {"_id": 1}}
+                ],
                 "category_spending": [
                     {"$group": {"_id": {"$ifNull": ["$category", "Uncategorized"]}, "total": {"$sum": {"$ifNull": ["$debit", 0]}}}}
-                ],
-                "latest_balance": [
-                    {"$sort": {"date": -1, "_id": -1}},
-                    {"$limit": 1},
-                    {"$project": {"balance": 1}}
                 ]
             }
         }
@@ -104,6 +110,16 @@ async def get_insights(
     cursor = collection.aggregate(pipeline)
     docs = await cursor.to_list(length=1)
     res = docs[0] if docs else {}
+    
+    # Calculate actual true balance (sum of latest balance per bank)
+    pipeline_bal = [
+        {"$match": match_stage},
+        {"$sort": {"date": -1, "_id": -1}},
+        {"$group": {"_id": "$bank", "balance": {"$first": "$balance"}}}
+    ]
+    cursor_bal = collection.aggregate(pipeline_bal)
+    bals = await cursor_bal.to_list(length=100)
+    actual_balance = sum((b.get("balance") or 0) for b in bals)
 
     # --- MERGING LOGIC ---
     merged_leaderboard = {}
@@ -126,19 +142,20 @@ async def get_insights(
     leaderboard = sorted(merged_leaderboard.values(), key=lambda x: x["spent"], reverse=True)
 
     # 3. Safe Extraction (Prevents IndexError)
-    latest_bal_list = res.get("latest_balance", [])
-    actual_balance = latest_bal_list[0].get("balance", 0) if latest_bal_list else 0
-    
     totals_list = res.get("totals", [])
     summary_data = totals_list[0] if totals_list else {}
     
     daily_trend_list = res.get("daily_trend", [])
-    daily_avg = daily_trend_list[0].get("avg_daily", 0) if daily_trend_list else 0
+    if daily_trend_list:
+        daily_avg = sum(d.get("daily_spend", 0) for d in daily_trend_list) / len(daily_trend_list)
+    else:
+        daily_avg = 0
 
     income = summary_data.get("income", 0) or 0
     expense = summary_data.get("expense", 0) or 0
     avg_txn = summary_data.get("avg_txn", 0) or 0
 
+    day_mapping = {1: "Sun", 2: "Mon", 3: "Tue", 4: "Wed", 5: "Thu", 6: "Fri", 7: "Sat"}
     return {
         "summary": {
             "income": income,
@@ -147,12 +164,22 @@ async def get_insights(
             "savings_rate": round(((income - expense) / income * 100), 2) if income > 0 else 0,
             "total_transactions": summary_data.get("count", 0) or 0,
             "daily_avg": round(daily_avg, 2),
-            "avg_transaction": round(avg_txn, 2)
+            "avg_transaction": round(avg_txn, 2),
+            "daily_trend": daily_trend_list
         },
         "leaderboard": leaderboard,
         "monthly_data": [
-            {"month": f"{m['_id']['month']}/{m['_id']['year']}", "amount": m["total"]} 
+            {
+                "month": f"{m['_id']['month']}/{m['_id']['year']}", 
+                "amount": m["total"],
+                "expense": m["total"],
+                "income": m.get("income", 0)
+            } 
             for m in res.get("monthly_trend", [])
+        ],
+        "day_of_week_data": [
+            {"day": day_mapping.get(m["_id"], "Unknown"), "amount": m["expense"]}
+            for m in res.get("day_of_week_trend", [])
         ],
         "category_data": sorted([
             {"category": item["_id"], "amount": item["total"]}
@@ -162,91 +189,120 @@ async def get_insights(
     }
 
 @router.get("/insights/advanced")
-async def get_advanced_insights(user = Depends(get_current_user)):
-    user_id = str(user["user_id"])
-    now = datetime.now()
-    first_of_month = datetime(now.year, now.month, 1)
+async def get_advanced_insights(
+    user = Depends(get_current_user),
     bank: Optional[str] = Query(None)
-    # 1. Get Latest Balance
-    latest_txn = await Transaction.find(Transaction.user_id == user_id).sort("-date", "-_id").limit(1).to_list()
-    current_balance = latest_txn[0].balance if latest_txn else 0
+):
+    try:
+        user_id = str(user["user_id"])
+        now = datetime.now()
+        first_of_month = datetime(now.year, now.month, 1)
+        
+        match_stage = {"user_id": user_id}
+        if bank and bank != "All Banks":
+            match_stage["bank"] = {"$regex": bank, "$options": "i"}
+            
+        col = Transaction.get_pymongo_collection()
 
-    # 2. Comprehensive Aggregation Pipeline
-    pipeline = [
-        {"$match": {"user_id": user_id}},
-        {"$facet": {
-            "current_month_stats": [
-                {"$match": {"date": {"$gte": first_of_month}}},
-                {"$group": {
-                    "_id": None,
-                    "expense": {"$sum": "$debit"},
-                    "income": {"$sum": "$credit"},
-                    "weekend_expense": {
-                        "$sum": {"$cond": [{"$in": [{"$dayOfWeek": "$date"}, [1, 7]]}, "$debit", 0]}
-                    }
-                }}
-            ],
-            "historic_stats": [
-                {"$match": {"debit": {"$gt": 0}}},
-                {"$group": {
-                    "_id": {"year": {"$year": "$date"}, "month": {"$month": "$date"}},
-                    "monthly_total": {"$sum": "$debit"}
-                }},
-                {"$sort": {"_id.year": 1, "_id.month": 1}},
-                {"$group": {
-                    "_id": None,
-                    "avg_monthly_burn": {"$avg": "$monthly_total"},
-                    "history": {"$push": "$monthly_total"}
-                }}
-            ]
-        }}
-    ]
+        pipeline_bal = [
+            {"$match": match_stage},
+            {"$sort": {"date": -1, "_id": -1}},
+            {"$group": {"_id": "$bank", "balance": {"$first": "$balance"}}}
+        ]
+        cursor_bal = col.aggregate(pipeline_bal)
+        bals = await cursor_bal.to_list(length=100)
+        current_balance = sum((b.get("balance") or 0) for b in bals)
 
-    col = Transaction.get_pymongo_collection()
-    cursor = col.aggregate(pipeline)
-    res = await cursor.to_list(length=1)
-    
-    data = res[0] if res else {}
+        pipeline = [
+            {"$match": match_stage},
+            {"$facet": {
+                "current_month_stats": [
+                    {"$match": {"date": {"$gte": first_of_month}}},
+                    {"$group": {
+                        "_id": None,
+                        "expense": {"$sum": "$debit"},
+                        "income": {"$sum": "$credit"},
+                        "weekend_expense": {
+                            "$sum": {"$cond": [{"$in": [{"$dayOfWeek": "$date"}, [1, 7]]}, "$debit", 0]}
+                        }
+                    }}
+                ],
+                "historic_stats": [
+                    {"$match": {"debit": {"$gt": 0}, "date": {"$lt": first_of_month}}},
+                    {"$group": {
+                        "_id": {"year": {"$year": "$date"}, "month": {"$month": "$date"}},
+                        "monthly_total": {"$sum": "$debit"}
+                    }},
+                    {"$sort": {"_id.year": 1, "_id.month": 1}},
+                    {"$group": {
+                        "_id": None,
+                        "avg_monthly_burn": {"$avg": "$monthly_total"},
+                        "history": {"$push": "$monthly_total"}
+                    }}
+                ]
+            }}
+        ]
 
-    # Extract results safely
-    cur_stats = data.get("current_month_stats", [{}])[0] if data.get("current_month_stats") else {"expense": 0, "income": 0, "weekend_expense": 0}
-    hist_stats = data.get("historic_stats", [{}])[0] if data.get("historic_stats") else {"avg_monthly_burn": 0, "history": []}
+        cursor = col.aggregate(pipeline)
+        res = await cursor.to_list(length=1)
+        
+        data = res[0] if res else {}
 
-    # Calculations
-    monthly_burn = cur_stats.get("expense") or 0
-    monthly_income = cur_stats.get("income") or 0
-    avg_burn = hist_stats.get("avg_monthly_burn") or (monthly_burn if monthly_burn > 0 else 1)
-    
-    # Savings Rate
-    savings_rate = round(((monthly_income - monthly_burn) / monthly_income * 100), 1) if monthly_income > 0 else 0
+        cur_stats = data.get("current_month_stats", [{}])[0] if data.get("current_month_stats") else {"expense": 0, "income": 0, "weekend_expense": 0}
+        hist_stats = data.get("historic_stats", [{}])[0] if data.get("historic_stats") else {"avg_monthly_burn": 0, "history": []}
 
-    # Lifestyle Inflation (Current month vs average of previous months)
-    history = hist_stats.get("history", [])
-    lifestyle_inflation = 0
-    if len(history) >= 2:
-        prev_month = history[-2]
-        if prev_month > 0:
-            lifestyle_inflation = round(((monthly_burn - prev_month) / prev_month) * 100, 1)
+        monthly_burn = cur_stats.get("expense") or 0
+        monthly_income = cur_stats.get("income") or 0
+        avg_burn = hist_stats.get("avg_monthly_burn") or (monthly_burn if monthly_burn > 0 else 1)
+        
+        history = hist_stats.get("history", [])
+        
+        # Use last completed month for variance/inflation to prevent mid-month skew
+        last_full_month_burn = history[-1] if len(history) >= 1 else monthly_burn
+        
+        # Savings Rate uses historical average income if current month is too young, or defaults
+        savings_rate = 0
+        if monthly_income > 0:
+            savings_rate = round(((monthly_income - monthly_burn) / monthly_income * 100), 1)
+        
+        lifestyle_inflation = 0
+        if len(history) >= 2:
+            last_month = history[-1]
+            prev_month = history[-2]
+            if prev_month > 0:
+                lifestyle_inflation = round(((last_month - prev_month) / prev_month) * 100, 1)
 
-    # Burn Variance (Current month vs Historical Average)
-    burn_variance = round(((monthly_burn - avg_burn) / avg_burn) * 100, 1) if avg_burn > 0 else 0
+        burn_variance = 0
+        if avg_burn > 0:
+            burn_variance = round(((last_full_month_burn - avg_burn) / avg_burn) * 100, 1)
 
-    # Weekend Intensity
-    weekend_intensity = round((cur_stats.get("weekend_expense", 0) / monthly_burn * 100), 1) if monthly_burn > 0 else 0
+        weekend_intensity = round((cur_stats.get("weekend_expense", 0) / (monthly_burn or 1) * 100), 1)
 
-    # Prediction Logic
-    days_passed = now.day
-    days_in_month = 30 # Simplified
-    daily_burn_avg = avg_burn / days_in_month
-    predicted_end = current_balance - (daily_burn_avg * (days_in_month - days_passed))
+        days_passed = now.day
+        days_in_month = 30 # Simplified
+        daily_burn_avg = avg_burn / days_in_month
+        predicted_end = current_balance - (daily_burn_avg * (days_in_month - days_passed))
 
-    return {
-        "savings_rate": savings_rate,
-        "safety_net_score": round(current_balance / avg_burn, 1) if avg_burn > 0 else 0,
-        "lifestyle_inflation": lifestyle_inflation,
-        "burn_variance": burn_variance,
-        "weekend_intensity": weekend_intensity,
-        "recurring_total": round(monthly_burn * 0.4, 2), # Heuristic
-        "payday_velocity": "High" if (monthly_burn > avg_burn * 0.5 and days_passed < 10) else "Normal",
-        "predicted_end_balance": max(0, round(predicted_end, 2))
-    }
+        return {
+            "savings_rate": savings_rate,
+            "safety_net_score": round(current_balance / avg_burn, 1) if avg_burn > 0 else 0,
+            "lifestyle_inflation": lifestyle_inflation,
+            "burn_variance": burn_variance,
+            "weekend_intensity": weekend_intensity,
+            "recurring_total": round(last_full_month_burn * 0.4, 2), # Heuristic based on full month
+            "payday_velocity": "High" if (monthly_burn > avg_burn * 0.5 and days_passed < 10) else "Normal",
+            "predicted_end_balance": max(0, round(predicted_end, 2))
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "error_traceback": traceback.format_exc(),
+            "savings_rate": 0,
+            "safety_net_score": 0,
+            "lifestyle_inflation": 0,
+            "burn_variance": 0,
+            "weekend_intensity": 0,
+            "recurring_total": 0,
+            "payday_velocity": "Error",
+            "predicted_end_balance": 0
+        }

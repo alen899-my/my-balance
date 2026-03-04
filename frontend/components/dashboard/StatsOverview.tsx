@@ -2,12 +2,12 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { authFetch } from "@/lib/authFetch";
-import { TrendingDown, Wallet, Trophy, Zap, Target, Repeat } from "lucide-react";
+import { TrendingDown, Wallet, Trophy, Activity, Target, Repeat } from "lucide-react";
 
 interface StatsOverviewProps {
   startDate?: Date;
   endDate?: Date;
-  selectedBank?: string; // 1. Added Prop
+  selectedBank?: string;
 }
 
 export default function StatsOverview({ startDate, endDate, selectedBank }: StatsOverviewProps) {
@@ -17,26 +17,19 @@ export default function StatsOverview({ startDate, endDate, selectedBank }: Stat
 
   useEffect(() => {
     async function loadStats() {
-      setLoading(true); // Reset loading state when bank changes
+      setLoading(true);
       try {
         const params = new URLSearchParams();
         if (startDate) params.append("start_date", startDate.toISOString());
         if (endDate) params.append("end_date", endDate.toISOString());
-        
-        // 2. Pass Bank to the API
-        if (selectedBank && selectedBank !== "All Banks") {
-          params.append("bank", selectedBank);
-        }
+        if (selectedBank && selectedBank !== "All Banks") params.append("bank", selectedBank);
 
         const [resData, resInsights] = await Promise.all([
-          // Passing params to transactions as well ensures the "Records in View" count is accurate
           authFetch(`${process.env.NEXT_PUBLIC_API_URL}/transactions?limit=1&${params.toString()}`),
-          authFetch(`${process.env.NEXT_PUBLIC_API_URL}/insights?${params.toString()}`)
+          authFetch(`${process.env.NEXT_PUBLIC_API_URL}/insights?${params.toString()}`),
         ]);
-
         const jsonD = await resData.json();
         const jsonI = await resInsights.json();
-        
         setData(jsonD.data || []);
         setSummary(jsonI);
       } catch (err) {
@@ -46,67 +39,68 @@ export default function StatsOverview({ startDate, endDate, selectedBank }: Stat
       }
     }
     loadStats();
-    // 3. Added selectedBank to dependency array
-  }, [startDate, endDate, selectedBank]); 
+  }, [startDate, endDate, selectedBank]);
 
   const cards = useMemo(() => {
     const s = summary?.summary;
     const leaderboard = summary?.leaderboard || [];
-    
-    // Find the first payee with actual spending for the "Top Payee" card
     const topPayee = leaderboard[0];
-
     return [
-      {
-        label: "Balance",
-        value: `₹${(s?.balance || 0).toLocaleString()}`,
-        icon: Wallet, color: "text-blue-600"
-      },
-      {
-        label: "Expense",
-        value: `₹${(s?.expense || 0).toLocaleString()}`,
-        icon: TrendingDown, color: "text-red-500"
-      },
-      {
-        label: "Top Payee",
-        value: topPayee?.name || "No Data",
-        icon: Trophy, color: "text-amber-500"
-      },
-      {
-        label: "Daily Avg",
-        value: `₹${(s?.daily_avg || 0).toLocaleString()}`,
-        icon: Zap, color: "text-purple-500"
-      },
-      {
-        label: "Savings",
-        value: `${s?.savings_rate || 0}%`,
-        icon: Target, color: "text-emerald-500"
-      },
-      {
-        label: "Txns",
-        value: s?.total_transactions || 0,
-        icon: Repeat, color: "text-slate-500"
-      },
+      { label: "Net Balance", value: `₹${(s?.balance || 0).toLocaleString()}`, icon: Wallet, color: "var(--brand)", border: "#bfcfef", bg: "var(--brand-light)", title: "Sum of actual balances across all filtered bank accounts." },
+      { label: "Total Expense", value: `₹${(s?.expense || 0).toLocaleString()}`, icon: TrendingDown, color: "var(--danger)", border: "#fda29b", bg: "var(--danger-bg)", title: "Sum of all debit transactions (money spent) in this period." },
+      { label: "Top Payee", value: topPayee?.name || "N/A", icon: Trophy, color: "var(--warning)", border: "#fedf89", bg: "var(--warning-bg)", title: "The merchant or individual you sent the most money to this period." },
+      { label: "Daily Average", value: `₹${(s?.daily_avg || 0).toLocaleString()}`, icon: Activity, color: "#7c3aed", border: "#ddd6fe", bg: "#f5f3ff", title: "Average amount of money spent per day." },
+      { label: "Savings Rate", value: `${s?.savings_rate || 0}%`, icon: Target, color: "var(--success)", border: "#abefc6", bg: "var(--success-bg)", title: "Percentage of total income that was not spent." },
+      { label: "Transactions", value: (s?.total_transactions || 0).toString(), icon: Repeat, color: "var(--info)", border: "#b9e6fe", bg: "var(--info-bg)", title: "Total number of combined transactions in this period." },
     ];
   }, [data, summary]);
 
-  if (loading) return (
-    <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
-      {[...Array(6)].map((_, i) => (
-        <div key={i} className="h-24 bg-white dark:bg-slate-900 animate-pulse rounded-2xl border border-slate-200 dark:border-slate-800" />
-      ))}
-    </div>
-  );
+  if (loading) {
+    return (
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "12px" }}>
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="skeleton" style={{ height: "88px" }} />
+        ))}
+      </div>
+    );
+  }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "12px" }}>
       {cards.map((card, i) => (
-        <div key={i} className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
-          <card.icon className={`w-5 h-5 ${card.color} mb-2`} />
-          <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">{card.label}</p>
-          <h3 className="text-lg font-black text-slate-900 dark:text-white truncate" title={card.value.toString()}>
+        <div
+          key={i}
+          className="gov-kpi-card"
+          style={{ borderLeft: `3px solid ${card.border}` }}
+          title={card.title}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+            <div
+              style={{
+                width: "28px", height: "28px",
+                background: card.bg,
+                borderRadius: "6px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <card.icon style={{ width: "14px", height: "14px", color: card.color }} />
+            </div>
+            <p className="section-label">{card.label}</p>
+          </div>
+          <p
+            style={{
+              fontSize: "18px",
+              fontWeight: 700,
+              color: "var(--text-primary)",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+            title={card.value.toString()}
+          >
             {card.value}
-          </h3>
+          </p>
         </div>
       ))}
     </div>

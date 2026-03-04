@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { User, Mail, Phone, Lock, ArrowRight, ShieldCheck } from "lucide-react";
+import { User, Mail, Phone, Lock, ArrowRight } from "lucide-react";
 
 export default function Signup() {
   const router = useRouter();
@@ -49,119 +49,146 @@ export default function Signup() {
   }
 
   return (
-    <div className="w-full max-w-md space-y-8 bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-violet-500/5">
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-violet-600 mb-4 shadow-lg shadow-violet-500/30">
-          <ShieldCheck className="text-white w-8 h-8" />
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+      <div className="gov-panel" style={{ width: "100%", maxWidth: "480px", padding: "40px 32px", display: "flex", flexDirection: "column", gap: "24px" }}>
+
+        {/* Brand Logo & Header */}
+        <div style={{ textAlign: "center", marginBottom: "8px" }}>
+          <p style={{
+            color: "var(--text-primary)",
+            fontWeight: 800,
+            fontSize: "28px",
+            lineHeight: 1.2,
+            letterSpacing: "-0.04em",
+            fontFamily: "var(--font-geist-sans), sans-serif",
+            background: "linear-gradient(to right, #cfd8dc, #ffffff)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            marginBottom: "16px"
+          }}>
+            my<span style={{ color: "var(--brand)", WebkitTextFillColor: "initial" }}>balance</span>
+          </p>
+          <h2 style={{ fontSize: "20px", fontWeight: 600, color: "var(--text-primary)", marginBottom: "8px", letterSpacing: "-0.02em" }}>
+            Secure Registration
+          </h2>
+          <p style={{ fontSize: "13px", color: "var(--text-secondary)" }}>
+            Join thousands of users managing their assets safely.
+          </p>
         </div>
-        <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Secure Registration
-        </h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          Join thousands of users managing their assets safely.
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          {/* Name Field */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
+              Full Name
+            </label>
+            <div style={{ position: "relative" }}>
+              <User style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", width: "16px", height: "16px", color: "var(--text-muted)" }} />
+              <input
+                name="name"
+                placeholder="John Doe"
+                onChange={update}
+                className="gov-input"
+                style={{ width: "100%", paddingLeft: "36px" }}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Email Field */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
+                Email Address
+              </label>
+              <div style={{ position: "relative" }}>
+                <Mail style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", width: "16px", height: "16px", color: "var(--text-muted)" }} />
+                <input
+                  name="email"
+                  type="email"
+                  placeholder="name@example.com"
+                  onChange={update}
+                  className="gov-input"
+                  style={{ width: "100%", paddingLeft: "36px" }}
+                />
+              </div>
+            </div>
+
+            {/* Phone Field */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
+                Phone Number
+              </label>
+              <div style={{ position: "relative" }}>
+                <Phone style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", width: "16px", height: "16px", color: "var(--text-muted)" }} />
+                <input
+                  name="phone"
+                  placeholder="+1 (555) 000-0000"
+                  onChange={update}
+                  className="gov-input"
+                  style={{ width: "100%", paddingLeft: "36px" }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Password Fields */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
+                Password
+              </label>
+              <div style={{ position: "relative" }}>
+                <Lock style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", width: "16px", height: "16px", color: "var(--text-muted)" }} />
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="••••••••"
+                  onChange={update}
+                  className="gov-input"
+                  style={{ width: "100%", paddingLeft: "36px" }}
+                />
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
+                Confirm
+              </label>
+              <div style={{ position: "relative" }}>
+                <Lock style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", width: "16px", height: "16px", color: "var(--text-muted)" }} />
+                <input
+                  type="password"
+                  name="confirm_password"
+                  placeholder="••••••••"
+                  onChange={update}
+                  className="gov-input"
+                  style={{ width: "100%", paddingLeft: "36px" }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={handleSignup}
+          disabled={isLoading}
+          className="gov-btn-primary"
+          style={{ width: "100%", justifyContent: "center", padding: "10px", marginTop: "8px" }}
+        >
+          {isLoading ? "Creating account..." : (
+            <>
+              Get Started
+              <ArrowRight style={{ width: "16px", height: "16px" }} />
+            </>
+          )}
+        </button>
+
+        <p style={{ textAlign: "center", fontSize: "13px", color: "var(--text-secondary)", marginTop: "8px" }}>
+          Already have an account?{" "}
+          <Link href="/login" style={{ color: "var(--brand)", textDecoration: "none", fontWeight: 500 }}>
+            Sign in
+          </Link>
         </p>
       </div>
-
-      <div className="space-y-4 mt-8">
-        {/* Name Field */}
-        <div className="space-y-1">
-          <label className="text-xs font-bold uppercase tracking-widest text-slate-400 ml-1">Full Name</label>
-          <div className="relative group">
-            <User className="absolute left-3 top-3.5 h-5 w-5 text-slate-400 group-focus-within:text-violet-500 transition-colors" />
-            <input
-              name="name"
-              placeholder="John Doe"
-              onChange={update}
-              className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all text-slate-900 dark:text-white"
-            />
-          </div>
-        </div>
-
-        {/* Email Field */}
-        <div className="space-y-1">
-          <label className="text-xs font-bold uppercase tracking-widest text-slate-400 ml-1">Email Address</label>
-          <div className="relative group">
-            <Mail className="absolute left-3 top-3.5 h-5 w-5 text-slate-400 group-focus-within:text-violet-500 transition-colors" />
-            <input
-              name="email"
-              type="email"
-              placeholder="name@example.com"
-              onChange={update}
-              className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all text-slate-900 dark:text-white"
-            />
-          </div>
-        </div>
-
-        {/* Phone Field */}
-        <div className="space-y-1">
-          <label className="text-xs font-bold uppercase tracking-widest text-slate-400 ml-1">Phone Number</label>
-          <div className="relative group">
-            <Phone className="absolute left-3 top-3.5 h-5 w-5 text-slate-400 group-focus-within:text-violet-500 transition-colors" />
-            <input
-              name="phone"
-              placeholder="+1 (555) 000-0000"
-              onChange={update}
-              className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all text-slate-900 dark:text-white"
-            />
-          </div>
-        </div>
-
-        {/* Password Fields */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <label className="text-xs font-bold uppercase tracking-widest text-slate-400 ml-1">Password</label>
-            <div className="relative group">
-              <Lock className="absolute left-3 top-3.5 h-5 w-5 text-slate-400 group-focus-within:text-violet-500 transition-colors" />
-              <input
-                type="password"
-                name="password"
-                placeholder="••••••••"
-                onChange={update}
-                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all text-slate-900 dark:text-white text-sm"
-              />
-            </div>
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-bold uppercase tracking-widest text-slate-400 ml-1">Confirm</label>
-            <div className="relative group">
-              <Lock className="absolute left-3 top-3.5 h-5 w-5 text-slate-400 group-focus-within:text-violet-500 transition-colors" />
-              <input
-                type="password"
-                name="confirm_password"
-                placeholder="••••••••"
-                onChange={update}
-                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all text-slate-900 dark:text-white text-sm"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <button
-        onClick={handleSignup}
-        disabled={isLoading}
-        className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-violet-600 text-white font-bold rounded-2xl hover:bg-violet-700 active:scale-[0.98] transition-all shadow-lg shadow-violet-500/25 disabled:opacity-50 disabled:cursor-not-allowed mt-8"
-      >
-        {isLoading ? (
-          <span className="flex items-center gap-2">
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            Creating account...
-          </span>
-        ) : (
-          <>
-            Get Started
-            <ArrowRight className="w-5 h-5" />
-          </>
-        )}
-      </button>
-
-      <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
-        Already have an account?{" "}
-        <Link href="/login" className="text-violet-600 dark:text-violet-400 hover:underline font-bold">
-          Sign in
-        </Link>
-      </p>
     </div>
   );
 }

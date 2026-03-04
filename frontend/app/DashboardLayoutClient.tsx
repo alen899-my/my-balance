@@ -9,16 +9,28 @@ export default function DashboardLayoutClient({
 }: {
     children: React.ReactNode;
 }) {
+    // Sidebar closed by default — hamburger opens/closes on all screen sizes
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     return (
-        <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
+        <div style={{ display: "flex", minHeight: "100vh", background: "var(--bg-page)" }}>
+
+            {/* Sidebar — always fixed overlay, never shifts content */}
             <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
 
-            <div className="flex-1 flex flex-col min-w-0">
-                <Header onMenuClick={() => setIsSidebarOpen(true)} />
-                <main className="p-4 sm:p-6 lg:p-8 flex-1">
-                    <div className="max-w-7xl mx-auto">
+            {/* Main content — never shifts, sidebar overlays on top */}
+            <div
+                style={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    minWidth: 0,
+                    width: "100%",
+                }}
+            >
+                <Header onMenuClick={() => setIsSidebarOpen((prev) => !prev)} />
+                <main style={{ flex: 1, padding: "24px 24px 40px", overflowX: "hidden" }}>
+                    <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
                         {children}
                     </div>
                 </main>

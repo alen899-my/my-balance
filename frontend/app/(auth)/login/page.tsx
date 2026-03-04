@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Mail, Lock, ArrowRight, Fingerprint } from "lucide-react";
+import { Mail, Lock, ArrowRight } from "lucide-react";
 
 export default function Login() {
   const router = useRouter();
@@ -29,9 +29,7 @@ export default function Login() {
 
       if (res.ok && data.token) {
         localStorage.setItem("token", data.token);
-        // Storing the user object for use in the dashboard
-        localStorage.setItem("user", JSON.stringify(data.user)); 
-        
+        localStorage.setItem("user", JSON.stringify(data.user));
         router.push("/dashboard");
       } else {
         alert(data.detail || "Invalid credentials");
@@ -45,93 +43,100 @@ export default function Login() {
   }
 
   return (
-    <div className="w-full max-w-md space-y-8 bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-violet-500/5">
-      {/* Brand Icon & Header */}
-      <div className="text-center space-y-2">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-violet-600 mb-4 shadow-lg shadow-violet-500/30">
-          <Fingerprint className="text-white w-8 h-8" />
-        </div>
-        <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Welcome back
-        </h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          Enter your credentials to access your secure vault.
-        </p>
-      </div>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+      <div className="gov-panel" style={{ width: "100%", maxWidth: "420px", padding: "40px 32px", display: "flex", flexDirection: "column", gap: "24px" }}>
 
-      <div className="space-y-5 mt-8">
-        {/* Identifier Field */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold uppercase tracking-widest text-slate-400 ml-1">
-            Account ID
-          </label>
-          <div className="relative group">
-            <Mail className="absolute left-3 top-3.5 h-5 w-5 text-slate-400 group-focus-within:text-violet-500 transition-colors" />
-            <input
-              placeholder="Email or Phone number"
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              className="w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all text-slate-900 dark:text-white"
-            />
-          </div>
+        {/* Brand Logo & Header */}
+        <div style={{ textAlign: "center", marginBottom: "8px" }}>
+          <p style={{
+            color: "var(--text-primary)",
+            fontWeight: 800,
+            fontSize: "28px",
+            lineHeight: 1.2,
+            letterSpacing: "-0.04em",
+            fontFamily: "var(--font-geist-sans), sans-serif",
+            background: "linear-gradient(to right, #cfd8dc, #ffffff)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            marginBottom: "16px"
+          }}>
+            my<span style={{ color: "var(--brand)", WebkitTextFillColor: "initial" }}>balance</span>
+          </p>
+          <h2 style={{ fontSize: "20px", fontWeight: 600, color: "var(--text-primary)", marginBottom: "8px", letterSpacing: "-0.02em" }}>
+            Welcome back
+          </h2>
+          <p style={{ fontSize: "13px", color: "var(--text-secondary)" }}>
+            Enter your credentials to access your secure vault.
+          </p>
         </div>
 
-        {/* Password Field */}
-        <div className="space-y-1.5">
-          <div className="flex justify-between items-center px-1">
-            <label className="text-xs font-bold uppercase tracking-widest text-slate-400">
-              Password
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          {/* Identifier Field */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
+              Account ID
             </label>
-            <Link href="#" className="text-xs font-semibold text-violet-600 hover:text-violet-500 transition-colors">
-              Forgot?
-            </Link>
+            <div style={{ position: "relative" }}>
+              <Mail style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", width: "16px", height: "16px", color: "var(--text-muted)" }} />
+              <input
+                placeholder="Email or Phone number"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                className="gov-input"
+                style={{ width: "100%", paddingLeft: "36px" }}
+              />
+            </div>
           </div>
-          <div className="relative group">
-            <Lock className="absolute left-3 top-3.5 h-5 w-5 text-slate-400 group-focus-within:text-violet-500 transition-colors" />
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all text-slate-900 dark:text-white"
-            />
+
+          {/* Password Field */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
+                Password
+              </label>
+              <Link href="#" style={{ fontSize: "12px", color: "var(--brand)", textDecoration: "none", fontWeight: 500 }}>
+                Forgot?
+              </Link>
+            </div>
+            <div style={{ position: "relative" }}>
+              <Lock style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", width: "16px", height: "16px", color: "var(--text-muted)" }} />
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="gov-input"
+                style={{ width: "100%", paddingLeft: "36px" }}
+              />
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="pt-4">
         <button
           onClick={handleLogin}
           disabled={isLoading}
-          className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-violet-600 text-white font-bold rounded-2xl hover:bg-violet-700 active:scale-[0.98] transition-all shadow-lg shadow-violet-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="gov-btn-primary"
+          style={{ width: "100%", justifyContent: "center", padding: "10px", marginTop: "8px" }}
         >
-          {isLoading ? (
-            <span className="flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              Verifying...
-            </span>
-          ) : (
+          {isLoading ? "Verifying..." : (
             <>
               Sign in to Dashboard
-              <ArrowRight className="w-5 h-5" />
+              <ArrowRight style={{ width: "16px", height: "16px" }} />
             </>
           )}
         </button>
-      </div>
 
-      <div className="relative my-8">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-slate-200 dark:border-slate-800"></div>
+        <div style={{ position: "relative", textAlign: "center", margin: "16px 0" }}>
+          <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: "1px", background: "var(--border-default)" }}></div>
+          <span style={{ position: "relative", background: "var(--bg-surface)", padding: "0 12px", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
+            New to the platform?
+          </span>
         </div>
-        <div className="relative flex justify-center text-xs uppercase tracking-tighter">
-          <span className="bg-white dark:bg-slate-900 px-4 text-slate-400 font-medium">New to the platform?</span>
-        </div>
-      </div>
 
-      <div className="mt-6">
-        <Link 
-          href="/signup" 
-          className="w-full flex justify-center py-3.5 px-4 border-2 border-violet-100 dark:border-violet-900/30 rounded-2xl font-bold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-all"
+        <Link
+          href="/signup"
+          className="gov-btn-secondary"
+          style={{ width: "100%", justifyContent: "center", padding: "10px", textDecoration: "none" }}
         >
           Create a secure account
         </Link>

@@ -1,117 +1,101 @@
 "use client";
+
 import React from "react";
-import { Eye, Trash2, ShoppingBag, Coffee, Car, Home, Receipt, Layers } from "lucide-react";
+import { Eye, Trash2, ShoppingBag, Coffee, Car, Home, Receipt } from "lucide-react";
 
 export default function DailySurvivalTable({ items, onView, onDelete }: any) {
   const getIcon = (cat: string) => {
     const c = cat.toLowerCase();
-    if (c.includes("food") || c.includes("lunch") || c.includes("dinner")) return <Coffee className="w-4 h-4" />;
-    if (c.includes("travel") || c.includes("uber") || c.includes("fuel")) return <Car className="w-4 h-4" />;
-    if (c.includes("rent") || c.includes("home")) return <Home className="w-4 h-4" />;
-    return <ShoppingBag className="w-4 h-4" />;
+    if (c.includes("food") || c.includes("lunch") || c.includes("dinner") || c.includes("coffee")) return <Coffee style={{ width: "13px", height: "13px" }} />;
+    if (c.includes("travel") || c.includes("uber") || c.includes("fuel") || c.includes("auto")) return <Car style={{ width: "13px", height: "13px" }} />;
+    if (c.includes("rent") || c.includes("home")) return <Home style={{ width: "13px", height: "13px" }} />;
+    return <ShoppingBag style={{ width: "13px", height: "13px" }} />;
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          {/* Table Header */}
-          <thead className="bg-slate-50/50 dark:bg-slate-950/50 border-b border-slate-200 dark:border-slate-800">
-            <tr>
-              <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-                Transaction Details
-              </th>
-              <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 text-right">
-                Amount
-              </th>
-              <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 text-center">
-                Management
-              </th>
-            </tr>
-          </thead>
-
-          {/* Table Body */}
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
-            {items.length > 0 ? (
-              items.map((item: any) => (
-                <tr 
-                  key={item._id} 
-                  className="group hover:bg-slate-50/80 dark:hover:bg-violet-900/10 transition-all duration-200"
-                >
-                  {/* Category & Icon */}
-                  <td className="px-6 py-5">
-                    <div className="flex items-center gap-4">
-                      <div className={`p-3 rounded-2xl transition-transform group-hover:scale-110 duration-300 ${
-                        item.type === 'income' 
-                        ? 'bg-emerald-100/50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' 
-                        : 'bg-orange-100/50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400'
-                      }`}>
-                        {getIcon(item.category)}
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-black text-slate-900 dark:text-white tracking-tight">
-                          {item.category}
-                        </span>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                          {item.type}
-                        </span>
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Amount */}
-                  <td className="px-6 py-5 text-right">
-                    <span className={`text-base font-black tabular-nums tracking-tighter ${
-                      item.type === 'income' 
-                      ? 'text-emerald-500' 
-                      : 'text-slate-900 dark:text-white'
-                    }`}>
-                      {item.type === 'income' ? '+' : '-'} ₹{item.amount.toLocaleString()}
-                    </span>
-                  </td>
-
-                  {/* Actions */}
-                  <td className="px-6 py-5">
-                    <div className="flex justify-center gap-3">
-                      <button 
-                        onClick={() => onView(item)} 
-                        className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/30 rounded-xl transition-all"
-                        title="View Details"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={() => onDelete(item._id)}
-                        className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl transition-all"
-                        title="Delete Entry"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              /* Empty State */
-              <tr>
-                <td colSpan={3} className="px-6 py-20 text-center">
-                  <div className="flex flex-col items-center justify-center space-y-3 opacity-40">
-                    <Receipt className="w-10 h-10 text-slate-400" />
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">
-                      No Records Dispatched
-                    </p>
+    <div style={{ overflowX: "auto" }}>
+      <table className="gov-table" style={{ minWidth: "480px" }}>
+        <thead>
+          <tr>
+            <th>Transaction Details</th>
+            <th style={{ textAlign: "right" }}>Amount (₹)</th>
+            <th style={{ textAlign: "center", width: "80px" }}>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.length > 0 ? items.map((item: any) => (
+            <tr key={item._id}>
+              <td>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div
+                    style={{
+                      width: "28px", height: "28px", borderRadius: "6px",
+                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                      background: item.type === "income" ? "var(--success-bg)" : "var(--danger-bg)",
+                      color: item.type === "income" ? "var(--success)" : "var(--danger)",
+                    }}
+                  >
+                    {/* The getIcon function is defined inside the component */}
+                    {getIcon ? getIcon(item.category) : <ShoppingBag style={{ width: "13px", height: "13px" }} />}
                   </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-      
-      {/* Footer Decoration */}
-      <div className="bg-slate-50/50 dark:bg-slate-950/50 p-4 border-t border-slate-100 dark:border-slate-800 flex justify-center">
-         <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full" />
-      </div>
+                  <div>
+                    <p style={{ fontSize: "14px", fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.3, marginBottom: "2px" }}>
+                      {item.title || item.category}
+                    </p>
+                    <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", alignItems: "center" }}>
+                      <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-secondary)" }}>
+                        {item.category}
+                      </span>
+                      <span style={{ color: "var(--border-default)" }}>•</span>
+                      {item.source === "bank_statement" ? (
+                        <span className="badge-warning" style={{ fontSize: "9px", padding: "1px 4px" }} title={`Imported from ${item.bank || "Bank"}`}>Bank Sync</span>
+                      ) : (
+                        <span className="badge-neutral" style={{ fontSize: "9px", padding: "1px 4px" }}>Manual Entry</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td style={{ textAlign: "right", fontSize: "15px", fontWeight: 700, color: item.type === "income" ? "var(--success)" : "var(--text-primary)" }}>
+                {item.type === "income" ? "+" : "−"}₹{(item.amount || 0).toLocaleString()}
+              </td>
+              <td>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+                  <button onClick={() => onView(item)} title="View Details" style={{ padding: "6px", background: "var(--info-bg)", border: "1px solid #b9e6fe", borderRadius: "6px", cursor: "pointer", display: "flex", color: "var(--info)", transition: "all 0.15s ease" }} onMouseEnter={(e) => e.currentTarget.style.background = "#e0f2fe"} onMouseLeave={(e) => e.currentTarget.style.background = "var(--info-bg)"}>
+                    <Eye style={{ width: "14px", height: "14px" }} />
+                  </button>
+                  <button
+                    onClick={() => item.source !== "bank_statement" && onDelete(item._id)}
+                    title={item.source === "bank_statement" ? "Bank imports cannot be deleted here" : "Delete"}
+                    style={{
+                      padding: "6px",
+                      background: item.source === "bank_statement" ? "var(--bg-surface)" : "var(--danger-bg)",
+                      border: `1px solid ${item.source === "bank_statement" ? "var(--border-default)" : "#fda29b"}`,
+                      borderRadius: "6px",
+                      cursor: item.source === "bank_statement" ? "not-allowed" : "pointer",
+                      display: "flex",
+                      color: item.source === "bank_statement" ? "var(--text-muted)" : "var(--danger)",
+                      opacity: item.source === "bank_statement" ? 0.5 : 1,
+                      transition: "all 0.15s ease"
+                    }}
+                    onMouseEnter={(e) => { if (item.source !== "bank_statement") e.currentTarget.style.background = "#fee2e2"; }}
+                    onMouseLeave={(e) => { if (item.source !== "bank_statement") e.currentTarget.style.background = "var(--danger-bg)"; }}
+                  >
+                    <Trash2 style={{ width: "14px", height: "14px" }} />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          )) : (
+            <tr>
+              <td colSpan={3} style={{ padding: "48px 14px", textAlign: "center" }}>
+                <Receipt style={{ width: "28px", height: "28px", color: "var(--text-muted)", margin: "0 auto 8px" }} />
+                <p style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase" }}>No entries for this date</p>
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }

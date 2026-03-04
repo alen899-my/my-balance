@@ -54,22 +54,79 @@ async def get_range_stats(
     user = Depends(get_current_user)
 ):
     """
-    Fetches all entries between two dates.
-    Used for the daily list and custom range reporting.
+    Fetches all entries between two dates, unifying manual daily entries 
+    with synced bank transactions from statement uploads.
     """
-    user_id = PydanticObjectId(user["user_id"])
+    user_id = str(user["user_id"])
+    py_user_id = PydanticObjectId(user["user_id"])
     
-    items = await DailyBudgetEntry.find(
-        DailyBudgetEntry.user_id == user_id,
+    # 1. Fetch Manual Daily Entries
+    manual_items = await DailyBudgetEntry.find(
+        DailyBudgetEntry.user_id == py_user_id,
         DailyBudgetEntry.entry_date >= start_date,
         DailyBudgetEntry.entry_date <= end_date
-    ).sort(+DailyBudgetEntry.entry_date).to_list()
+    ).to_list()
+    
+    unified_items = []
+    
+    for item in manual_items:
+        unified_items.append({
+            "_id": str(item.id),
+            "title": item.title,
+            "category": item.category or "Uncategorized",
+            "amount": item.amount,
+            "type": item.type,
+            "entry_date": item.entry_date.isoformat(),
+            "source": "manual",
+            "calculation_rows": [{"description": r.description, "amount": r.amount} for r in (item.calculation_rows or [])]
+        })
 
+    # 2. Fetch Synced Bank Transactions
+    from app.models.transaction import Transaction
+    col = Transaction.get_pymongo_collection()
+    
+    start_dt = datetime.combine(start_date, datetime.min.time())
+    end_dt = datetime.combine(end_date, datetime.max.time())
+    
+    pipeline = [
+        {"$match": {
+            "user_id": user_id,
+            "date": {"$gte": start_dt, "$lte": end_dt}
+        }}
+    ]
+    cursor = col.aggregate(pipeline)
+    bank_txns = await cursor.to_list(length=1000)
+    
+    for txn in bank_txns:
+        # Determine type based on debits/credits
+        debit = txn.get("debit")
+        credit = txn.get("credit")
+        if credit and credit > 0:
+            type_val = "income"
+            amt = credit
+        else:
+            type_val = "expense"
+            amt = debit or 0
+            
+        unified_items.append({
+            "_id": str(txn.get("_id")),
+            "title": txn.get("payee") or txn.get("narrative") or "Bank Transfer",
+            "category": txn.get("category") or ("Income" if type_val == "income" else "Uncategorized"),
+            "amount": amt,
+            "type": type_val,
+            "entry_date": txn.get("date").date().isoformat() if txn.get("date") else start_date.isoformat(),
+            "source": "bank_statement",
+            "bank": txn.get("bank", "")
+        })
+        
+    # 3. Sort Chronologically
+    unified_items.sort(key=lambda x: x["entry_date"])
+    
     return {
         "start": start_date,
         "end": end_date,
-        "items": items,
-        "total_period_expense": sum(i.amount for i in items if i.type == "expense")
+        "items": unified_items,
+        "total_period_expense": sum(i["amount"] for i in unified_items if i["type"] == "expense")
     }
 
 @router.post("/")

@@ -22,97 +22,75 @@ export default function MonthlySpendingChart({ startDate, endDate, selectedBank 
         const params = new URLSearchParams();
         if (startDate) params.append("start_date", startDate.toISOString());
         if (endDate) params.append("end_date", endDate.toISOString());
-        
-        if (selectedBank && selectedBank !== "All Banks") {
-          params.append("bank", selectedBank);
-        }
-
+        if (selectedBank && selectedBank !== "All Banks") params.append("bank", selectedBank);
         const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/insights?${params.toString()}`);
         const json = await res.json();
-        
         setData(json.monthly_data || []);
-      } catch (err) {
-        console.error("Chart load error:", err);
-      } finally {
-        setLoading(false);
-      }
+      } catch (err) { console.error("Chart load error:", err); }
+      finally { setLoading(false); }
     }
     fetchChartData();
   }, [startDate, endDate, selectedBank]);
 
   if (loading) {
-    return (
-      <div className="h-[400px] w-full bg-slate-50 dark:bg-slate-900/50 animate-pulse rounded-[2.5rem] border border-slate-200 dark:border-slate-800" />
-    );
+    return <div className="gov-panel skeleton" style={{ height: "500px" }} />;
   }
 
   return (
-    <div className="bg-white dark:bg-slate-900 p-5 md:p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm h-full flex flex-col">
-      <div className="flex items-center justify-between mb-6 md:mb-8">
-        <div>
-          <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">Monthly Spending</h2>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-            {selectedBank && selectedBank !== "All Banks" ? `${selectedBank} Trends` : "Total Account Trends"}
-          </p>
+    <div className="gov-panel" style={{ height: "500px", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <div className="gov-panel-header" style={{ flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <BarChart3 style={{ width: "15px", height: "15px", color: "var(--brand)" }} />
+          <div>
+            <h2 style={{ margin: 0, fontSize: "14px" }}>Monthly Spending Trend</h2>
+            <p style={{ margin: 0, fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              {selectedBank && selectedBank !== "All Banks" ? selectedBank : "All Banks"}
+            </p>
+          </div>
         </div>
-        <div className="p-3 bg-violet-50 dark:bg-violet-900/20 rounded-2xl">
-          <BarChart3 className="w-5 h-5 text-violet-600 dark:text-violet-400" />
-        </div>
+        <span className="badge-info">Area Chart</span>
       </div>
 
-      <div className="flex-1 w-full overflow-x-auto scrollbar-hide">
-        <div className="h-[300px] w-full min-w-[500px] md:min-w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#7c3aed" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid 
-                strokeDasharray="3 3" 
-                vertical={false} 
-                stroke="#e2e8f0" 
-                className="dark:stroke-slate-800" 
-              />
-              <XAxis
-                dataKey="month"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 'bold' }}
-                dy={10}
-              />
-              <YAxis
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 'bold' }}
-                tickFormatter={(value) => `₹${value}`}
-              />
-              <Tooltip
-                contentStyle={{ 
-                  borderRadius: '16px', 
-                  border: 'none', 
-                  backgroundColor: '#0f172a',
-                  color: '#fff',
-                  boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.3)' 
-                }}
-                itemStyle={{ color: '#ddd', fontSize: '12px', fontWeight: 'bold' }}
-                labelStyle={{ color: '#fff', marginBottom: '4px', fontWeight: '900' }}
-                formatter={(value: any) => [`₹${Number(value || 0).toLocaleString()}`, "Amount"]}
-              />
-              <Area
-                type="monotone"
-                dataKey="amount"
-                stroke="#7c3aed"
-                strokeWidth={3}
-                fillOpacity={1}
-                fill="url(#colorTotal)"
-                animationDuration={1500}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+      <div style={{ flex: 1, padding: "16px 8px 8px", overflow: "hidden" }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 8, right: 16, left: -16, bottom: 0 }}>
+            <defs>
+              <linearGradient id="govAreaFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#1a3a8f" stopOpacity={0.15} />
+                <stop offset="95%" stopColor="#1a3a8f" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e4e7ec" />
+            <XAxis
+              dataKey="month"
+              axisLine={false} tickLine={false}
+              tick={{ fill: "#98a2b3", fontSize: 10, fontWeight: 600 }}
+              dy={8}
+            />
+            <YAxis
+              axisLine={false} tickLine={false}
+              tick={{ fill: "#98a2b3", fontSize: 10, fontWeight: 600 }}
+              tickFormatter={v => `₹${Number(v).toLocaleString()}`}
+            />
+            <Tooltip
+              contentStyle={{
+                borderRadius: "6px", border: "1px solid #d0d5dd",
+                background: "var(--bg-surface)", color: "#101828",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                fontSize: "12px",
+              }}
+              itemStyle={{ color: "#1a3a8f", fontWeight: 600 }}
+              labelStyle={{ color: "#475467", fontWeight: 700, marginBottom: "4px" }}
+              formatter={(value: any) => [`₹${Number(value || 0).toLocaleString()}`, "Amount"]}
+            />
+            <Area
+              type="monotone" dataKey="amount"
+              stroke="#1a3a8f" strokeWidth={2}
+              fillOpacity={1} fill="url(#govAreaFill)"
+              animationDuration={1200}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );

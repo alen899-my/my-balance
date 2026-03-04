@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import { X, Wallet, ArrowUpCircle, Loader2, Edit3 } from "lucide-react";
 import { authFetch } from "@/lib/authFetch";
@@ -8,9 +9,7 @@ export default function IncomeModal({ isOpen, onClose, currentIncome, onSave, mo
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
-      setIncomeValue(currentIncome > 0 ? currentIncome.toString() : "");
-    }
+    if (isOpen) setIncomeValue(currentIncome > 0 ? currentIncome.toString() : "");
   }, [currentIncome, isOpen]);
 
   const isEditing = currentIncome > 0;
@@ -19,65 +18,50 @@ export default function IncomeModal({ isOpen, onClose, currentIncome, onSave, mo
     if (!incomeValue || isNaN(Number(incomeValue))) return;
     setLoading(true);
     try {
-      const response = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/budget/income`, {
+      const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/budget/income`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: Number(incomeValue),
-          month: Number(month),
-          year: Number(year)
-        }),
+        body: JSON.stringify({ amount: Number(incomeValue), month: Number(month), year: Number(year) }),
       });
-
-      if (response.ok) {
-        onSave();
-        onClose();
-      }
-    } catch (err) {
-      console.error("Income Update Error:", err);
-    } finally {
-      setLoading(false);
-    }
+      if (res.ok) { onSave(); onClose(); }
+    } catch (err) { console.error("Income Update Error:", err); }
+    finally { setLoading(false); }
   }
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
-      {/* Backdrop with stronger blur for focus */}
-      <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-xl animate-in fade-in duration-300" onClick={onClose} />
+    <div style={{ position: "fixed", inset: 0, zIndex: 150, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
+      <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)" }} onClick={onClose} />
+      <div className="gov-panel" style={{ position: "relative", width: "100%", maxWidth: "360px", padding: "24px" }}>
 
-      <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 p-6 md:p-8 shadow-2xl animate-in zoom-in-95 duration-300">
-        <div className="flex justify-between items-center mb-6">
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
           <div>
-            <h2 className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white">
-              {isEditing ? "Update Income" : "Monthly Income"}
-            </h2>
-            <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-              {isEditing ? "Modify your settings" : "Set your base budget"}
-            </p>
+            <p className="section-label" style={{ marginBottom: "2px" }}>Budget Register</p>
+            <h2 style={{ margin: 0, fontSize: "18px" }}>{isEditing ? "Update Monthly Income" : "Set Monthly Income"}</h2>
+            <p style={{ margin: "2px 0 0", fontSize: "12px", color: "var(--text-muted)" }}>{isEditing ? "Modify existing income entry" : "Define base budget for this month"}</p>
           </div>
-          <button onClick={onClose} className="p-2 bg-slate-50 dark:bg-slate-800 rounded-full text-slate-400 hover:text-rose-500 transition-colors">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} style={{ padding: "6px", background: "#161616", border: "1px solid var(--border-default)", borderRadius: "6px", cursor: "pointer", display: "flex", color: "var(--text-secondary)", flexShrink: 0 }}>
+            <X style={{ width: "16px", height: "16px" }} />
           </button>
         </div>
 
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-1">
+        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+          <div>
+            <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)", display: "block", marginBottom: "6px" }}>
               Monthly Amount (₹)
             </label>
-            <div className="relative group">
-              <div className="absolute left-5 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-violet-500">
-                <Wallet className="w-5 h-5 text-slate-400 group-focus-within:text-violet-500" />
-              </div>
+            <div style={{ position: "relative" }}>
+              <Wallet style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", width: "14px", height: "14px", color: "var(--text-muted)" }} />
               <input
                 type="number"
                 placeholder="0.00"
                 value={incomeValue}
                 autoFocus
-                onChange={(e) => setIncomeValue(e.target.value)}
-                className="w-full pl-14 pr-6 py-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xl font-black text-slate-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all appearance-none"
+                onChange={e => setIncomeValue(e.target.value)}
+                className="gov-input"
+                style={{ paddingLeft: "32px", fontSize: "20px", fontWeight: 700, height: "52px" }}
               />
             </div>
           </div>
@@ -85,19 +69,17 @@ export default function IncomeModal({ isOpen, onClose, currentIncome, onSave, mo
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="w-full py-4 md:py-5 bg-violet-600 hover:bg-violet-700 text-white rounded-[1.8rem] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-xl shadow-violet-500/25 active:scale-[0.98] disabled:opacity-50"
+            className="gov-btn-primary"
+            style={{ justifyContent: "center", padding: "12px", opacity: loading ? 0.6 : 1 }}
           >
-            {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <>
-                {isEditing ? <Edit3 className="w-5 h-5" /> : <ArrowUpCircle className="w-5 h-5" />}
-                <span className="text-sm">{isEditing ? "Update Now" : "Confirm Income"}</span>
-              </>
-            )}
+            {loading
+              ? <Loader2 style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} />
+              : <>{isEditing ? <Edit3 style={{ width: "14px", height: "14px" }} /> : <ArrowUpCircle style={{ width: "14px", height: "14px" }} />}</>}
+            {isEditing ? "Update Income" : "Confirm Income"}
           </button>
         </div>
       </div>
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
