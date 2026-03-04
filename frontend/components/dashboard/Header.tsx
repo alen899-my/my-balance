@@ -10,6 +10,8 @@ const routeLabels: Record<string, string> = {
   "/statements": "Statements & Transactions",
   "/daily": "Daily Tracking",
   "/monthly": "Monthly Budget Planner",
+  "/subscriptions": "Subscriptions & Bills",
+  "/goals": "Savings Goals & Vaults",
 };
 
 export default function Header({ onMenuClick }: { onMenuClick: () => void }) {

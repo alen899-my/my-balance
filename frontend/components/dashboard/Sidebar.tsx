@@ -3,7 +3,7 @@
 import React from "react";
 import {
   LayoutDashboard, FileText, BarChart3,
-  CalendarDays, X, Building2,
+  CalendarDays, X, Building2, RefreshCw, Target
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -11,6 +11,8 @@ import { usePathname } from "next/navigation";
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard", section: "Overview" },
   { icon: FileText, label: "Statements", href: "/statements", section: "Management" },
+  { icon: RefreshCw, label: "Subscriptions", href: "/subscriptions", section: "Management" },
+  { icon: Target, label: "Savings Goals", href: "/goals", section: "Management" },
   { icon: CalendarDays, label: "Daily", href: "/daily", section: "Management" },
   { icon: BarChart3, label: "Monthly", href: "/monthly", section: "Management" },
 ];
