@@ -11,6 +11,7 @@ import { usePathname } from "next/navigation";
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard", section: "Overview" },
   { icon: FileText, label: "Statements", href: "/statements", section: "Management" },
+  { icon: CalendarDays, label: "Calendar", href: "/calendar", section: "Management" },
   { icon: RefreshCw, label: "Subscriptions", href: "/subscriptions", section: "Management" },
   { icon: Target, label: "Savings Goals", href: "/goals", section: "Management" },
   { icon: CalendarDays, label: "Daily", href: "/daily", section: "Management" },

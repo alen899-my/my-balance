@@ -8,6 +8,7 @@ import { authFetch } from "@/lib/authFetch";
 const routeLabels: Record<string, string> = {
   "/dashboard": "Executive Summary",
   "/statements": "Statements & Transactions",
+  "/calendar": "Monthly Wealth Calendar",
   "/daily": "Daily Tracking",
   "/monthly": "Monthly Budget Planner",
   "/subscriptions": "Subscriptions & Bills",
