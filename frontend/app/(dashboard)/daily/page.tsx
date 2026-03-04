@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
     Plus, Wallet, TrendingDown,
     CalendarDays, ChevronLeft, ChevronRight,
-    Loader2, ArrowUpRight, ArrowDownRight
+    Loader2, ArrowUpRight, ArrowDownRight, Camera
 } from "lucide-react";
 import { authFetch } from "@/lib/authFetch";
 import DailyBudgetModal from "@/components/daily/DailyBudgetModal";
@@ -22,6 +22,10 @@ export default function DailyPage() {
     const [isViewOpen, setIsViewOpen] = useState(false);
     const [activeItem, setActiveItem] = useState<any>(null);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [isScanning, setIsScanning] = useState(false);
+    const [scannedData, setScannedData] = useState<any>(null);
+    const [selectedModel, setSelectedModel] = useState("gemini-2.0-flash");
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => { fetchDailyList(); }, [selectedDate]);
 
@@ -73,6 +77,44 @@ export default function DailyPage() {
             );
             if (res.ok) { setIsDeleteOpen(false); fetchDailyList(); }
         } catch (err) { console.error("Delete failed:", err); }
+    }
+
+    async function handleReceiptUpload(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // 2MB Limit
+        if (file.size > 2 * 1024 * 1024) {
+            alert("File too large. Max 2MB allowed.");
+            return;
+        }
+
+        setIsScanning(true);
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("model", selectedModel);
+
+            const ocrRes = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/ocr/scan`, {
+                method: "POST",
+                body: formData
+            });
+
+            if (ocrRes.ok) {
+                const results = await ocrRes.json();
+                setScannedData(results);
+                setIsModalOpen(true);
+            } else {
+                const errJson = await ocrRes.json();
+                throw new Error(errJson.detail || "Scanning failed");
+            }
+        } catch (err: any) {
+            console.error("OCR Error:", err);
+            alert(`OCR Error: ${err.message || "Unknown error"}. Please try manual entry.`);
+        } finally {
+            setIsScanning(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
     }
 
     const displayDate = new Date(selectedDate).toLocaleDateString("en-IN", {
@@ -213,17 +255,61 @@ export default function DailyPage() {
             </div>
 
             {/* ── Action Bar ── */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
-                <div>
-                    <p style={{ fontSize: "12px", color: "var(--text-secondary)" }}>{displayDate}</p>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-surface rounded-xl p-4 border border-default">
+                <div className="flex flex-col gap-1">
+                    <p className="text-xs text-secondary font-medium uppercase tracking-wider">{displayDate}</p>
                 </div>
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="gov-btn-primary"
-                >
-                    <Plus style={{ width: "14px", height: "14px" }} />
-                    Log Transaction
-                </button>
+
+                <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleReceiptUpload}
+                        accept="image/*"
+                        style={{ display: "none" }}
+                    />
+
+                    <div className="flex items-center gap-2 flex-1 sm:flex-none">
+                        <select
+                            value={selectedModel}
+                            onChange={(e) => setSelectedModel(e.target.value)}
+                            className="gov-input !py-1.5 !px-3 font-medium flex-1 sm:flex-none"
+                            style={{ minWidth: "160px", fontSize: "12px" }}
+                            disabled={isScanning}
+                        >
+                            <optgroup label="Google Gemini">
+                                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                                <option value="gemini-2.0-flash-lite">Gemini 2.0 Lite</option>
+                                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                            </optgroup>
+                            <optgroup label="Groq (Lightning Fast)">
+                                <option value="meta-llama/llama-4-scout-17b-16e-instruct">Llama 4 Scout</option>
+                                <option value="llama-3.2-11b-vision-preview">Llama 3.2 11B (Beta)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="gov-btn-secondary flex-1 sm:flex-none"
+                            disabled={isScanning}
+                            style={{ padding: "6px 12px" }}
+                        >
+                            {isScanning ? <Loader2 className="animate-spin" size={14} /> : <Camera size={14} />}
+                            <span style={{ fontSize: "13px" }}>{isScanning ? "Scanning..." : "Scan"}</span>
+                        </button>
+
+                        <button
+                            onClick={() => { setScannedData(null); setIsModalOpen(true); }}
+                            className="gov-btn-primary flex-1 sm:flex-none"
+                            style={{ padding: "6px 12px" }}
+                        >
+                            <Plus size={14} />
+                            <span style={{ fontSize: "13px" }}>Add Entry</span>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {/* ── Daily Transaction Table ── */}
@@ -256,8 +342,11 @@ export default function DailyPage() {
             </div>
 
             <DailyBudgetModal
-                isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}
-                onSave={fetchDailyList} selectedDate={selectedDate}
+                isOpen={isModalOpen}
+                onClose={() => { setIsModalOpen(false); setScannedData(null); }}
+                onSave={fetchDailyList}
+                selectedDate={selectedDate}
+                initialData={scannedData}
             />
             <DailyViewModal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} item={activeItem} />
             <DeleteConfirmModal

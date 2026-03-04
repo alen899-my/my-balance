@@ -12,11 +12,12 @@ import re
 import json
 import logging
 from datetime import datetime
+from typing import Optional, Any
 
 logger = logging.getLogger(__name__)
 
-# Model to use — free tier eligible
-GEMINI_MODEL = "gemini-2.0-flash-lite"
+# Model to use — high performance flash model
+GEMINI_MODEL = "gemini-2.0-flash"
 
 # Accepted date formats when parsing Gemini output
 DATE_FORMATS = [
@@ -46,6 +47,16 @@ Page text:
 ---
 {page_text}
 ---"""
+
+RECEIPT_PROMPT = """You are an expert receipt OCR agent. Extract data from the provided receipt image.
+Return a valid JSON object with the following keys:
+- "merchant": string (The name of the store or brand)
+- "amount": number (Total amount including tax)
+- "date": string in DD-MM-YYYY format (If not found, use "{default_date}")
+
+Return ONLY the JSON object, no markdown, no explanation.
+If you cannot find a value, use null for MERCHANT/AMOUNT.
+"""
 
 
 def _parse_date(val: str) -> datetime | None:
@@ -160,3 +171,80 @@ class GeminiParser:
         except Exception as e:
             logger.error(f"❌ GeminiParser error: {e}", exc_info=True)
             return []
+
+    def scan_receipt(
+        self, 
+        image_url: Optional[str] = None, 
+        image_bytes: Optional[bytes] = None,
+        model_name: Optional[str] = None
+    ) -> dict:
+        """
+        Uses Gemini to extract data from a receipt image (via URL or raw bytes).
+        """
+        try:
+            client = self._get_client()
+            
+            # Use requested model or default
+            active_model = model_name or GEMINI_MODEL
+            
+            # Use provided bytes or fetch from URL
+            final_bytes = image_bytes
+            mime_type = "image/jpeg"
+
+            if not final_bytes and image_url:
+                import requests
+                img_res = requests.get(image_url)
+                if img_res.status_code != 200:
+                    logger.error(f"Failed to fetch image from URL: {image_url}")
+                    return {"merchant": None, "amount": 0, "date": None}
+                final_bytes = img_res.content
+                mime_type = img_res.headers.get("Content-Type", "image/jpeg")
+
+            # Detect MIME type if we have bytes but generic type
+            if final_bytes and mime_type == "image/jpeg":
+                if final_bytes.startswith(b'\xff\xd8'):
+                    mime_type = "image/jpeg"
+                elif final_bytes.startswith(b'\x89PNG'):
+                    mime_type = "image/png"
+                elif final_bytes.startswith(b'GIF8'):
+                    mime_type = "image/gif"
+                elif final_bytes.startswith(b'RIFF') and b'WEBP' in final_bytes[:12]:
+                    mime_type = "image/webp"
+
+            prompt = RECEIPT_PROMPT.format(default_date=datetime.now().strftime("%d-%m-%Y"))
+            
+            response = client.models.generate_content(
+                model=active_model,
+                contents=[
+                    prompt,
+                    {
+                        "inline_data": {
+                            "mime_type": mime_type,
+                            "data": final_bytes
+                        }
+                    }
+                ]
+            )
+
+            raw_text = response.text.strip()
+            # Extract JSON
+            json_match = re.search(r"\{.*\}", raw_text, re.DOTALL)
+            if not json_match:
+                return {"merchant": None, "amount": 0, "date": None}
+
+            data = json.loads(json_match.group(0))
+            
+            return {
+                "merchant": data.get("merchant"),
+                "amount": _safe_float(data.get("amount")),
+                "date": data.get("date")
+            }
+
+        except Exception as e:
+            error_msg = str(e)
+            if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
+                logger.error(f"⚠️ Gemini Rate Limit Hit: {error_msg}")
+                return {"merchant": "Rate Limit Reached", "amount": 0, "date": "Please wait 60s"}
+            
+            logger.error(f"❌ Receipt OCR error: {e}", exc_info=True)
+            return {"merchant": None, "amount": 0, "date": None}

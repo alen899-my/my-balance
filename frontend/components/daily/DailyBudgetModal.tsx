@@ -4,10 +4,18 @@ import React, { useState } from "react";
 import { X, Plus, Tag, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { authFetch } from "@/lib/authFetch";
 
-export default function DailyBudgetModal({ isOpen, onClose, onSave, selectedDate }: any) {
+export default function DailyBudgetModal({ isOpen, onClose, onSave, selectedDate, initialData }: any) {
   const [category, setCategory] = useState("");
   const [amount, setAmount] = useState<number>(0);
   const [type, setType] = useState("expense");
+
+  React.useEffect(() => {
+    if (initialData) {
+      setCategory(initialData.merchant || "");
+      setAmount(initialData.amount || 0);
+      setType("expense");
+    }
+  }, [initialData]);
 
   if (!isOpen) return null;
 
@@ -102,6 +110,7 @@ export default function DailyBudgetModal({ isOpen, onClose, onSave, selectedDate
                 placeholder="0"
                 className="gov-input"
                 style={{ paddingLeft: "32px", fontSize: "22px", fontWeight: 700, height: "52px" }}
+                value={amount || ""}
                 onChange={e => setAmount(Number(e.target.value))}
               />
             </div>
