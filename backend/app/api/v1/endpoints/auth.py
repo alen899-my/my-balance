@@ -53,9 +53,46 @@ def login(data: UserLogin):
     }
 
 @router.get("/me")
-async def get_me(user = Depends(get_current_user)):
+async def get_me(payload = Depends(get_current_user)):
+    from bson import ObjectId
+    user = users.find_one({"_id": ObjectId(payload["user_id"])})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
     return {
         "user_id": str(user["_id"]),
-        "name": user["name"],
-        "email": user["email"]
+        "name": user.get("name"),
+        "email": user.get("email"),
+        "phone": user.get("phone"),
+        "profile_picture": user.get("profile_picture")
     }
+
+from pydantic import BaseModel
+from typing import Optional
+
+class ProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    profile_picture: Optional[str] = None
+
+@router.put("/me")
+async def update_profile(data: ProfileUpdate, payload = Depends(get_current_user)):
+    from bson import ObjectId
+    update_data = {}
+    if data.name is not None:
+        update_data["name"] = data.name
+    if data.email is not None:
+        update_data["email"] = data.email
+    if data.phone is not None:
+        update_data["phone"] = data.phone
+    if data.profile_picture is not None:
+        update_data["profile_picture"] = data.profile_picture
+        
+    if update_data:
+        users.update_one(
+            {"_id": ObjectId(payload["user_id"])},
+            {"$set": update_data}
+        )
+        
+    return {"message": "Profile updated successfully"}

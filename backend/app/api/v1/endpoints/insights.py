@@ -11,20 +11,43 @@ router = APIRouter()
 
 def extract_clean_name(payee_str: str) -> str:
     """
-    Cleans UPI strings like 'UPI-NAME-NAME@okaxis' or 'TRANSFER TO NAME' 
-    into a readable name or UPI ID.
+    Cleans messy bank transaction narrative strings into readable names or UPI IDs.
     """
     if not payee_str:
         return "Unknown"
+        
+    p = payee_str.upper()
     
-    # Heuristic: If it contains '@', it's a UPI ID. Extract the ID.
-    upi_match = re.search(r'[\w\.-]+@[\w\.-]+', payee_str)
+    # Heuristic 1: Extract VPA / UPI ID if present
+    upi_match = re.search(r'([A-Z0-9\.\-_]+@[A-Z]+)', p)
     if upi_match:
-        return upi_match.group(0).lower()
+        return upi_match.group(1).lower()
+
+    # Heuristic 2: Standard bank slash formats (e.g., UPI/12345/John Doe/SBI)
+    slash_parts = p.split('/')
+    if len(slash_parts) >= 3 and any(x in p for x in ['UPI', 'IMPS', 'NEFT', 'RTGS']):
+        candidate = slash_parts[2].strip()
+        if len(candidate) > 2:
+            return candidate.title()
+
+    # Heuristic 3: Common hyphen format (e.g., UPI-John Doe)
+    if "UPI-" in p:
+        parts = p.split("-")
+        if len(parts) >= 2 and len(parts[1]) > 2:
+            return parts[1].strip().title()
+
+    # Heuristic 4: Strip banking acronyms and stop words
+    # Remove things like UPIAR, INB, POS, DR, CR, HDFC, etc.
+    p = re.sub(r'\b(UPIAR|UPI|TRANSFER TO|PAYMENT FROM|INB|RTGS|NEFT|IMPS|POS|DR|CR|HDFC|SBI|ICICI|AXIS)\b|/|-', ' ', p)
     
-    # Remove common banking prefixes
-    clean = re.sub(r'(UPI-|TRANSFER TO |PAYMENT FROM |/|INB |RTGS |NEFT )', '', payee_str, flags=re.IGNORECASE)
-    return clean.strip().title()
+    # Collapse multiple spaces
+    p = " ".join(p.split())
+    
+    if len(p) <= 2:
+        # If we aggressively stripped everything, fallback safely
+        return payee_str.title()[:20].strip()
+        
+    return p.title()[:25]
 
 @router.get("/insights")
 async def get_insights(
@@ -228,16 +251,23 @@ async def get_advanced_insights(
                     }}
                 ],
                 "historic_stats": [
-                    {"$match": {"debit": {"$gt": 0}, "date": {"$lt": first_of_month}}},
+                    {"$match": {"date": {"$lt": first_of_month}}},
                     {"$group": {
                         "_id": {"year": {"$year": "$date"}, "month": {"$month": "$date"}},
-                        "monthly_total": {"$sum": "$debit"}
+                        "monthly_total": {"$sum": "$debit"},
+                        "monthly_income": {"$sum": "$credit"},
+                        "txn_count": {"$sum": 1}
                     }},
                     {"$sort": {"_id.year": 1, "_id.month": 1}},
                     {"$group": {
                         "_id": None,
                         "avg_monthly_burn": {"$avg": "$monthly_total"},
-                        "history": {"$push": "$monthly_total"}
+                        "avg_monthly_income": {"$avg": "$monthly_income"},
+                        "max_income": {"$max": "$monthly_income"},
+                        "min_income": {"$min": "$monthly_income"},
+                        "avg_monthly_txns": {"$avg": "$txn_count"},
+                        "history": {"$push": "$monthly_total"},
+                        "income_history": {"$push": "$monthly_income"}
                     }}
                 ]
             }}
@@ -254,6 +284,7 @@ async def get_advanced_insights(
         monthly_burn = cur_stats.get("expense") or 0
         monthly_income = cur_stats.get("income") or 0
         avg_burn = hist_stats.get("avg_monthly_burn") or (monthly_burn if monthly_burn > 0 else 1)
+        avg_income = hist_stats.get("avg_monthly_income") or (monthly_income if monthly_income > 0 else 1)
         
         history = hist_stats.get("history", [])
         
@@ -264,6 +295,8 @@ async def get_advanced_insights(
         savings_rate = 0
         if monthly_income > 0:
             savings_rate = round(((monthly_income - monthly_burn) / monthly_income * 100), 1)
+        elif avg_income > 0:
+            savings_rate = round(((avg_income - avg_burn) / avg_income * 100), 1)
         
         lifestyle_inflation = 0
         if len(history) >= 2:
@@ -283,15 +316,47 @@ async def get_advanced_insights(
         daily_burn_avg = avg_burn / days_in_month
         predicted_end = current_balance - (daily_burn_avg * (days_in_month - days_passed))
 
+        recurring_total = round(last_full_month_burn * 0.4, 2)
+        
+        # Dynamic DTI (Debt-to-Income) Ratio estimation based on recurring vs avg income
+        dti_ratio = round(recurring_total / avg_income, 2) if avg_income > 0 else 0
+        
+        # Dynamic Financial Age based on Balance to Avg Burn ratio (Safety Net Score) mapped to an age heuristic
+        safety_net_score = round(current_balance / avg_burn, 1) if avg_burn > 0 else 0
+        financial_age = int(18 + (safety_net_score * 1.5))
+
+        # Income Volatility (Max variance in historical income)
+        max_inc = hist_stats.get("max_income", 0)
+        min_inc = hist_stats.get("min_income", 0)
+        income_volatility = round(((max_inc - min_inc) / avg_income) * 100, 1) if avg_income > 0 else 0
+
+        # TXN frequency
+        avg_txns = hist_stats.get("avg_monthly_txns", 0)
+        tx_frequency = round(avg_txns / 30, 1) if avg_txns > 0 else 0
+
+        if savings_rate >= 20:
+            savings_status = "Excellent"
+        elif savings_rate >= 10:
+            savings_status = "Stable"
+        elif savings_rate >= 0:
+            savings_status = "At Risk"
+        else:
+            savings_status = "Deficit"
+
         return {
             "savings_rate": savings_rate,
-            "safety_net_score": round(current_balance / avg_burn, 1) if avg_burn > 0 else 0,
+            "safety_net_score": safety_net_score,
             "lifestyle_inflation": lifestyle_inflation,
             "burn_variance": burn_variance,
             "weekend_intensity": weekend_intensity,
-            "recurring_total": round(last_full_month_burn * 0.4, 2), # Heuristic based on full month
+            "recurring_total": recurring_total, # Heuristic based on full month
             "payday_velocity": "High" if (monthly_burn > avg_burn * 0.5 and days_passed < 10) else "Normal",
-            "predicted_end_balance": max(0, round(predicted_end, 2))
+            "predicted_end_balance": max(0, round(predicted_end, 2)),
+            "dti_ratio": dti_ratio,
+            "financial_age": f"{financial_age} yrs",
+            "income_volatility": income_volatility,
+            "tx_frequency": tx_frequency,
+            "savings_status": savings_status
         }
     except Exception as e:
         import traceback
@@ -304,5 +369,10 @@ async def get_advanced_insights(
             "weekend_intensity": 0,
             "recurring_total": 0,
             "payday_velocity": "Error",
-            "predicted_end_balance": 0
+            "predicted_end_balance": 0,
+            "dti_ratio": 0,
+            "financial_age": "Unknown",
+            "income_volatility": 0,
+            "tx_frequency": 0,
+            "savings_status": "Unknown"
         }

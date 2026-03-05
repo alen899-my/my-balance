@@ -37,7 +37,7 @@ export default function IncomeVsExpenseChart({ startDate, endDate, selectedBank 
     }
 
     return (
-        <div className="gov-panel" style={{ height: "400px", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div className="gov-panel" style={{ display: "flex", flexDirection: "column", minHeight: "320px" }}>
             <div className="gov-panel-header" style={{ flexShrink: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                     <TrendingUp style={{ width: "15px", height: "15px", color: "var(--brand)" }} />
@@ -51,8 +51,8 @@ export default function IncomeVsExpenseChart({ startDate, endDate, selectedBank 
                 <span className="badge-success">Area Chart</span>
             </div>
 
-            <div style={{ flex: 1, padding: "16px 8px 8px", overflow: "hidden" }}>
-                <ResponsiveContainer width="100%" height="100%">
+            <div style={{ flex: 1, padding: "16px 8px 8px", minHeight: "260px" }}>
+                <ResponsiveContainer width="100%" height={260}>
                     <AreaChart data={data} margin={{ top: 8, right: 16, left: -16, bottom: 0 }}>
                         <defs>
                             <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
@@ -84,7 +84,7 @@ export default function IncomeVsExpenseChart({ startDate, endDate, selectedBank 
                                 fontSize: "12px",
                             }}
                             labelStyle={{ color: "#475467", fontWeight: 700, marginBottom: "4px" }}
-                            formatter={(value: any, name: any) => [`₹${Number(value || 0).toLocaleString()}`, name === "income" ? "Income" : "Expense"]}
+                            formatter={(value: any, name: any) => [`₹${Number(value || 0).toLocaleString()}`, name === "Income" ? "Income" : "Expense"]}
                         />
                         <Legend iconType="circle" wrapperStyle={{ fontSize: "12px", fontWeight: 600, color: "var(--text-secondary)" }} />
                         <Area

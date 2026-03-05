@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Bell, Menu, LogOut, ChevronDown, User2 } from "lucide-react";
+import { Bell, Menu, LogOut, ChevronDown, User2, Settings } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { authFetch } from "@/lib/authFetch";
+import ProfileSettingsModal from "./ProfileSettingsModal";
 
 const routeLabels: Record<string, string> = {
   "/dashboard": "Executive Summary",
@@ -19,7 +20,11 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
   const router = useRouter();
   const pathname = usePathname();
   const [userName, setUserName] = useState("User");
+  const [userEmail, setUserEmail] = useState("");
+  const [userPhone, setUserPhone] = useState("");
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchUser() {
@@ -27,7 +32,10 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
       if (storedUser) {
         try {
           const user = JSON.parse(storedUser);
-          if (user.name) { setUserName(user.name); return; }
+          if (user.name) setUserName(user.name);
+          if (user.email) setUserEmail(user.email);
+          if (user.phone) setUserPhone(user.phone);
+          if (user.profile_picture) setUserAvatar(user.profile_picture);
         } catch (e) { console.error("Parse error", e); }
       }
       try {
@@ -35,12 +43,35 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
         if (res.ok) {
           const user = await res.json();
           setUserName(user.name);
+          setUserEmail(user.email || "");
+          setUserPhone(user.phone || "");
+          setUserAvatar(user.profile_picture || null);
           localStorage.setItem("user", JSON.stringify(user));
         }
       } catch (e) { console.error("Failed to load user profile", e); }
     }
     fetchUser();
   }, []);
+
+  const handleProfileSaved = (newName: string, newEmail: string, newPhone: string, newAvatar: string | null) => {
+    setUserName(newName);
+    setUserEmail(newEmail);
+    setUserPhone(newPhone);
+    setUserAvatar(newAvatar);
+
+    // Update local storage so it persists between reloads
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        user.name = newName;
+        user.email = newEmail;
+        user.phone = newPhone;
+        user.profile_picture = newAvatar;
+        localStorage.setItem("user", JSON.stringify(user));
+      } catch (e) { }
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -166,12 +197,17 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
               style={{
                 width: "28px", height: "28px",
                 borderRadius: "50%",
-                background: "#0070f3",
+                background: "var(--brand-light)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 flexShrink: 0,
+                overflow: "hidden"
               }}
             >
-              <User2 style={{ width: "14px", height: "14px", color: "var(--bg-surface)" }} />
+              {userAvatar ? (
+                <img src={userAvatar} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                <User2 style={{ width: "14px", height: "14px", color: "var(--brand)" }} />
+              )}
             </div>
             <div style={{ textAlign: "left" }}>
               <p style={{ fontSize: "12px", fontWeight: 500, color: "var(--text-primary)", lineHeight: 1.2, letterSpacing: "-0.01em" }}>
@@ -223,6 +259,29 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
                   </p>
                   <p style={{ fontSize: "11px", color: "var(--text-muted)" }}>Account Holder</p>
                 </div>
+
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    setIsProfileModalOpen(true);
+                  }}
+                  style={{
+                    width: "100%",
+                    display: "flex", alignItems: "center", gap: "8px",
+                    padding: "10px 14px",
+                    background: "transparent", border: "none", borderBottom: "1px solid var(--border-light)",
+                    cursor: "pointer",
+                    fontSize: "13px", fontWeight: 500,
+                    color: "var(--text-primary)",
+                    transition: "background 0.1s",
+                    textAlign: "left",
+                  }}
+                  className="dropdown-item-hover"
+                >
+                  <Settings style={{ width: "14px", height: "14px", color: "var(--text-muted)" }} />
+                  Profile Settings
+                </button>
+
                 <button
                   onClick={handleLogout}
                   style={{
@@ -247,8 +306,19 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
         </div>
       </div>
 
+      <ProfileSettingsModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        initialName={userName}
+        initialEmail={userEmail}
+        initialPhone={userPhone}
+        initialAvatar={userAvatar}
+        onSaved={handleProfileSaved}
+      />
+
       <style>{`
         .header-user-btn:hover { background: #1a1a1a !important; }
+        .dropdown-item-hover:hover { background: var(--bg-surface) !important; }
         .logout-btn-hover:hover { background: var(--danger-bg) !important; }
       `}</style>
     </header>

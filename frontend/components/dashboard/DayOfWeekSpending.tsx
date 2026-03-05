@@ -53,7 +53,7 @@ export default function DayOfWeekSpending({ startDate, endDate, selectedBank }: 
     const maxAmount = Math.max(...data.map(d => d.amount));
 
     return (
-        <div className="gov-panel" style={{ height: "400px", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div className="gov-panel" style={{ display: "flex", flexDirection: "column", minHeight: "320px" }}>
             <div className="gov-panel-header" style={{ flexShrink: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                     <CalendarDays style={{ width: "15px", height: "15px", color: "var(--brand)" }} />
@@ -67,8 +67,8 @@ export default function DayOfWeekSpending({ startDate, endDate, selectedBank }: 
                 <span className="badge-warning">Bar Chart</span>
             </div>
 
-            <div style={{ flex: 1, padding: "16px 8px 8px", overflow: "hidden" }}>
-                <ResponsiveContainer width="100%" height="100%">
+            <div style={{ flex: 1, padding: "16px 8px 8px", minHeight: "260px" }}>
+                <ResponsiveContainer width="100%" height={260}>
                     <BarChart data={data} margin={{ top: 8, right: 16, left: -16, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e4e7ec" />
                         <XAxis

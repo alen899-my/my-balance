@@ -88,6 +88,53 @@ async def clear_all_transactions(user = Depends(get_current_user)):
 @router.get("/unique-banks")
 async def get_unique_banks(user = Depends(get_current_user)):
     user_id = str(user["user_id"])
-    # Get unique bank names from the transactions collection for this user
     banks = await Transaction.get_pymongo_collection().distinct("bank", {"user_id": user_id})
     return sorted([b for b in banks if b])
+
+
+@router.post("/re-extract-payees")
+async def re_extract_payees(user=Depends(get_current_user)):
+    """
+    Re-runs the improved payee name extractor on every transaction for this user.
+    Updates `payee` and `category` fields in MongoDB without re-uploading statements.
+    """
+    from app.utils.normalize import extract_payee_name
+    from app.utils.analysis import classify_category
+    from pymongo import UpdateOne
+
+    user_id = str(user["user_id"])
+    collection = Transaction.get_pymongo_collection()
+
+    # Fetch all transactions with their description (only what we need)
+    cursor = collection.find(
+        {"user_id": user_id},
+        {"_id": 1, "description": 1}
+    )
+    docs = await cursor.to_list(length=None)
+
+    if not docs:
+        return {"updated": 0, "message": "No transactions found."}
+
+    ops = []
+    for doc in docs:
+        desc = doc.get("description") or ""
+        new_payee = extract_payee_name(desc)
+        new_category = classify_category(new_payee)
+        ops.append(
+            UpdateOne(
+                {"_id": doc["_id"]},
+                {"$set": {"payee": new_payee, "category": new_category}}
+            )
+        )
+
+    if ops:
+        result = await collection.bulk_write(ops, ordered=False)
+        updated = result.modified_count
+    else:
+        updated = 0
+
+    return {
+        "updated": updated,
+        "total": len(docs),
+        "message": f"Re-extracted payee names for {updated} of {len(docs)} transactions."
+    }

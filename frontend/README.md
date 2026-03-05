@@ -57,3 +57,12 @@ UI Look: A massive, interactive line chart forecasting your bank balance 3, 6, a
 New Feature: Dashboard Expansion
 What it does: Right now, we track cash flow via your banks. We could add a system to track Assets (Mutual Funds, Stocks, Real Estate) and Liabilities (Loans, Credit Card Debt) to give you a true Net Worth calculation over time.
 Do any of these catch your eye? The Subscriptions Tracker or the Target Savings Goals are usually huge technical upgrades that look incredible on a dashboard!
+
+//start for backend
+cd backend
+ venv/scripts/activate  
+  uvicorn app.main:app --reload --port 8000 
+
+//start for frontend
+cd frontend
+npm run dev

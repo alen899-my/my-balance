@@ -63,7 +63,7 @@ export default function SpendingPulse({ startDate, endDate, selectedBank }: Spen
       <div className="gov-panel-header">
         <div className="skeleton" style={{ width: "180px", height: "18px" }} />
       </div>
-      <div style={{ padding: "16px", display: "grid", gridTemplateColumns: "repeat(10, 1fr)", gap: "6px" }}>
+      <div style={{ padding: "16px", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(28px, 1fr))", gap: "6px" }}>
         {[...Array(30)].map((_, i) => <div key={i} className="skeleton" style={{ aspectRatio: "1" }} />)}
       </div>
     </div>
@@ -85,7 +85,7 @@ export default function SpendingPulse({ startDate, endDate, selectedBank }: Spen
 
       <div style={{ padding: "16px" }}>
         {/* Grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(10, 1fr)", gap: "5px", marginBottom: "16px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(28px, 1fr))", gap: "5px", marginBottom: "16px" }}>
           {calendarGrid.map((day, i) => (
             <div
               key={i}

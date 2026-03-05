@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { authFetch } from "@/lib/authFetch";
-import { Target, PlusCircle, ArrowUpCircle, TrendingUp, PiggyBank, CalendarDays } from "lucide-react";
+import { Target, PlusCircle, ArrowUpCircle, TrendingUp, PiggyBank, CalendarDays, Trash2 } from "lucide-react";
 
 export default function GoalsPage() {
     const [data, setData] = useState<any>({ goals: [], metrics: {} });
@@ -11,6 +11,7 @@ export default function GoalsPage() {
     // Modals
     const [isAddGoalOpen, setIsAddGoalOpen] = useState(false);
     const [isAddFundsOpen, setIsAddFundsOpen] = useState(false);
+    const [deleteGoalData, setDeleteGoalData] = useState<{ id: string, name: string } | null>(null);
     const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
 
     // Form State
@@ -72,6 +73,19 @@ export default function GoalsPage() {
             });
             setIsAddFundsOpen(false);
             setFundAmount(""); setSelectedGoalId(null);
+            fetchGoals();
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deleteGoalData) return;
+        try {
+            await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/goals/${deleteGoalData.id}`, {
+                method: "DELETE"
+            });
+            setDeleteGoalData(null);
             fetchGoals();
         } catch (err) {
             console.error(err);
@@ -165,7 +179,7 @@ export default function GoalsPage() {
             ) : (
                 <>
                     {/* ── DASHBOARD METRICS ── */}
-                    <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "16px" }}>
+                    <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))", gap: "16px" }}>
 
                         <div className="gov-kpi-card">
                             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
@@ -215,12 +229,23 @@ export default function GoalsPage() {
                                 <button onClick={() => setIsAddGoalOpen(true)} className="gov-btn-secondary">Create your first target</button>
                             </div>
                         ) : (
-                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "20px" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))", gap: "20px" }}>
                                 {data.goals.map((g: any) => (
-                                    <div key={g.id} className="gov-panel" style={{ padding: "24px", display: "flex", flexDirection: "column", alignItems: "center", gap: "24px" }}>
+                                    <div key={g.id} className="gov-panel" style={{ padding: "24px", display: "flex", flexDirection: "column", alignItems: "center", gap: "24px", position: "relative" }}>
+
+                                        {/* Delete Button */}
+                                        <button
+                                            onClick={() => setDeleteGoalData({ id: g.id, name: g.name })}
+                                            style={{ position: 'absolute', top: '12px', right: '12px', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px', borderRadius: '4px' }}
+                                            onMouseEnter={(e) => e.currentTarget.style.color = 'var(--danger)'}
+                                            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                                            title="Delete Vault"
+                                        >
+                                            <Trash2 style={{ width: "16px", height: "16px" }} />
+                                        </button>
 
                                         {/* Vault Header */}
-                                        <div style={{ width: "100%", textAlign: "center" }}>
+                                        <div style={{ width: "100%", textAlign: "center", padding: "0 20px" }}>
                                             <h3 style={{ margin: "0 0 4px", fontSize: "16px", fontWeight: 700 }}>{g.name}</h3>
                                             <div style={{ fontSize: "12px", color: "var(--text-secondary)", fontWeight: 500 }}>
                                                 <span style={{ color: "var(--text-primary)" }}>₹{g.current_amount.toLocaleString()}</span> / ₹{g.target_amount.toLocaleString()}
@@ -258,7 +283,7 @@ export default function GoalsPage() {
                                 <label className="section-label" style={{ marginBottom: "6px", display: "block" }}>What are you saving for?</label>
                                 <input required value={goalName} onChange={e => setGoalName(e.target.value)} placeholder="e.g. Emergency Fund" className="gov-input" style={{ width: "100%" }} />
                             </div>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 140px), 1fr))", gap: "12px" }}>
                                 <div>
                                     <label className="section-label" style={{ marginBottom: "6px", display: "block" }}>Target Amount (₹)</label>
                                     <input required type="number" min="1" value={targetAmount} onChange={e => setTargetAmount(e.target.value)} placeholder="100000" className="gov-input" style={{ width: "100%" }} />
@@ -291,6 +316,28 @@ export default function GoalsPage() {
                                 <button type="submit" className="gov-btn-primary">Confirm Deposit</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {deleteGoalData && (
+                <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div className="gov-panel" style={{ width: "100%", maxWidth: "320px", padding: "24px" }}>
+                        <h2 style={{ margin: "0 0 12px", fontSize: "18px", color: "var(--danger)" }}>Delete Vault</h2>
+                        <p style={{ margin: "0 0 20px", fontSize: "14px", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                            Are you sure you want to delete the <strong>{deleteGoalData.name}</strong> vault?
+                            This action cannot be undone.
+                        </p>
+                        <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+                            <button type="button" onClick={() => setDeleteGoalData(null)} className="gov-btn-secondary">Cancel</button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmDelete}
+                                style={{ background: "var(--danger)", color: "white", padding: "8px 16px", borderRadius: "6px", fontWeight: 600, border: "none", cursor: "pointer" }}
+                            >
+                                Delete
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

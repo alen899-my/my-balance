@@ -111,3 +111,15 @@ async def add_to_goal(goal_id: str, payload: GoalContribution, user = Depends(ge
         
     await goal.save()
     return {"status": "success", "new_amount": goal.current_amount}
+
+@router.delete("/{goal_id}")
+async def delete_goal(goal_id: str, user = Depends(get_current_user)):
+    user_id = str(user["user_id"])
+    from bson import ObjectId
+    
+    goal = await Goal.get(ObjectId(goal_id))
+    if not goal or goal.user_id != user_id:
+        raise HTTPException(status_code=404, detail="Goal not found")
+        
+    await goal.delete()
+    return {"status": "success", "message": "Goal deleted successfully"}

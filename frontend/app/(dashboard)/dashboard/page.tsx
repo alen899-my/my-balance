@@ -179,12 +179,12 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "16px", marginBottom: "16px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 400px), 1fr))", gap: "16px", marginBottom: "16px" }}>
         <IncomeVsExpenseChart startDate={startDate} endDate={endDate} selectedBank={selectedBank} />
         <DayOfWeekSpending startDate={startDate} endDate={endDate} selectedBank={selectedBank} />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: "16px" }}>
         <CategorySpending startDate={startDate} endDate={endDate} selectedBank={selectedBank} />
         <SpendingPulse startDate={startDate} endDate={endDate} selectedBank={selectedBank} />
       </div>

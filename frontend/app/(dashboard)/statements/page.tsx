@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, X, FileText, SlidersHorizontal } from "lucide-react";
+import { Plus, X, FileText, SlidersHorizontal, RefreshCw } from "lucide-react";
 import StatementUploadForm from "@/components/dashboard/StatementUploadForm";
 import TransactionTable from "@/components/dashboard/TransactionTable";
 import DeleteAllDataButton from "@/components/dashboard/DeleteAllDataButton";
@@ -17,8 +17,27 @@ export default function StatementsPage() {
   const [availableBanks, setAvailableBanks] = useState<string[]>([]);
   const [selectedBank, setSelectedBank] = useState("All Banks");
   const [filters, setFilters] = useState({ search: "", type: "all", sort: "desc" });
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshMsg, setRefreshMsg] = useState("");
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
+
+  const handleReExtract = async () => {
+    setIsRefreshing(true);
+    setRefreshMsg("");
+    try {
+      const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/transactions/re-extract-payees`, { method: "POST" });
+      const data = await res.json();
+      setRefreshMsg(data.message || "Done!");
+      // Auto-clear after 5s
+      setTimeout(() => setRefreshMsg(""), 5000);
+    } catch (e) {
+      setRefreshMsg("Failed to refresh payee names.");
+      setTimeout(() => setRefreshMsg(""), 4000);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     authFetch(`${process.env.NEXT_PUBLIC_API_URL}/transactions/unique-banks`)
@@ -62,6 +81,7 @@ export default function StatementsPage() {
             <SlidersHorizontal style={{ width: "14px", height: "14px" }} />
             {showFilters ? "Hide Filters" : "Filters"}
           </button>
+          
           <DeleteAllDataButton />
           <button
             onClick={() => setIsModalOpen(true)}
@@ -72,6 +92,17 @@ export default function StatementsPage() {
           </button>
         </div>
       </div>
+
+      {/* ── Refresh Feedback ── */}
+      {refreshMsg && (
+        <div style={{
+          background: "var(--success-bg)", border: "1px solid #abefc6",
+          borderRadius: "8px", padding: "10px 16px",
+          fontSize: "13px", fontWeight: 600, color: "var(--success)"
+        }}>
+          ✓ {refreshMsg}
+        </div>
+      )}
 
       {/* ── Background Sync ── */}
       <BackgroundSyncProgress />

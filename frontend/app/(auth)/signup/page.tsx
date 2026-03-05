@@ -4,6 +4,18 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { User, Mail, Phone, Lock, ArrowRight } from "lucide-react";
+import { z } from "zod";
+
+const signupSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().min(10, "Phone must be at least 10 digits").regex(/^[0-9+\-\s()]+$/, "Invalid phone format"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  confirm_password: z.string().min(1, "Please confirm your password")
+}).refine((data) => data.password === data.confirm_password, {
+  message: "Passwords do not match",
+  path: ["confirm_password"]
+});
 
 export default function Signup() {
   const router = useRouter();
@@ -16,13 +28,29 @@ export default function Signup() {
     confirm_password: "",
   });
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   function update(e: React.ChangeEvent<HTMLInputElement>) {
     setForm({ ...form, [e.target.name]: e.target.value });
+    // Clear error for the field being typed in
+    if (errors[e.target.name]) {
+      setErrors({ ...errors, [e.target.name]: "" });
+    }
   }
 
   async function handleSignup() {
-    if (form.password !== form.confirm_password) {
-      alert("Passwords do not match");
+    setErrors({});
+
+    // Zod Validation
+    const result = signupSchema.safeParse(form);
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      result.error.issues.forEach(issue => {
+        if (issue.path[0]) {
+          fieldErrors[issue.path[0] as string] = issue.message;
+        }
+      });
+      setErrors(fieldErrors);
       return;
     }
 
@@ -38,7 +66,13 @@ export default function Signup() {
         router.push("/login");
       } else {
         const err = await res.json();
-        alert(Array.isArray(err.detail) ? err.detail[0].msg : err.detail || "Signup failed");
+        const errorMessage = Array.isArray(err.detail) ? err.detail[0].msg : err.detail || "Signup failed";
+        // Show as general error, or link to email/phone if it says "already exists"
+        if (errorMessage.toLowerCase().includes("email") || errorMessage.toLowerCase().includes("exists")) {
+          setErrors({ email: errorMessage });
+        } else {
+          alert(errorMessage);
+        }
       }
     } catch (error) {
       console.error(error);
@@ -49,11 +83,11 @@ export default function Signup() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
-      <div className="gov-panel" style={{ width: "100%", maxWidth: "480px", padding: "40px 32px", display: "flex", flexDirection: "column", gap: "24px" }}>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
+      <div className="gov-panel" style={{ width: "100%", maxWidth: "480px", padding: "32px 24px", display: "flex", flexDirection: "column", gap: "24px" }}>
 
         {/* Brand Logo & Header */}
-        <div style={{ textAlign: "center", marginBottom: "8px" }}>
+        <div style={{ textAlign: "center", marginBottom: "4px" }}>
           <p style={{
             color: "var(--text-primary)",
             fontWeight: 800,
@@ -64,11 +98,11 @@ export default function Signup() {
             background: "linear-gradient(to right, #cfd8dc, #ffffff)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
-            marginBottom: "16px"
+            marginBottom: "12px"
           }}>
             my<span style={{ color: "var(--brand)", WebkitTextFillColor: "initial" }}>balance</span>
           </p>
-          <h2 style={{ fontSize: "20px", fontWeight: 600, color: "var(--text-primary)", marginBottom: "8px", letterSpacing: "-0.02em" }}>
+          <h2 style={{ fontSize: "20px", fontWeight: 600, color: "var(--text-primary)", marginBottom: "6px", letterSpacing: "-0.02em" }}>
             Secure Registration
           </h2>
           <p style={{ fontSize: "13px", color: "var(--text-secondary)" }}>
@@ -86,12 +120,14 @@ export default function Signup() {
               <User style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", width: "16px", height: "16px", color: "var(--text-muted)" }} />
               <input
                 name="name"
+                autoComplete="name"
                 placeholder="John Doe"
                 onChange={update}
                 className="gov-input"
-                style={{ width: "100%", paddingLeft: "36px" }}
+                style={{ width: "100%", paddingLeft: "36px", borderColor: errors.name ? "var(--danger)" : undefined }}
               />
             </div>
+            {errors.name && <span style={{ fontSize: "11px", color: "var(--danger)" }}>{errors.name}</span>}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -105,12 +141,14 @@ export default function Signup() {
                 <input
                   name="email"
                   type="email"
+                  autoComplete="email"
                   placeholder="name@example.com"
                   onChange={update}
                   className="gov-input"
-                  style={{ width: "100%", paddingLeft: "36px" }}
+                  style={{ width: "100%", paddingLeft: "36px", borderColor: errors.email ? "var(--danger)" : undefined }}
                 />
               </div>
+              {errors.email && <span style={{ fontSize: "11px", color: "var(--danger)" }}>{errors.email}</span>}
             </div>
 
             {/* Phone Field */}
@@ -122,12 +160,15 @@ export default function Signup() {
                 <Phone style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", width: "16px", height: "16px", color: "var(--text-muted)" }} />
                 <input
                   name="phone"
+                  type="tel"
+                  autoComplete="tel"
                   placeholder="+1 (555) 000-0000"
                   onChange={update}
                   className="gov-input"
-                  style={{ width: "100%", paddingLeft: "36px" }}
+                  style={{ width: "100%", paddingLeft: "36px", borderColor: errors.phone ? "var(--danger)" : undefined }}
                 />
               </div>
+              {errors.phone && <span style={{ fontSize: "11px", color: "var(--danger)" }}>{errors.phone}</span>}
             </div>
           </div>
 
@@ -142,13 +183,16 @@ export default function Signup() {
                 <input
                   type="password"
                   name="password"
+                  autoComplete="new-password"
                   placeholder="••••••••"
                   onChange={update}
                   className="gov-input"
-                  style={{ width: "100%", paddingLeft: "36px" }}
+                  style={{ width: "100%", paddingLeft: "36px", borderColor: errors.password ? "var(--danger)" : undefined }}
                 />
               </div>
+              {errors.password && <span style={{ fontSize: "11px", color: "var(--danger)" }}>{errors.password}</span>}
             </div>
+
             <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
               <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
                 Confirm
@@ -158,12 +202,14 @@ export default function Signup() {
                 <input
                   type="password"
                   name="confirm_password"
+                  autoComplete="new-password"
                   placeholder="••••••••"
                   onChange={update}
                   className="gov-input"
-                  style={{ width: "100%", paddingLeft: "36px" }}
+                  style={{ width: "100%", paddingLeft: "36px", borderColor: errors.confirm_password ? "var(--danger)" : undefined }}
                 />
               </div>
+              {errors.confirm_password && <span style={{ fontSize: "11px", color: "var(--danger)" }}>{errors.confirm_password}</span>}
             </div>
           </div>
         </div>
@@ -182,7 +228,7 @@ export default function Signup() {
           )}
         </button>
 
-        <p style={{ textAlign: "center", fontSize: "13px", color: "var(--text-secondary)", marginTop: "8px" }}>
+        <p style={{ textAlign: "center", fontSize: "13px", color: "var(--text-secondary)" }}>
           Already have an account?{" "}
           <Link href="/login" style={{ color: "var(--brand)", textDecoration: "none", fontWeight: 500 }}>
             Sign in

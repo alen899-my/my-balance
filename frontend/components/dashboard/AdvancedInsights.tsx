@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { authFetch } from "@/lib/authFetch";
 import {
   PieChart, ShieldCheck, Flame, RefreshCcw,
-  Activity, Timer, Calendar, CreditCard, Zap, TrendingUp
+  Activity, Timer, Calendar, CreditCard, Zap, TrendingUp, BarChart, Target
 } from "lucide-react";
 
 interface AdvancedInsightsProps {
@@ -63,9 +63,12 @@ export default function AdvancedInsights({ selectedBank }: AdvancedInsightsProps
     { label: "Burn Variance", value: `${data.burn_variance}%`, icon: Activity, border: "#fda29b", color: "var(--danger)", bg: "var(--danger-bg)", note: "Vs avg", title: "How much more (or less) you spent this month compared to your historical average." },
     { label: "End Balance", value: `₹${(data.predicted_end_balance || 0).toLocaleString()}`, icon: Timer, border: "#d0d5dd", color: "var(--text-secondary)", bg: "#f9fafb", note: "Forecasted", title: "Predicted total balance at the end of the current month based on daily average burn." },
     { label: "Weekend Spend", value: `${data.weekend_intensity}%`, icon: Calendar, border: "#bfcfef", color: "var(--brand)", bg: "var(--brand-light)", note: "Of total spend", title: "Percentage of your total monthly expenses that occurred on weekends." },
-    { label: "DTI Ratio", value: "0.2", icon: CreditCard, border: "#fda29b", color: "var(--danger)", bg: "var(--danger-bg)", note: "Debt risk: Low", title: "Debt-to-Income ratio estimation (Static metric for UI demonstration)." },
+    { label: "DTI Ratio", value: data.dti_ratio !== undefined ? data.dti_ratio.toString() : "0", icon: CreditCard, border: "#fda29b", color: "var(--danger)", bg: "var(--danger-bg)", note: "Debt risk indicator", title: "Estimated Debt-to-Income ratio based on recurring spend vs historical average income." },
     { label: "Payday Velocity", value: data.payday_velocity, icon: Zap, border: "#fedf89", color: "var(--warning)", bg: "var(--warning-bg)", note: "First 48h spend", title: "High indicates heavy spending immediately after receiving salary/income." },
-    { label: "Financial Age", value: "28 yrs", icon: TrendingUp, border: "#b9e6fe", color: "var(--info)", bg: "var(--info-bg)", note: "Based on wealth", title: "Estimated financial maturity based on asset accumulation and burn efficiency." },
+    { label: "Financial Age", value: data.financial_age || "Unknown", icon: TrendingUp, border: "#b9e6fe", color: "var(--info)", bg: "var(--info-bg)", note: "Based on wealth", title: "Estimated financial maturity based on asset accumulation and burn efficiency." },
+    { label: "Savings Status", value: data.savings_status || "Unknown", icon: Target, border: data.savings_status === "Excellent" ? "#abefc6" : data.savings_status === "Stable" ? "#b9e6fe" : "#fda29b", color: data.savings_status === "Excellent" ? "var(--success)" : data.savings_status === "Stable" ? "var(--info)" : "var(--danger)", bg: data.savings_status === "Excellent" ? "var(--success-bg)" : data.savings_status === "Stable" ? "var(--info-bg)" : "var(--danger-bg)", note: "Overall Health", title: "General indicator of holistic monthly cashflow standing." },
+    { label: "Daily TXNs", value: `${data.tx_frequency || 0}/day`, icon: Activity, border: "#d0d5dd", color: "var(--text-secondary)", bg: "#f9fafb", note: "Interaction rate", title: "Average count of daily transactions made per day across the period." },
+    { label: "Income Volatility", value: `${data.income_volatility || 0}%`, icon: BarChart, border: "#ddd6fe", color: "#7c3aed", bg: "#f5f3ff", note: "Income Spikes", title: "Max month-over-month variance calculated within income streams." },
   ];
 
   return (
