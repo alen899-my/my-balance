@@ -75,6 +75,7 @@ class ProfileUpdate(BaseModel):
     email: Optional[str] = None
     phone: Optional[str] = None
     profile_picture: Optional[str] = None
+    password: Optional[str] = None
 
 @router.put("/me")
 async def update_profile(data: ProfileUpdate, payload = Depends(get_current_user)):
@@ -88,6 +89,8 @@ async def update_profile(data: ProfileUpdate, payload = Depends(get_current_user
         update_data["phone"] = data.phone
     if data.profile_picture is not None:
         update_data["profile_picture"] = data.profile_picture
+    if data.password is not None:
+        update_data["password"] = hash_password(data.password)
         
     if update_data:
         users.update_one(

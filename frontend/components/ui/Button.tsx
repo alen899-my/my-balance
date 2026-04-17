@@ -27,8 +27,6 @@ const variantStyles: Record<ButtonVariant, string> = {
   primary: [
     "bg-primary text-primary-foreground",
     "hover:brightness-110 active:brightness-95",
-    "shadow-[0_2px_12px_0_oklch(0.700_0.210_47_/_0.35)]",
-    "hover:shadow-[0_4px_20px_0_oklch(0.700_0.210_47_/_0.50)]",
     "border border-transparent",
   ].join(" "),
 

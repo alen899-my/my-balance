@@ -60,96 +60,96 @@
 
 :root {
     /* ── Backgrounds ── */
-    --background:          oklch(0.958 0.014 88);             /* note ivory #F5F0E8 */
-    --foreground:          oklch(0.200 0.055 158);            /* deep engraving ink */
+    --background:          oklch(1 0 0);                      /* pure white/ivory */
+    --foreground:          oklch(0.250 0.020 250);            /* deep slate dark */
 
     /* ── Cards ── */
-    --card:                oklch(0.972 0.010 88);             /* slightly lighter ivory */
-    --card-foreground:     oklch(0.200 0.055 158);
+    --card:                oklch(0.985 0.005 250);            /* crisp card white */
+    --card-foreground:     oklch(0.250 0.020 250);
 
     /* ── Popovers ── */
-    --popover:             oklch(0.980 0.008 88);
-    --popover-foreground:  oklch(0.200 0.055 158);
+    --popover:             oklch(1 0 0);
+    --popover-foreground:  oklch(0.250 0.020 250);
 
     /* ── Primary — currency teal ── */
-    --primary:             oklch(0.530 0.090 168);            /* #2E7D6B */
-    --primary-foreground:  oklch(0.980 0.008 88);             /* ivory on teal */
+    --primary:             oklch(0.530 0.090 168);            /* #2E7D6B (keeping teal as accent) */
+    --primary-foreground:  oklch(1 0 0);                      /* white on teal */
 
-    /* ── Secondary — faded parchment ── */
-    --secondary:           oklch(0.900 0.030 90);             /* #E8DFC8 parchment */
-    --secondary-foreground: oklch(0.280 0.075 158);
+    /* ── Secondary — neutral surface ── */
+    --secondary:           oklch(0.950 0.010 250);            /* soft light grey */
+    --secondary-foreground: oklch(0.300 0.030 250);
 
     /* ── Muted ── */
-    --muted:               oklch(0.930 0.020 90);             /* warm light khaki */
-    --muted-foreground:    oklch(0.480 0.045 155);            /* faded federal green */
+    --muted:               oklch(0.960 0.005 250);
+    --muted-foreground:    oklch(0.550 0.020 250);
 
-    /* ── Accent — federal green ── */
-    --accent:              oklch(0.610 0.095 162);            /* #4A8C6F */
-    --accent-foreground:   oklch(0.980 0.008 88);             /* ivory on green */
+    /* ── Accent ── */
+    --accent:              oklch(0.940 0.015 250);
+    --accent-foreground:   oklch(0.250 0.020 250);
 
-    /* ── Destructive — seal red (like Treasury seal) ── */
-    --destructive:         oklch(0.420 0.140 22);             /* engraved red */
+    /* ── Destructive ── */
+    --destructive:         oklch(0.550 0.180 25);             /* crisp red */
 
     /* ── Borders & inputs ── */
-    --border:              oklch(0.840 0.040 90);             /* intaglio khaki border */
-    --input:               oklch(0.840 0.040 90);
-    --ring:                oklch(0.530 0.090 168);            /* teal focus ring */
+    --border:              oklch(0.900 0.010 250);
+    --input:               oklch(0.900 0.010 250);
+    --ring:                oklch(0.530 0.090 168);
 
-    /* ── Charts — currency ramp ── */
-    --chart-1:             oklch(0.530 0.090 168);            /* currency teal */
-    --chart-2:             oklch(0.610 0.095 162);            /* federal green */
-    --chart-3:             oklch(0.700 0.080 155);            /* sage green */
-    --chart-4:             oklch(0.790 0.055 88);             /* intaglio khaki */
-    --chart-5:             oklch(0.380 0.130 22);             /* seal red */
+    /* ── Charts ── */
+    --chart-1:             oklch(0.530 0.090 168);
+    --chart-2:             oklch(0.650 0.120 160);
+    --chart-3:             oklch(0.750 0.080 155);
+    --chart-4:             oklch(0.850 0.040 150);
+    --chart-5:             oklch(0.600 0.180 25);
 
     --radius: 0.625rem;
 
     /* ── Sidebar ── */
-    --sidebar:                    oklch(0.940 0.022 90);      /* parchment panel */
-    --sidebar-foreground:         oklch(0.200 0.055 158);
+    --sidebar:                    oklch(0.980 0.005 250);
+    --sidebar-foreground:         oklch(0.250 0.020 250);
     --sidebar-primary:            oklch(0.530 0.090 168);
-    --sidebar-primary-foreground: oklch(0.980 0.008 88);
-    --sidebar-accent:             oklch(0.900 0.030 90);
-    --sidebar-accent-foreground:  oklch(0.280 0.075 158);
-    --sidebar-border:             oklch(0.840 0.040 90);
+    --sidebar-primary-foreground: oklch(1 0 0);
+    --sidebar-accent:             oklch(0.950 0.010 250);
+    --sidebar-accent-foreground:  oklch(0.300 0.030 250);
+    --sidebar-border:             oklch(0.920 0.010 250);
     --sidebar-ring:               oklch(0.530 0.090 168);
 }
 
 .dark {
-    /* ── Backgrounds — deep engraving plate ── */
-    --background:          oklch(0.130 0.030 160);            /* near-black with green tint */
-    --foreground:          oklch(0.930 0.020 88);             /* faded ivory */
+    /* ── Backgrounds — deep black ── */
+    --background:          oklch(0.080 0.005 250);            /* sophisticated black */
+    --foreground:          oklch(0.980 0.005 250);            /* near-white */
 
-    /* ── Cards — inked plate surface ── */
-    --card:                oklch(0.165 0.035 162);            /* slightly lifted dark green */
-    --card-foreground:     oklch(0.930 0.020 88);
+    /* ── Cards ── */
+    --card:                oklch(0.120 0.010 250);            /* lighter dark depth */
+    --card-foreground:     oklch(0.980 0.005 250);
 
-    --popover:             oklch(0.180 0.032 160);
-    --popover-foreground:  oklch(0.930 0.020 88);
+    --popover:             oklch(0.120 0.010 250);
+    --popover-foreground:  oklch(0.980 0.005 250);
 
-    /* ── Primary — bright currency teal (readable on dark) ── */
-    --primary:             oklch(0.680 0.110 168);            /* brighter teal */
-    --primary-foreground:  oklch(0.110 0.030 160);            /* near-black text on teal */
+    /* ── Primary — bright currency teal ── */
+    --primary:             oklch(0.680 0.110 168);            /* brighter teal for dark usage */
+    --primary-foreground:  oklch(0.080 0.005 250);            /* black text on teal */
 
     /* ── Secondary ── */
-    --secondary:           oklch(0.220 0.045 162);            /* dark plate green */
-    --secondary-foreground: oklch(0.880 0.020 88);
+    --secondary:           oklch(0.180 0.015 250);
+    --secondary-foreground: oklch(0.900 0.010 250);
 
     /* ── Muted ── */
-    --muted:               oklch(0.200 0.040 160);
-    --muted-foreground:    oklch(0.580 0.060 158);            /* mid teal-grey */
+    --muted:               oklch(0.150 0.010 250);
+    --muted-foreground:    oklch(0.600 0.010 250);
 
-    /* ── Accent — federal green lifted ── */
-    --accent:              oklch(0.560 0.100 164);
-    --accent-foreground:   oklch(0.950 0.012 88);
+    /* ── Accent ── */
+    --accent:              oklch(0.200 0.020 250);
+    --accent-foreground:   oklch(0.980 0.005 250);
 
     /* ── Destructive ── */
-    --destructive:         oklch(0.560 0.170 22);             /* brighter seal red on dark */
+    --destructive:         oklch(0.580 0.180 25);
 
     /* ── Borders ── */
-    --border:              oklch(1 0 0 / 9%);
-    --input:               oklch(1 0 0 / 13%);
-    --ring:                oklch(0.680 0.110 168);            /* bright teal ring */
+    --border:              oklch(1 0 0 / 12%);
+    --input:               oklch(1 0 0 / 15%);
+    --ring:                oklch(0.680 0.110 168);
 
     /* ── Charts ── */
     --chart-1:             oklch(0.680 0.110 168);
@@ -158,14 +158,14 @@
     --chart-4:             oklch(0.790 0.055 88);
     --chart-5:             oklch(0.560 0.170 22);
 
-    /* ── Sidebar — darkest plate ── */
-    --sidebar:                    oklch(0.105 0.025 160);
-    --sidebar-foreground:         oklch(0.930 0.020 88);
+    /* ── Sidebar — pure depth ── */
+    --sidebar:                    oklch(0.060 0.005 250);
+    --sidebar-foreground:         oklch(0.980 0.005 250);
     --sidebar-primary:            oklch(0.680 0.110 168);
-    --sidebar-primary-foreground: oklch(0.110 0.030 160);
-    --sidebar-accent:             oklch(0.200 0.040 160);
-    --sidebar-accent-foreground:  oklch(0.880 0.020 88);
-    --sidebar-border:             oklch(1 0 0 / 9%);
+    --sidebar-primary-foreground: oklch(0.080 0.005 250);
+    --sidebar-accent:             oklch(0.150 0.010 250);
+    --sidebar-accent-foreground:  oklch(0.980 0.005 250);
+    --sidebar-border:             oklch(1 0 0 / 10%);
     --sidebar-ring:               oklch(0.680 0.110 168);
 }
 
@@ -178,5 +178,33 @@
     }
     html {
         @apply font-sans;
+    }
+
+    /* ─── Custom Premium Scrollbar (Global) ─── */
+    *::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    *::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    *::-webkit-scrollbar-thumb {
+        background: var(--muted-foreground);
+        border-radius: 20px;
+        border: 3px solid transparent;
+        background-clip: content-box;
+    }
+
+    *::-webkit-scrollbar-thumb:hover {
+        background: var(--primary);
+        background-clip: content-box;
+    }
+
+    /* Firefox fallback - ensure it's truly global */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: var(--muted-foreground) transparent;
     }
 }
