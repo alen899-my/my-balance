@@ -1072,30 +1072,33 @@ export function DailyTracker() {
           }
           footerSummarySlot={
             !loading && entries.length > 0 ? (
-              <div className="px-5 py-3.5 flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
+              <div className="px-5 py-4 flex flex-col sm:flex-row items-center justify-between gap-5 sm:gap-6">
+                {/* Label Group */}
+                <div className="flex items-center gap-2 self-start sm:self-center">
                   <div className="h-2 w-2 rounded-full bg-primary/40 animate-pulse" />
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
                     Daily Summary
                   </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-6">
-                  <div className="flex flex-col items-end">
-                    <span className="text-[9px] uppercase text-muted-foreground font-bold">Income</span>
+
+                {/* Stats Group */}
+                <div className="flex flex-wrap items-center justify-between sm:justify-end gap-x-8 gap-y-4 w-full sm:w-auto">
+                  <div className="flex flex-col items-end min-w-[100px]">
+                    <span className="text-[9px] uppercase text-muted-foreground font-bold tracking-tight">Income</span>
                     <span className="text-sm font-bold text-emerald-500 tabular-nums">
                       +{currencySymbol}{(daySummary?.total_income || 0).toFixed(2)}
                     </span>
                   </div>
-                  <div className="flex flex-col items-end">
-                    <span className="text-[9px] uppercase text-muted-foreground font-bold">Expenses</span>
+                  <div className="flex flex-col items-end min-w-[100px]">
+                    <span className="text-[9px] uppercase text-muted-foreground font-bold tracking-tight">Expenses</span>
                     <span className="text-sm font-bold text-destructive tabular-nums">
                       -{currencySymbol}{(daySummary?.total_expenses || 0).toFixed(2)}
                     </span>
                   </div>
-                  <div className="pl-5 border-l border-border/60 flex flex-col items-end">
-                    <span className="text-[10px] uppercase text-foreground font-black tracking-tight">Net</span>
+                  <div className="pt-4 sm:pt-0 sm:pl-6 border-t sm:border-t-0 sm:border-l border-border/60 flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center w-full sm:w-auto mt-2 sm:mt-0">
+                    <span className="text-[10px] uppercase text-foreground font-black tracking-tight sm:mb-1">Net</span>
                     <span className={cn(
-                      "text-base font-black tabular-nums",
+                      "text-base sm:text-lg font-black tabular-nums tracking-tighter leading-none",
                       (daySummary?.balance || 0) >= 0 ? "text-emerald-500" : "text-destructive"
                     )}>
                       {(daySummary?.balance || 0) >= 0 ? "+" : ""}{currencySymbol}{Math.abs(daySummary?.balance || 0).toFixed(2)}
