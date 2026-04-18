@@ -246,19 +246,20 @@ function StatementsPageContent() {
     { 
       key: "sno", 
       header: "S.No", 
-      width: "50px",
+      width: "70px",
       align: "center",
+      noTruncate: true,
       cell: (_: unknown, __: Transaction, index: number) => (
         <span className="text-muted-foreground/50 font-mono text-[11px]">
           {(page - 1) * pageSize + index + 1}
         </span>
       )
     },
-    { key: "date", header: "Date", width: "120px" },
+    { key: "date", header: "Date", width: "110px" },
     { 
       key: "bank", 
       header: "Bank", 
-      width: "140px",
+      width: "130px",
       cell: (val: unknown) => (
         <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20">
           {String(val)}
@@ -268,7 +269,8 @@ function StatementsPageContent() {
     { 
       key: "description", 
       header: "Description", 
-      width: "350px",
+      width: "400px",
+      minWidth: "250px",
       cell: (val: unknown) => (
         <div className="flex flex-col gap-0.5 max-w-full overflow-hidden">
           <span className="text-[13px] font-medium text-foreground line-clamp-1 break-all">
@@ -285,6 +287,7 @@ function StatementsPageContent() {
       key: "amount",
       header: "Amount",
       align: "right",
+      width: "130px",
       cell: (val: unknown) => {
         const num = val as number;
         const isCredit = num >= 0;
@@ -306,13 +309,14 @@ function StatementsPageContent() {
       key: "balance",
       header: "Balance",
       align: "right",
+      width: "130px",
       cell: (val: unknown) => val != null ? `${currencySymbol}${Number(val).toFixed(2)}` : "—"
     },
     {
       key: "actions",
       header: "Actions",
       align: "right",
-      width: "120px",
+      width: "110px",
       cell: (_, row: Transaction) => (
         <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
           <button

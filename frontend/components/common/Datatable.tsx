@@ -784,6 +784,7 @@ export function DataTable<T = Record<string, unknown>>({
                           col.hideOnTablet && "dt-hide-tablet",
                           col.cellClassName
                         )}
+                        style={{ width: col.width, minWidth: col.minWidth }}
                       >
                         {!col.noTruncate ? (
                           <div className="dt-cell-truncate">{rendered}</div>

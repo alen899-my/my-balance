@@ -340,7 +340,7 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 0.8125rem;
-    min-width: 600px;
+    min-width: 850px;
     table-layout: fixed;
 }
 
@@ -490,7 +490,6 @@
     color: var(--dt-cell-fg);
     vertical-align: middle;
     border-right: 1px solid var(--dt-border);
-    max-width: 200px;
 }
 
 .dt-table tbody td:last-child {
