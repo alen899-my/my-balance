@@ -663,7 +663,7 @@ export function BudgetPlanner() {
                 <TrendingUp className="w-4 h-4" />
               </div>
             </div>
-            <span className="text-2xl font-black tabular-nums text-foreground relative z-10 tracking-tight">{currencySymbol}{(summary?.income || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            <span className="text-2xl font-black tabular-nums text-emerald-500 dark:text-emerald-400 relative z-10 tracking-tight">{currencySymbol}{(summary?.income || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </div>
 
           <div className="flex flex-col p-5 rounded-none bg-card border border-border shadow-sm relative overflow-hidden group hover:border-destructive/30 transition-colors">
@@ -673,7 +673,7 @@ export function BudgetPlanner() {
                 <TrendingDown className="w-4 h-4" />
               </div>
             </div>
-            <span className="text-2xl font-black tabular-nums text-foreground relative z-10 tracking-tight">{currencySymbol}{(summary?.expenses || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            <span className="text-2xl font-black tabular-nums text-destructive relative z-10 tracking-tight">{currencySymbol}{(summary?.expenses || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </div>
 
           <div className="flex flex-col p-5 rounded-none bg-card border border-border shadow-sm relative overflow-hidden group hover:border-primary/30 transition-colors">
@@ -683,7 +683,7 @@ export function BudgetPlanner() {
                 <Wallet className="w-4 h-4" />
               </div>
             </div>
-            <span className="text-2xl font-black tabular-nums text-foreground relative z-10 tracking-tight">{currencySymbol}{(summary?.savings || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            <span className={cn("text-2xl font-black tabular-nums relative z-10 tracking-tight", (summary?.savings || 0) >= 0 ? "text-emerald-500 dark:text-emerald-400" : "text-destructive")}>{(summary?.savings || 0) < 0 ? "-" : ""}{currencySymbol}{Math.abs(summary?.savings || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </div>
         </div>
 
