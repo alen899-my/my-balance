@@ -892,6 +892,26 @@ export function DailyTracker() {
 
   const entries = daySummary?.items || [];
 
+  const dateInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDateClick = () => {
+    try {
+      if (dateInputRef.current) {
+        // @ts-ignore - showPicker is modern but maybe not in all types yet
+        if (typeof dateInputRef.current.showPicker === "function") {
+          // @ts-ignore
+          dateInputRef.current.showPicker();
+        } else {
+          dateInputRef.current.focus();
+          dateInputRef.current.click();
+        }
+      }
+    } catch (err) {
+      // Fallback
+      dateInputRef.current?.focus();
+    }
+  };
+
   return (
     <>
       {/* Modals */}
@@ -928,15 +948,19 @@ export function DailyTracker() {
               <ChevronLeft className="h-4 w-4" />
             </button>
 
-            <div className="flex items-center gap-2 px-2">
-              <Calendar className="h-4 w-4 text-primary shrink-0" />
-              <div className="relative">
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
-                  className="opacity-0 absolute inset-0 w-full cursor-pointer"
-                />
+            <div 
+              className="relative group/picker pointer-events-auto"
+              onClick={handleDateClick}
+            >
+              <input
+                ref={dateInputRef}
+                type="date"
+                value={selectedDate}
+                onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
+                className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10"
+              />
+              <div className="flex items-center gap-2 px-4 py-1.5 rounded-xl border border-transparent group-hover/picker:border-border group-hover/picker:bg-accent/40 transition-all cursor-pointer">
+                <Calendar className="h-4 w-4 text-primary shrink-0 transition-transform group-hover/picker:scale-110" />
                 <div className="flex flex-col">
                   <span className="text-sm font-bold text-foreground leading-tight whitespace-nowrap">
                     {new Date(
@@ -945,8 +969,10 @@ export function DailyTracker() {
                       Number(selectedDate.split("-")[2])
                     ).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
                   </span>
-                  {isToday(selectedDate) && (
+                  {isToday(selectedDate) ? (
                     <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Today</span>
+                  ) : (
+                    <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-widest leading-none">Tap to Change</span>
                   )}
                 </div>
               </div>
