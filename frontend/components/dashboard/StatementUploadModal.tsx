@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { FormInput } from "@/components/ui/Forminput";
 import { PasswordInput } from "@/components/ui/Passwordinput";
 import { cn } from "@/lib/utils";
+import { ScanningAnimation } from "./ScanningAnimation";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -179,101 +180,97 @@ export function StatementUploadModal({ open, onClose, onSuccess }: StatementUplo
         </ModalFooterActions>
       }
     >
-      <div className="flex flex-col gap-4 py-2">
-        {error && (
+      <div className="flex flex-col gap-4 py-2 min-h-[300px]">
+        {error && !uploading && (
           <div className="flex items-start gap-2.5 px-4 py-3 rounded-lg border-l-4 border-destructive bg-destructive/8">
             <span className="text-destructive mt-0.5 shrink-0">⚠</span>
             <p className="text-sm text-destructive">{error}</p>
           </div>
         )}
 
-        {successMsg && (
-          <div className="flex items-start gap-2.5 px-4 py-3 rounded-lg border-l-4 border-emerald-500 bg-emerald-500/10">
-            <Check className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
-            <p className="text-sm text-emerald-700 dark:text-emerald-400">{successMsg}</p>
-          </div>
-        )}
+        {uploading ? (
+          <ScanningAnimation status={pollStatus} error={error} />
+        ) : successMsg ? (
+          <ScanningAnimation status="Complete" error={null} />
+        ) : (
+          <>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-semibold text-foreground">Bank Name</label>
+              <select
+                value={bank}
+                onChange={(e) => {
+                   setBank(e.target.value);
+                   if (e.target.value !== "Other...") setCustomBank("");
+                }}
+                className="w-full h-10 px-3 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                {BANKS.map((b) => (
+                  <option key={b} value={b} disabled={b === "Select a bank"}>{b}</option>
+                ))}
+              </select>
 
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[13px] font-semibold text-foreground">Bank Name</label>
-          <select
-            value={bank}
-            onChange={(e) => {
-               setBank(e.target.value);
-               if (e.target.value !== "Other...") setCustomBank("");
-            }}
-            disabled={uploading}
-            className="w-full h-10 px-3 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-          >
-            {BANKS.map((b) => (
-              <option key={b} value={b} disabled={b === "Select a bank"}>{b}</option>
-            ))}
-          </select>
-
-          {bank === "Other..." && (
-             <div className="mt-1 animate-in fade-in slide-in-from-top-1">
-                 <FormInput 
-                    value={customBank}
-                    onChange={(e) => setCustomBank(e.target.value)}
-                    placeholder="Enter your bank's full name"
-                    disabled={uploading}
-                 />
-             </div>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-1.5 mt-2">
-          <label className="text-[13px] font-semibold text-foreground">Statement PDF</label>
-          <div
-            className={cn(
-              "relative flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl transition-colors bg-muted/30",
-              file ? "border-primary/50 bg-primary/5" : "border-border hover:border-primary/50",
-              uploading && "opacity-60 pointer-events-none"
-            )}
-          >
-            <input
-              type="file"
-              accept="application/pdf"
-              onChange={handleFileChange}
-              disabled={uploading}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            />
-            {file ? (
-              <div className="flex flex-col items-center gap-2 w-full px-4">
-                <div className="h-10 w-10 shrink-0 flex items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <FileText className="h-5 w-5" />
+              {bank === "Other..." && (
+                <div className="mt-1 animate-in fade-in slide-in-from-top-1">
+                    <FormInput 
+                        value={customBank}
+                        onChange={(e) => setCustomBank(e.target.value)}
+                        placeholder="Enter your bank's full name"
+                    />
                 </div>
-                <p className="text-sm font-medium text-foreground text-center truncate w-full" title={file.name}>
-                  {file.name}
-                </p>
-                <p className="text-[11px] text-muted-foreground">
-                  {(file.size / 1024 / 1024).toFixed(2)} MB
-                </p>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-1.5">
-                <UploadCloud className="h-8 w-8 text-muted-foreground/60" />
-                <p className="text-sm font-medium text-foreground text-center">
-                  Click to drop your statement
-                </p>
-                <p className="text-xs text-muted-foreground text-center">
-                  PDF format only. Max 10MB.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
+              )}
+            </div>
 
-        <div className="mt-2">
-          <PasswordInput
-            label="Statement Password (If encrypted)"
-            placeholder="Leave blank if not protected"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={uploading}
-            leftIcon={<Lock className="h-4 w-4" />}
-          />
-        </div>
+            <div className="flex flex-col gap-1.5 mt-2">
+              <label className="text-[13px] font-semibold text-foreground">Statement PDF</label>
+              <div
+                className={cn(
+                  "relative flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl transition-colors bg-muted/30",
+                  file ? "border-primary/50 bg-primary/5" : "border-border hover:border-primary/50"
+                )}
+              >
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handleFileChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                {file ? (
+                  <div className="flex flex-col items-center gap-2 w-full px-4">
+                    <div className="h-10 w-10 shrink-0 flex items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <p className="text-sm font-medium text-foreground text-center truncate w-full" title={file.name}>
+                      {file.name}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {(file.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-1.5">
+                    <UploadCloud className="h-8 w-8 text-muted-foreground/60" />
+                    <p className="text-sm font-medium text-foreground text-center">
+                      Click to drop your statement
+                    </p>
+                    <p className="text-xs text-muted-foreground text-center">
+                      PDF format only. Max 10MB.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-2">
+              <PasswordInput
+                label="Statement Password (If encrypted)"
+                placeholder="Leave blank if not protected"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                leftIcon={<Lock className="h-4 w-4" />}
+              />
+            </div>
+          </>
+        )}
       </div>
     </Modal>
   );
