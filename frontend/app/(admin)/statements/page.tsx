@@ -243,6 +243,17 @@ function StatementsPageContent() {
   };
 
   const columns: ColumnDef<Transaction>[] = [
+    { 
+      key: "sno", 
+      header: "S.No", 
+      width: "50px",
+      align: "center",
+      cell: (_: unknown, __: Transaction, index: number) => (
+        <span className="text-muted-foreground/50 font-mono text-[11px]">
+          {(page - 1) * pageSize + index + 1}
+        </span>
+      )
+    },
     { key: "date", header: "Date", width: "120px" },
     { 
       key: "bank", 
@@ -257,8 +268,17 @@ function StatementsPageContent() {
     { 
       key: "description", 
       header: "Description", 
-      noTruncate: true,
-      cell: (val: unknown) => <span className="text-muted-foreground text-xs">{String(val)}</span>
+      width: "350px",
+      cell: (val: unknown) => (
+        <div className="flex flex-col gap-0.5 max-w-full overflow-hidden">
+          <span className="text-[13px] font-medium text-foreground line-clamp-1 break-all">
+            {String(val)}
+          </span>
+          <span className="text-[10px] text-muted-foreground/60 uppercase tracking-tighter truncate opacity-80">
+            {String(val)}
+          </span>
+        </div>
+      )
     },
   
     {
@@ -383,7 +403,7 @@ function StatementsPageContent() {
             label: "Filter by Bank",
             type: "select",
             value: bankFilter,
-            onChange: (v: string) => { setBankFilter(v); setPage(1); },
+            onChange: (v: string) => { setBankFilter(v); setPage(1); setLoading(true); },
             options: dynamicBanks.map(b => ({ label: b, value: b })),
             placeholder: dynamicBanks.length === 0 ? "Upload to filter..." : "All Banks"
           },
@@ -392,21 +412,21 @@ function StatementsPageContent() {
             label: "From Date",
             type: "date",
             value: startDate,
-            onChange: (v: string) => { setStartDate(v); setPage(1); }
+            onChange: (v: string) => { setStartDate(v); setPage(1); setLoading(true); }
           },
           {
             key: "endDate",
             label: "To Date",
             type: "date",
             value: endDate,
-            onChange: (v: string) => { setEndDate(v); setPage(1); }
+            onChange: (v: string) => { setEndDate(v); setPage(1); setLoading(true); }
           },
           {
             key: "type",
             label: "Transaction Type",
             type: "select",
             value: typeFilter,
-            onChange: (v: string) => { setTypeFilter(v); setPage(1); },
+            onChange: (v: string) => { setTypeFilter(v); setPage(1); setLoading(true); },
             options: [
               { label: "All Transactions", value: "all" },
               { label: "Credit (+)", value: "credit" },
@@ -420,13 +440,13 @@ function StatementsPageContent() {
             type: "input",
             placeholder: "Enter exact amount...",
             value: amountFilter,
-            onChange: (v: string) => { setAmountFilter(v); setPage(1); }
+            onChange: (v: string) => { setAmountFilter(v); setPage(1); setLoading(true); }
           }
         ]}
         filterCount={[bankFilter, typeFilter !== "all" ? typeFilter : "", startDate, endDate, search, amountFilter].filter(Boolean).length}
         onClearFilters={() => { setBankFilter(""); setTypeFilter("all"); setStartDate(""); setEndDate(""); setSearch(""); setAmountFilter(""); setPage(1); }}
         searchValue={search}
-        onSearchChange={(val: string) => { setSearch(val); setPage(1); }}
+        onSearchChange={(val: string) => { setSearch(val); setPage(1); setLoading(true); }}
         searchPlaceholder="Search descriptions/payees..."
       >
         <div className="w-full">

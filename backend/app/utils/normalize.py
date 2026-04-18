@@ -370,8 +370,8 @@ def normalize(txn):
         except:
             return 0.0
 
-    debit = to_float(txn.get("debit"))
-    credit = to_float(txn.get("credit"))
+    debit = abs(to_float(txn.get("debit")))
+    credit = abs(to_float(txn.get("credit")))
 
     if debit == 0 and credit == 0:
         return None

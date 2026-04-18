@@ -41,13 +41,13 @@ DATE_FORMATS = [
 ]
 
 def _clean_num(val: str) -> float:
-    """Convert a cell string like '1,23,456.78 Dr' → float."""
+    """Convert a cell string like '-1,23,456.78 Dr' → float."""
     if not val:
         return 0.0
     # Remove commas and whitespace
     cleaned = val.replace(",", "").strip()
-    # Extract all digit/dot sequences
-    nums = "".join(re.findall(r"[\d.]", cleaned))
+    # Extract digit, dot, and minus sign sequences
+    nums = "".join(re.findall(r"[-\d.]", cleaned))
     try:
         return float(nums) if nums else 0.0
     except ValueError:
@@ -130,22 +130,45 @@ def _extract_txn_from_row(row: list, mapping: dict, bank: str) -> dict | None:
             debit  = _clean_num(row[mapping["debit"]])
             credit = _clean_num(row[mapping["credit"]])
         elif "amount" in mapping:
-            # Single-amount column → detect Dr/Cr from the cell text
+            # Single-amount column → detect Dr/Cr from the cell text, sign, or separate type column
             raw_amt = str(row[mapping["amount"]])
             amt = _clean_num(raw_amt)
             raw_lower = raw_amt.lower()
-            # Detect Dr/Cr suffix or sign signals
-            if "dr" in raw_lower or "d" in raw_lower.replace("credit", ""):
-                debit, credit = amt, 0.0
-            elif "cr" in raw_lower:
-                debit, credit = 0.0, amt
+            
+            # Check for Dr/Cr in the amount cell itself
+            is_debit = (
+                "dr" in raw_lower or 
+                "d" in raw_lower.replace("credit", "") or 
+                amt < 0
+            )
+            is_credit = "cr" in raw_lower or "c" in raw_lower.replace("debit", "")
+            
+            # If not detected yet, check all other columns for Dr/Cr indicators
+            # (Matches banks that have a separate 'Type' or 'Dr/Cr' column)
+            if not is_debit and not is_credit:
+                for idx, cell in enumerate(row):
+                    cell_l = str(cell).lower().strip()
+                    if cell_l in ["dr", "d", "debit"]:
+                        is_debit = True
+                        break
+                    if cell_l in ["cr", "c", "credit"]:
+                        is_credit = True
+                        break
+
+            abs_amt = abs(amt)
+            
+            if is_debit:
+                debit, credit = abs_amt, 0.0
+            elif is_credit:
+                debit, credit = 0.0, abs_amt
             else:
-                # Fallback: look at description
+                # Fallback: look at description keywords
                 desc_l = desc.lower()
-                if any(x in desc_l for x in ["debit", "withdrawal", "payment", "dr"]):
-                    debit, credit = amt, 0.0
+                if any(x in desc_l for x in ["debit", "withdrawal", "payment", "purchase", "paid to", "dr"]):
+                    debit, credit = abs_amt, 0.0
                 else:
-                    debit, credit = 0.0, amt
+                    # Default to credit if no signals
+                    debit, credit = 0.0, abs_amt
         else:
             return None
 
