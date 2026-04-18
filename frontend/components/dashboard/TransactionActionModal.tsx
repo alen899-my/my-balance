@@ -5,6 +5,7 @@ import { Modal, ModalFooterActions } from "@/components/common/Modal";
 import { Button } from "@/components/ui/Button";
 import { FormInput } from "@/components/ui/Forminput";
 import { Check, Trash2, Edit3, Eye, Calendar, IndianRupee, Building } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export interface Transaction {
   _id: string;
@@ -36,12 +37,16 @@ export function TransactionActionModal({ open, mode, transaction, currencySymbol
   const [description, setDescription] = useState("");
   const [payee, setPayee] = useState("");
   const [bank, setBank] = useState("");
+  const [amount, setAmount] = useState<number>(0);
+  const [type, setType] = useState<"Debit" | "Credit">("Debit");
 
   useEffect(() => {
     if (transaction && mode === "edit") {
       setDescription(transaction.description || "");
       setPayee(transaction.payee || "");
       setBank(transaction.bank || "");
+      setAmount(Math.abs(transaction.amount));
+      setType(transaction.type === "Credit" ? "Credit" : "Debit");
     }
     setError(null);
   }, [transaction, mode, open]);
@@ -76,7 +81,9 @@ export function TransactionActionModal({ open, mode, transaction, currencySymbol
       const payload = {
         description,
         payee,
-        bank
+        bank,
+        debit: type === "Debit" ? amount : 0,
+        credit: type === "Credit" ? amount : 0
       };
 
       const res = await fetch(`${API_BASE_URL}/transactions/${transaction._id}`, {
@@ -157,6 +164,44 @@ export function TransactionActionModal({ open, mode, transaction, currencySymbol
     <Modal open={open} onClose={onClose} title="Edit Transaction" size="md">
       <div className="flex flex-col gap-4 py-2">
         {error && <p className="text-sm text-destructive">{error}</p>}
+        <div className="grid grid-cols-2 gap-4">
+          <FormInput 
+            label={`Amount (${currencySymbol})`} 
+            type="number"
+            value={amount} 
+            onChange={(e) => setAmount(Number(e.target.value))} 
+            placeholder="0.00" 
+          />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-muted-foreground uppercase">Type</label>
+            <div className="flex bg-muted/50 p-1 rounded-lg border border-border">
+              <button
+                type="button"
+                onClick={() => setType("Debit")}
+                className={cn(
+                  "flex-1 py-1.5 text-xs font-bold rounded-md transition-all",
+                  type === "Debit" 
+                    ? "bg-destructive text-white shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Debit
+              </button>
+              <button
+                type="button"
+                onClick={() => setType("Credit")}
+                className={cn(
+                  "flex-1 py-1.5 text-xs font-bold rounded-md transition-all",
+                  type === "Credit" 
+                    ? "bg-emerald-500 text-white shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Credit
+              </button>
+            </div>
+          </div>
+        </div>
         <FormInput 
           label="Payee" 
           value={payee} 

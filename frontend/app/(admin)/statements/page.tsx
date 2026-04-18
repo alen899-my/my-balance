@@ -113,7 +113,7 @@ function StatementsPageContent() {
       const data = await res.json();
       
       const mapped = data.data.map((t: any) => ({
-        _id: t._id,
+        _id: String(t._id || t.id || ""),
         date: t.date,
         description: t.description || "",
         payee: t.payee || "Unknown",
@@ -246,7 +246,6 @@ function StatementsPageContent() {
     { 
       key: "sno", 
       header: "S.No", 
-      width: "70px",
       align: "center",
       noTruncate: true,
       cell: (_: unknown, __: Transaction, index: number) => (
@@ -255,11 +254,10 @@ function StatementsPageContent() {
         </span>
       )
     },
-    { key: "date", header: "Date", width: "110px" },
+    { key: "date", header: "Date" },
     { 
       key: "bank", 
       header: "Bank", 
-      width: "130px",
       cell: (val: unknown) => (
         <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20">
           {String(val)}
@@ -269,14 +267,13 @@ function StatementsPageContent() {
     { 
       key: "description", 
       header: "Description", 
-      width: "400px",
-      minWidth: "250px",
+      noTruncate: true,
       cell: (val: unknown) => (
-        <div className="flex flex-col gap-0.5 max-w-full overflow-hidden">
-          <span className="text-[13px] font-medium text-foreground line-clamp-1 break-all">
+        <div className="flex flex-col gap-0.5 whitespace-nowrap">
+          <span className="text-[13px] font-medium text-foreground">
             {String(val)}
           </span>
-          <span className="text-[10px] text-muted-foreground/60 uppercase tracking-tighter truncate opacity-80">
+          <span className="text-[10px] text-muted-foreground/60 uppercase tracking-tighter opacity-80">
             {String(val)}
           </span>
         </div>
@@ -287,7 +284,6 @@ function StatementsPageContent() {
       key: "amount",
       header: "Amount",
       align: "right",
-      width: "130px",
       cell: (val: unknown) => {
         const num = val as number;
         const isCredit = num >= 0;
@@ -309,14 +305,13 @@ function StatementsPageContent() {
       key: "balance",
       header: "Balance",
       align: "right",
-      width: "130px",
       cell: (val: unknown) => val != null ? `${currencySymbol}${Number(val).toFixed(2)}` : "—"
     },
     {
       key: "actions",
       header: "Actions",
       align: "right",
-      width: "110px",
+      noTruncate: true,
       cell: (_, row: Transaction) => (
         <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
           <button

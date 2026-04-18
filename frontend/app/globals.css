@@ -337,11 +337,11 @@
 
 /* ── Table ── */
 .dt-table {
-    width: 100%;
+    width: max-content;
+    min-width: 100%;
     border-collapse: collapse;
     font-size: 0.8125rem;
-    min-width: 850px;
-    table-layout: fixed;
+    table-layout: auto;
 }
 
 /* ════════════════════════════

@@ -177,7 +177,10 @@ const IconLoader = () => (
 function getRowKey<T>(row: T, rowKey: DataTableProps<T>["rowKey"], index: number): string | number {
   if (!rowKey) return index;
   if (typeof rowKey === "function") return rowKey(row);
-  return (row as Record<string, unknown>)[rowKey] as string | number ?? index;
+  const val = (row as Record<string, unknown>)[rowKey];
+  if (val === null || val === undefined) return index;
+  if (typeof val === "string" || typeof val === "number") return val;
+  return index; // Fallback to index if val is an object or other non-primitive
 }
 
 function getValue<T>(row: T, col: ColumnDef<T>): unknown {
