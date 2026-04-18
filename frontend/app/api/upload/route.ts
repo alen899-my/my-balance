@@ -12,7 +12,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     const blob = await put(file.name, file, {
       access: 'public',
-      // The BLOB_READ_WRITE_TOKEN is automatically used from environment variables
+      addRandomSuffix: true, // Prevent "blob already exists" errors
     });
 
     return NextResponse.json(blob);

@@ -24,8 +24,14 @@ async def get_transactions(
 ):
     skip = (page - 1) * limit
     
-    # 1. Base Query: Always filter by user
-    find_query = Transaction.find(Transaction.user_id == str(user["user_id"]))
+    # 1. Base Query: Always filter by user and exclude manually added entries
+    # handled by the Daily module or legacy manual entries
+    find_query = Transaction.find(
+        Transaction.user_id == str(user["user_id"]),
+        Transaction.bank != "Manually Added",
+        Transaction.bank != "Cash/Manual",
+        Transaction.bank != "Manual"
+    )
     
     # 2. NEW: Bank Filtering Logic
     if bank and bank != "All Banks":
@@ -152,7 +158,12 @@ async def export_transactions(
     from fastapi.responses import StreamingResponse
 
     # Reuse filtering logic (simplified fetch for speed)
-    find_query = Transaction.find(Transaction.user_id == str(user["user_id"]))
+    find_query = Transaction.find(
+        Transaction.user_id == str(user["user_id"]),
+        Transaction.bank != "Manually Added",
+        Transaction.bank != "Cash/Manual",
+        Transaction.bank != "Manual"
+    )
     
     if bank and bank != "All Banks":
         find_query = find_query.find(RegEx(Transaction.bank, bank, "i"))
@@ -230,7 +241,13 @@ async def clear_all_transactions(user = Depends(get_current_user)):
 @router.get("/unique-banks")
 async def get_unique_banks(user = Depends(get_current_user)):
     user_id = str(user["user_id"])
-    banks = await Transaction.get_pymongo_collection().distinct("bank", {"user_id": user_id})
+    banks = await Transaction.get_pymongo_collection().distinct(
+        "bank", 
+        {
+            "user_id": user_id, 
+            "bank": {"$nin": ["Manually Added", "Cash/Manual", "Manual"]}
+        }
+    )
     return sorted([b for b in banks if b])
 
 
