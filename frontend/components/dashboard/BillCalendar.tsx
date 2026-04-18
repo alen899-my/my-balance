@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import { Modal } from "@/components/common/Modal";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -14,6 +15,16 @@ interface CalendarSummary {
 }
 interface Need { id: string; name: string; amount: number; date: string; is_paid: boolean; }
 interface BillCalendarProps { currencySymbol?: string; }
+
+interface DayTransaction {
+  _id: string;
+  description: string;
+  payee: string;
+  debit: number;
+  credit: number;
+  balance?: number;
+  type?: string;
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -38,7 +49,7 @@ function fmtAmt(n: number, sym: string) {
 }
 
 function fmtFull(n: number, sym: string) {
-  return `${sym}${n.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
+  return `${sym}${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function tier(n: number, max: number) {
@@ -129,7 +140,7 @@ function DayCell({ day, spending, maxSpend, isToday, isSelected, isWeekend, isPe
     >
       {/* ── Date number ── */}
       <div className={cn(
-        "flex items-start justify-between px-1.5 pt-1.5 sm:px-2 sm:pt-2",
+        "flex items-start justify-between px-1 pt-1 sm:px-2 sm:pt-2",
       )}>
         <span className={cn(
           "font-black leading-none tabular-nums",
@@ -160,9 +171,9 @@ function DayCell({ day, spending, maxSpend, isToday, isSelected, isWeekend, isPe
 
       {/* ── Spend amount ── */}
       {hasSpend && (
-        <div className="px-1.5 sm:px-2 pb-1.5 sm:pb-2 mt-auto">
+        <div className="px-1 sm:px-2 pb-1 sm:pb-2 mt-auto">
           <span className={cn(
-            "text-[8px] sm:text-[10px] font-bold leading-none block",
+            "text-[8px] sm:text-[10px] font-bold leading-none block line-clamp-1",
             isSelected
               ? "text-white/90"
               : TIER_AMOUNT_COLOR[t],
@@ -199,9 +210,45 @@ export function BillCalendar({ currencySymbol = "₹" }: BillCalendarProps) {
 
   const [data,       setData]       = useState<CalendarSummary | null>(null);
   const [loading,    setLoading]    = useState(true);
-  const [selectedDay, setSelectedDay] = useState<number | null>(today.getDate());
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+
+  // ── Day modal state ────────────────────────────────────────────────────────
+  const [modalOpen,    setModalOpen]    = useState(false);
+  const [modalDay,     setModalDay]     = useState<number | null>(null);
+  const [modalTxns,    setModalTxns]    = useState<DayTransaction[]>([]);
+  const [modalLoading, setModalLoading] = useState(false);
 
   const toMV = (y: number, m: number) => `${y}-${String(m).padStart(2, "0")}`;
+
+  // ── Fetch day transactions ─────────────────────────────────────────────────
+  const openDayModal = useCallback(async (day: number) => {
+    setModalDay(day);
+    setModalOpen(true);
+    setModalLoading(true);
+    setModalTxns([]);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const dateStr = `${year}-${pad(month)}-${pad(day)}`;
+      const params = new URLSearchParams({
+        start_date: dateStr,
+        end_date:   dateStr,
+        limit:      "200",
+        sort:       "desc",
+      });
+      const res = await fetch(`${API_BASE_URL}/transactions?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error();
+      const json = await res.json();
+      setModalTxns(Array.isArray(json.data) ? json.data : []);
+    } catch {
+      setModalTxns([]);
+    } finally {
+      setModalLoading(false);
+    }
+  }, [year, month]);
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
   const fetchCalendar = useCallback(async () => {
@@ -363,11 +410,13 @@ export function BillCalendar({ currencySymbol = "₹" }: BillCalendarProps) {
           </div>
 
           {/* Stats strip inside header */}
-          <div className="relative grid grid-cols-4 border-t border-white/10">
+          <div className="relative grid grid-cols-2 sm:grid-cols-4 border-t border-white/10">
             {stats.map((s, i) => (
               <div key={i} className={cn(
                 "flex flex-col gap-0.5 px-3 sm:px-5 py-2.5 sm:py-3",
-                i < 3 && "border-r border-white/10"
+                i % 2 === 0 && "border-r border-white/10",
+                i === 1 && "sm:border-r sm:border-white/10",
+                i < 2 && "border-b border-white/10 sm:border-b-transparent"
               )}>
                 <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-white/40">{s.label}</span>
                 <span className={cn("text-xs sm:text-sm font-black tabular-nums leading-tight text-white")}>{s.value}</span>
@@ -381,7 +430,7 @@ export function BillCalendar({ currencySymbol = "₹" }: BillCalendarProps) {
         <div className="grid grid-cols-7 bg-muted/40 dark:bg-muted/20 border-b border-border">
           {DAY_SHORT.map((d, i) => (
             <div key={d} className={cn(
-              "text-center py-2 sm:py-3",
+              "text-center py-1.5 sm:py-3",
               "text-[9px] sm:text-[11px] font-black uppercase tracking-widest",
               i === 0 || i === 6
                 ? "text-[oklch(0.55_0.13_25)] dark:text-[oklch(0.72_0.14_25)]"
@@ -395,7 +444,7 @@ export function BillCalendar({ currencySymbol = "₹" }: BillCalendarProps) {
 
         {/* ── Calendar grid ── */}
         <div className={cn(
-          "grid grid-cols-7 gap-1.5 sm:gap-2 p-2 sm:p-4",
+          "grid grid-cols-7 gap-1 sm:gap-2 p-1.5 sm:p-4",
           loading && "opacity-40 pointer-events-none"
         )}>
           {cells.map((cell, idx) => {
@@ -416,7 +465,7 @@ export function BillCalendar({ currencySymbol = "₹" }: BillCalendarProps) {
                 isWeekend={isWeekend}
                 isPeak={d === peakDay}
                 currencySymbol={currencySymbol}
-                onClick={() => setSelectedDay(p => p === d ? null : d)}
+                onClick={() => openDayModal(d)}
               />
             );
           })}
@@ -456,8 +505,212 @@ export function BillCalendar({ currencySymbol = "₹" }: BillCalendarProps) {
         </div>
       </div>
 
-    
+      {/* ── Day Transactions Modal ────────────────────────────────────────── */}
+      <DayTransactionsModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        day={modalDay}
+        month={month}
+        year={year}
+        transactions={modalTxns}
+        loading={modalLoading}
+        currencySymbol={currencySymbol}
+        spending={spending}
+        dayOfWeek={modalDay != null ? (firstDay + modalDay - 1) % 7 : 0}
+      />
+
     </div>
+  );
+}
+
+// ─── Day Transactions Modal ───────────────────────────────────────────────────
+
+interface DayTransactionsModalProps {
+  open: boolean;
+  onClose: () => void;
+  day: number | null;
+  month: number;
+  year: number;
+  transactions: DayTransaction[];
+  loading: boolean;
+  currencySymbol: string;
+  spending: DailySpending;
+  dayOfWeek: number;
+}
+
+function DayTransactionsModal({
+  open, onClose, day, month, year,
+  transactions, loading, currencySymbol, spending, dayOfWeek,
+}: DayTransactionsModalProps) {
+  if (!open || day === null) return null;
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const dateLabel = `${DAY_FULL[dayOfWeek]}, ${MONTH_NAMES[month - 1]} ${day}, ${year}`;
+  const totalDebit  = transactions.reduce((s, t) => s + (t.debit  ?? 0), 0);
+  const totalCredit = transactions.reduce((s, t) => s + (t.credit ?? 0), 0);
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      size="lg"
+      position="center"
+      noPadding
+      header={
+        /* ── Custom header ── */
+        <div
+          className="px-5 py-4 flex items-center gap-4"
+          style={{
+            background: "linear-gradient(135deg, var(--dt-header-from) 0%, var(--dt-header-to) 100%)",
+          }}
+        >
+          {/* Date badge */}
+          <div className="h-12 w-12 rounded-xl bg-white/15 border border-white/20 flex flex-col items-center justify-center shrink-0">
+            <span className="text-xl font-black text-white leading-none">{day}</span>
+            <span className="text-[9px] font-bold text-white/60 uppercase tracking-wide mt-0.5">
+              {MONTH_SHORT[month - 1]}
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-bold text-sm leading-tight truncate">{dateLabel}</p>
+            <p className="text-white/55 text-[11px] mt-0.5">
+              {loading ? "Loading…" : `${transactions.length} transaction${transactions.length !== 1 ? "s" : ""}`}
+            </p>
+          </div>
+        </div>
+      }
+      footer={
+        transactions.length > 0 ? (
+          /* ── Totals footer ── */
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+              Day Summary
+            </span>
+            <div className="flex items-center gap-4 flex-wrap">
+              {totalDebit > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-red-500" />
+                  <span className="text-xs text-muted-foreground">Spent</span>
+                  <span className="text-sm font-black text-red-500">
+                    {currencySymbol}{totalDebit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              )}
+              {totalCredit > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  <span className="text-xs text-muted-foreground">Received</span>
+                  <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                    {currencySymbol}{totalCredit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : undefined
+      }
+    >
+      {/* ── Body ── */}
+      <div className="px-5 py-4">
+
+        {/* Loading skeleton */}
+        {loading && (
+          <div className="flex flex-col gap-2.5">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 animate-pulse">
+                <div className="h-9 w-9 rounded-xl bg-muted shrink-0" />
+                <div className="flex-1 flex flex-col gap-1.5">
+                  <div className="h-3 w-3/4 rounded-full bg-muted" />
+                  <div className="h-2.5 w-1/2 rounded-full bg-muted" />
+                </div>
+                <div className="h-4 w-16 rounded-full bg-muted" />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Empty state */}
+        {!loading && transactions.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-12 gap-3 text-center">
+            <div className="h-14 w-14 rounded-2xl bg-muted/60 flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-muted-foreground">
+                <rect x="2" y="5" width="20" height="14" rx="2"/>
+                <path d="M2 10h20"/>
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">No transactions</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Nothing recorded for {MONTH_SHORT[month - 1]} {day}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Transaction list */}
+        {!loading && transactions.length > 0 && (
+          <div className="flex flex-col divide-y divide-border/60">
+            {transactions.map((txn, i) => {
+              const isDebit  = (txn.debit  ?? 0) > 0;
+              const isCredit = (txn.credit ?? 0) > 0;
+              const amount   = isDebit ? txn.debit : txn.credit;
+              const initials = (txn.description || txn.payee || "?")
+                .trim().slice(0, 2).toUpperCase();
+
+              return (
+                <div
+                  key={txn._id ?? i}
+                  className="flex items-center gap-3 py-3 group"
+                >
+                  {/* Avatar */}
+                  <div className={cn(
+                    "h-9 w-9 rounded-xl flex items-center justify-center shrink-0 text-[11px] font-black",
+                    isDebit
+                      ? "bg-red-500/10 text-red-600 dark:text-red-400"
+                      : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                  )}>
+                    {initials}
+                  </div>
+
+                  {/* Description + payee */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate leading-tight">
+                      {txn.description || txn.payee || "—"}
+                    </p>
+                    {txn.payee && txn.description && (
+                      <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                        {txn.payee}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Amount + type chip */}
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <span className={cn(
+                      "text-sm font-black tabular-nums leading-none",
+                      isDebit
+                        ? "text-red-500 dark:text-red-400"
+                        : "text-emerald-600 dark:text-emerald-400"
+                    )}>
+                      {isDebit ? "−" : "+"}{currencySymbol}
+                      {(amount ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    </span>
+                    <span className={cn(
+                      "text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full",
+                      isDebit
+                        ? "bg-red-500/10 text-red-600 dark:text-red-300"
+                        : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                    )}>
+                      {isDebit ? "Debit" : "Credit"}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </Modal>
   );
 }
 

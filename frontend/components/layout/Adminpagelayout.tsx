@@ -173,7 +173,7 @@ export function AdminPageLayout({
     <div className={cn("flex flex-col min-h-full", className)}>
 
       {/* ── Top bar ──────────────────────────────────────────── */}
-      <div className="bg-background px-3 sm:px-6 py-3 sm:py-4">
+      <div className="bg-background px- sm:px-2 py-1 sm:py-2">
 
         {/* Breadcrumbs */}
         {breadcrumbs && breadcrumbs.length > 0 && (
@@ -316,7 +316,7 @@ export function AdminPageLayout({
 
       {/* ── Toolbar (search + filters) ───────────────────────── */}
       {(onSearchChange || filters.length > 0) && (
-        <div className="bg-background border-b border-border px-3 sm:px-6 py-2.5 sm:py-3 space-y-3">
+        <div className="bg-background border-b border-border px-2 sm:px-4 py-2.5 sm:py-3 space-y-3">
           <div className="flex items-center gap-2 flex-wrap">
 
             {/* Search */}
@@ -409,7 +409,7 @@ export function AdminPageLayout({
             </div>
           </div>
         )}
-        <div className="px-3 sm:px-6 py-3 sm:py-5">
+        <div className="px-2 sm:px-4 py-3 sm:py-4">
           {children}
         </div>
       </div>
