@@ -5,24 +5,25 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  ArrowLeftRight,
   PiggyBank,
   CreditCard,
   BarChart3,
   Settings,
   X,
   FileText,
+  CalendarDays,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// ─── Flat nav list ─────────────────────────────────────────────────────────────
 const NAV = [
-  { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Statements", href: "/statements", icon: FileText },
-  { label: "Transactions", href: "/dashboard/transactions", icon: ArrowLeftRight },
-  { label: "Savings", href: "/dashboard/savings", icon: PiggyBank },
-  { label: "Cards", href: "/dashboard/cards", icon: CreditCard },
-  { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
-  { label: "Settings", href: "/settings", icon: Settings },
+  { label: "Overview",      href: "/dashboard",                  icon: LayoutDashboard },
+  { label: "Statements",    href: "/statements",                  icon: FileText        },
+  { label: "Bill Calendar", href: "/bill-calendar",              icon: CalendarDays    },
+  { label: "Savings",       href: "/dashboard/savings",           icon: PiggyBank       },
+  { label: "Cards",         href: "/dashboard/cards",             icon: CreditCard      },
+  { label: "Analytics",     href: "/dashboard/analytics",         icon: BarChart3       },
+  { label: "Settings",      href: "/settings",                    icon: Settings        },
 ];
 
 interface AppSidebarProps {
@@ -40,7 +41,6 @@ export function AppSidebar({ collapsed, mobileOpen, onMobileClose }: AppSidebarP
       <aside
         className={cn(
           "fixed top-0 left-0 h-full z-40 hidden lg:flex flex-col",
-          // ← Remove bg-sidebar here; background is handled entirely by SidebarBackground
           "border-r border-sidebar-border",
           "transition-all duration-300 ease-in-out overflow-hidden",
           collapsed ? "w-16" : "w-60"
@@ -91,7 +91,6 @@ export function AppSidebar({ collapsed, mobileOpen, onMobileClose }: AppSidebarP
 function SidebarBackground() {
   return (
     <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-      {/* The actual image */}
       <div
         className="absolute inset-0"
         style={{
@@ -100,19 +99,7 @@ function SidebarBackground() {
           backgroundPosition: "center top",
         }}
       />
-
-      {/* 
-        Dark overlay — heavy enough to keep text readable,
-        light enough to let the image breathe through.
-        Light mode: deep teal-green tint.
-        Dark mode: near-black with green cast.
-      */}
       <div className="absolute inset-0 bg-[oklch(0.200_0.055_158_/_0.78)] dark:bg-[oklch(0.110_0.030_160_/_0.88)]" />
-
-      {/* 
-        Subtle vignette: stronger at edges, clear in the middle
-        so nav items in the center remain crisp.
-      */}
       <div
         className="absolute inset-0"
         style={{
@@ -120,10 +107,6 @@ function SidebarBackground() {
             "radial-gradient(ellipse 80% 100% at 50% 50%, transparent 40%, oklch(0.08 0.020 160 / 0.5) 100%)",
         }}
       />
-
-      {/* 
-        Bottom fade — blends into the version tag area cleanly.
-      */}
       <div
         className="absolute bottom-0 left-0 right-0 h-24"
         style={{
@@ -145,7 +128,6 @@ function SidebarContent({
   pathname: string;
 }) {
   return (
-    // z-10 so all content sits above the background layers
     <div className="relative z-10 flex flex-col h-full">
       {/* Logo row */}
       <div
@@ -206,18 +188,11 @@ function NavItem({
       onClick={onClick}
       title={collapsed ? item.label : undefined}
       className={cn(
-        "flex items-center rounded-lg transition-all duration-150 group",
+        "flex items-center rounded-lg transition-all duration-150 group relative",
         collapsed ? "justify-center h-10 w-10 mx-auto" : "gap-3 px-3 h-10",
         active
-          ? [
-              // Active: teal pill with slight frosted surface
-              "bg-white/15 text-white",
-              "ring-1 ring-inset ring-white/20",
-            ]
-          : [
-              // Inactive: subtle on hover
-              "text-white/55 hover:text-white hover:bg-white/10",
-            ]
+          ? ["bg-white/15 text-white", "ring-1 ring-inset ring-white/20"]
+          : ["text-white/55 hover:text-white hover:bg-white/10"]
       )}
     >
       {/* Active indicator bar */}
