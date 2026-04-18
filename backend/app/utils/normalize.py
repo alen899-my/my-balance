@@ -1,5 +1,21 @@
 import re
+import os
 from datetime import datetime
+from functools import lru_cache
+
+try:
+    from groq import Groq
+except ImportError:
+    Groq = None
+
+# Lazily initialized Groq Client
+_groq_client = None
+
+def get_groq_client():
+    global _groq_client
+    if not _groq_client and Groq and os.getenv("GROQ_API_KEY"):
+        _groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+    return _groq_client
 
 DATE_REGEX = re.compile(r"(\d{2}[-/]\d{2}[-/]\d{4})|(\d{2}-[a-zA-Z]{3}-\d{4})")
 
@@ -218,27 +234,68 @@ def _stage_fallback_clean(desc: str) -> str:
 # Public entry point
 # ---------------------------------------------------------------------------
 
+def batch_extract_payees_ai(descriptions: list[str]) -> dict:
+    """Takes a unique list of descriptions and uses Groq to map them to exact payees in a single prompt."""
+    client = get_groq_client()
+    if not client or not descriptions:
+        return {}
+
+    mapping = {}
+    chunk_size = 20
+    
+    for i in range(0, len(descriptions), chunk_size):
+        chunk = descriptions[i:i+chunk_size]
+        prompt = (
+            "You are a strict data extraction AI processing batch bank descriptions.\n"
+            "Extract the EXACT REAL PERSON OR REAL COMPANY NAME from each bank description.\n"
+            "Rules:\n"
+            "1. Exclude transaction IDs, codes like UPI/IMPS/RTGS, and gateway banks (e.g., skip 'ICICI' if it's 'ZOMATO@ICICI').\n"
+            "2. Output ONLY valid JSON containing a dictionary where the Key is the exact description provided, and the Value is the exact extracted payee.\n"
+            "Example:\n"
+            "{\"UPI/DR/123/JOHN DOE/bank\": \"John Doe\", \"POS 452113X DMART\": \"Dmart\"}\n\n"
+            "Descriptions to process:\n"
+        )
+        for d in chunk:
+            prompt += f"- {d}\n"
+
+        try:
+            completion = client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0,
+                response_format={"type": "json_object"},
+                timeout=10.0
+            )
+            import json
+            res = json.loads(completion.choices[0].message.content.strip())
+            # Safely Title-Case the results
+            for k, v in res.items():
+                if v and isinstance(v, str):
+                    mapping[k] = " ".join(w.capitalize() for w in v.split())
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"Groq Batch AI failed on chunk {i}: {e}")
+
+    return mapping
+
 def extract_payee_name(description: str) -> str:
     """
     Extract the actual payee/merchant name from a bank transaction description.
-
-    Tries multiple strategies in priority order:
-    1. Known merchant keyword match (fastest, most reliable for popular brands)
-    2. UPI slash-format name extraction
-    3. IMPS/NEFT name extraction
-    4. POS merchant name
-    5. ACH/EMI mandate name
-    6. UPI dash-format name extraction
-    7. UPI VPA handle (only if it's a personal name, no digits)
-    8. Fallback: strip noise and return whatever's left
+    Tries multiple fast regex strategies, then relies on LLM to extract true exact names.
     """
     if not description:
-        return "UNKNOWN"
+        return "Unknown"
 
     desc = str(description).strip()
+    
+    # 1. Very fast exact known merchant match (avoids unnecessary API calls)
+    known = _stage_known_merchants(desc)
+    if known:
+        return " ".join(w.capitalize() for w in known.split())
 
+    # 2. Run regex fallback pipeline to get decent fallback
+    fallback_result = None
     stages = [
-        _stage_known_merchants,
         _stage_upi_slash,
         _stage_imps_neft_name,
         _stage_pos_merchant,
@@ -246,21 +303,20 @@ def extract_payee_name(description: str) -> str:
         _stage_upi_dash,
         _stage_upi_handle,
     ]
-
     for stage in stages:
-        result = stage(desc)
-        if result:
-            cleaned = result.strip().upper()
-            # Accept if it's a meaningful name (not pure noise)
+        res = stage(desc)
+        if res:
+            cleaned = res.strip().upper()
             if cleaned and len(cleaned) >= 2 and cleaned not in _NOISE_NAMES:
-                # Title-case the result for readability
-                return " ".join(w.capitalize() for w in cleaned.split())
+                fallback_result = " ".join(w.capitalize() for w in cleaned.split())
+                break
+                
+    if not fallback_result:
+        raw_fallback = _stage_fallback_clean(desc)
+        fallback_result = " ".join(w.capitalize() for w in raw_fallback.split()) if raw_fallback else "General Transfer"
 
-    # Final fallback
-    fallback = _fallback = _stage_fallback_clean(desc)
-    if fallback and fallback != "GENERAL TRANSFER":
-        return " ".join(w.capitalize() for w in fallback.split())
-    return "General Transfer"
+    # 3. Skip individual synchronous AI hit to prevent 429 Rate Limits
+    return fallback_result
 
 
 # ---------------------------------------------------------------------------

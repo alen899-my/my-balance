@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
+import { Select } from "@/components/ui/Select";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -367,16 +368,12 @@ export function AdminPageLayout({
                     {filter.label}
                   </label>
                   {filter.type === "select" ? (
-                    <select
+                    <Select
                       value={filter.value ?? ""}
-                      onChange={(e) => filter.onChange(e.target.value)}
-                      className="h-8 px-2 text-sm border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
-                    >
-                      <option value="">{filter.placeholder ?? "All"}</option>
-                      {filter.options?.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
+                      onChange={(val) => filter.onChange(val)}
+                      options={filter.options ?? []}
+                      placeholder={filter.placeholder ?? "All"}
+                    />
                   ) : (
                     <input
                       type={filter.type === "date" ? "date" : "text"}

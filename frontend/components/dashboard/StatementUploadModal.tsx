@@ -16,11 +16,15 @@ interface StatementUploadModalProps {
   onSuccess?: () => void;
 }
 
-const BANKS = ["Select a bank", "Federal Bank", "HDFC Bank", "ICICI Bank", "SBI", "Axis Bank", "Kotak Mahindra"];
+const BANKS = [
+  "Select a bank", "Federal Bank", "HDFC Bank", "ICICI Bank", "SBI", 
+  "Axis Bank", "Kotak Mahindra", "Canara Bank", "Bank of Baroda", "Union Bank", "Other..."
+];
 
 export function StatementUploadModal({ open, onClose, onSuccess }: StatementUploadModalProps) {
   const [file, setFile] = useState<File | null>(null);
-  const [bank, setBank] = useState<string>("");
+  const [bank, setBank] = useState<string>("Select a bank");
+  const [customBank, setCustomBank] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +34,8 @@ export function StatementUploadModal({ open, onClose, onSuccess }: StatementUplo
 
   const handleReset = () => {
     setFile(null);
-    setBank("");
+    setBank("Select a bank");
+    setCustomBank("");
     setPassword("");
     setError(null);
     setSuccessMsg(null);
@@ -97,8 +102,9 @@ export function StatementUploadModal({ open, onClose, onSuccess }: StatementUplo
       setError("Please select a statement PDF file.");
       return;
     }
-    if (!bank || bank === "Select a bank") {
-      setError("Please select the bank.");
+    const finalBank = bank === "Other..." ? customBank.trim() : bank;
+    if (!finalBank || finalBank === "Select a bank") {
+      setError("Please specify the bank name.");
       return;
     }
 
@@ -111,7 +117,7 @@ export function StatementUploadModal({ open, onClose, onSuccess }: StatementUplo
       const token = localStorage.getItem("token");
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("bank", bank);
+      formData.append("bank", finalBank);
       if (password) {
         formData.append("password", password);
       }
@@ -165,7 +171,7 @@ export function StatementUploadModal({ open, onClose, onSuccess }: StatementUplo
             variant="primary"
             onClick={handleUpload}
             loading={uploading}
-            disabled={!file || !bank || bank === "Select a bank" || uploading}
+            disabled={!file || !bank || bank === "Select a bank" || (bank === "Other..." && !customBank.trim()) || uploading}
             leftIcon={!uploading ? <UploadCloud className="h-4 w-4" /> : undefined}
           >
             {uploading ? (pollStatus || "Processing...") : "Upload Statement"}
@@ -192,7 +198,10 @@ export function StatementUploadModal({ open, onClose, onSuccess }: StatementUplo
           <label className="text-[13px] font-semibold text-foreground">Bank Name</label>
           <select
             value={bank}
-            onChange={(e) => setBank(e.target.value)}
+            onChange={(e) => {
+               setBank(e.target.value);
+               if (e.target.value !== "Other...") setCustomBank("");
+            }}
             disabled={uploading}
             className="w-full h-10 px-3 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
           >
@@ -200,6 +209,17 @@ export function StatementUploadModal({ open, onClose, onSuccess }: StatementUplo
               <option key={b} value={b} disabled={b === "Select a bank"}>{b}</option>
             ))}
           </select>
+
+          {bank === "Other..." && (
+             <div className="mt-1 animate-in fade-in slide-in-from-top-1">
+                 <FormInput 
+                    value={customBank}
+                    onChange={(e) => setCustomBank(e.target.value)}
+                    placeholder="Enter your bank's full name"
+                    disabled={uploading}
+                 />
+             </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-1.5 mt-2">
@@ -219,11 +239,11 @@ export function StatementUploadModal({ open, onClose, onSuccess }: StatementUplo
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
             {file ? (
-              <div className="flex flex-col items-center gap-2">
-                <div className="h-10 w-10 flex items-center justify-center rounded-full bg-primary/10 text-primary">
+              <div className="flex flex-col items-center gap-2 w-full px-4">
+                <div className="h-10 w-10 shrink-0 flex items-center justify-center rounded-full bg-primary/10 text-primary">
                   <FileText className="h-5 w-5" />
                 </div>
-                <p className="text-sm font-medium text-foreground text-center truncate max-w-full px-4">
+                <p className="text-sm font-medium text-foreground text-center truncate w-full" title={file.name}>
                   {file.name}
                 </p>
                 <p className="text-[11px] text-muted-foreground">

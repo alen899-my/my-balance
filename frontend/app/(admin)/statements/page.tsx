@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import React, { useEffect, useState, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Plus, Download, FileText, Eye, Edit3, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AdminPageLayout } from "@/components/layout/Adminpagelayout";
 import { DataTable, ColumnDef, RowAction } from "@/components/common/Datatable";
 import { StatementUploadModal } from "@/components/dashboard/StatementUploadModal";
 import { TransactionActionModal } from "@/components/dashboard/TransactionActionModal";
+import { Modal, ModalFooterActions } from "@/components/common/Modal";
+import { Button } from "@/components/ui/Button";
 import getSymbolFromCurrency from "currency-symbol-map";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -23,8 +25,11 @@ interface Transaction {
   balance?: number;
 }
 
-export default function StatementsPage() {
+function StatementsPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
   const [loading, setLoading] = useState(true);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -35,15 +40,45 @@ export default function StatementsPage() {
     mode: "view" | "edit" | "delete" | null;
     transaction: Transaction | null;
   }>({ open: false, mode: null, transaction: null });
+
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [clearLoading, setClearLoading] = useState(false);
+  const [summary, setSummary] = useState({ total_debit: 0, total_credit: 0 });
   
   // Datatable state
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [search, setSearch] = useState("");
-  const [bankFilter, setBankFilter] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
+  const [pageSize, setPageSize] = useState(Number(searchParams.get("limit")) || 10);
+  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [bankFilter, setBankFilter] = useState(searchParams.get("bank") || "");
+  const [startDate, setStartDate] = useState(searchParams.get("start_date") || "");
+  const [endDate, setEndDate] = useState(searchParams.get("end_date") || "");
   const [currencySymbol, setCurrencySymbol] = useState("₹");
+  const [dynamicBanks, setDynamicBanks] = useState<string[]>([]);
+  const [typeFilter, setTypeFilter] = useState(searchParams.get("type") || "all");
+  const [amountFilter, setAmountFilter] = useState(searchParams.get("amount") || "");
+
+  const updateURL = useCallback(() => {
+    const params = new URLSearchParams();
+    if (page > 1) params.set("page", String(page));
+    if (pageSize !== 10) params.set("limit", String(pageSize));
+    if (search) params.set("search", search);
+    if (bankFilter && bankFilter !== "All Banks") params.set("bank", bankFilter);
+    if (startDate) params.set("start_date", startDate);
+    if (endDate) params.set("end_date", endDate);
+    if (typeFilter && typeFilter !== "all") params.set("type", typeFilter);
+    if (amountFilter) params.set("amount", amountFilter);
+
+    const q = params.toString();
+    const newUrl = `${pathname}${q ? `?${q}` : ""}`;
+    window.history.replaceState(null, "", newUrl);
+  }, [page, pageSize, search, bankFilter, startDate, endDate, typeFilter, pathname]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      updateURL();
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [updateURL]);
 
   const fetchTransactions = useCallback(async () => {
     try {
@@ -60,8 +95,10 @@ export default function StatementsPage() {
       params.append("limit", String(pageSize));
       if (search) params.append("search", search);
       if (bankFilter && bankFilter !== "All Banks") params.append("bank", bankFilter);
+      if (typeFilter && typeFilter !== "all") params.append("type", typeFilter);
       if (startDate) params.append("start_date", startDate);
       if (endDate) params.append("end_date", endDate);
+      if (amountFilter) params.append("amount", amountFilter);
       params.append("sort", "desc");
 
       const res = await fetch(`${API_BASE_URL}/transactions?${params.toString()}`, {
@@ -87,12 +124,13 @@ export default function StatementsPage() {
 
       setTransactions(mapped);
       setTotalCount(data.total);
+      if (data.summary) setSummary(data.summary);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, search, bankFilter, startDate, endDate, router]);
+  }, [page, pageSize, search, bankFilter, startDate, endDate, typeFilter, amountFilter]);
 
   useEffect(() => {
     // Attempt local storage sync
@@ -112,12 +150,58 @@ export default function StatementsPage() {
              }).catch(() => {});
        }
     }
-    fetchTransactions();
+    
+    // Fetch unique banks
+    const token = localStorage.getItem("token");
+    if (token) {
+        fetch(`${API_BASE_URL}/transactions/unique-banks`, { headers: { Authorization: `Bearer ${token}` }})
+          .then(res => res.json())
+          .then(data => {
+              if (Array.isArray(data)) setDynamicBanks(data);
+          })
+          .catch(() => {});
+    }
+
+    const fetchHandler = setTimeout(() => {
+      fetchTransactions();
+    }, 400);
+
+    return () => clearTimeout(fetchHandler);
   }, [fetchTransactions]);
 
   const handleUploadSuccess = () => {
     setPage(1); // Reset to first page
     fetchTransactions();
+    
+    // Refresh bank list
+    const token = localStorage.getItem("token");
+    if (token) {
+        fetch(`${API_BASE_URL}/transactions/unique-banks`, { headers: { Authorization: `Bearer ${token}` }})
+          .then(res => res.json())
+          .then(data => { if (Array.isArray(data)) setDynamicBanks(data); })
+          .catch(() => {});
+    }
+  };
+
+  const handleClearAll = async () => {
+    try {
+      setClearLoading(true);
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/transactions/clear`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to clear transactions");
+      
+      setShowClearConfirm(false);
+      setPage(1);
+      fetchTransactions();
+    } catch (err) {
+      console.error(err);
+      alert("Error clearing transactions");
+    } finally {
+      setClearLoading(false);
+    }
   };
 
   const columns: ColumnDef<Transaction>[] = [
@@ -220,6 +304,18 @@ export default function StatementsPage() {
         onSuccess={handleUploadSuccess}
       />
 
+      {/* Delete All Confirmation Modal */}
+      <Modal open={showClearConfirm} onClose={() => setShowClearConfirm(false)} title="Wipe All Transactions">
+        <div className="py-4">
+           <p className="text-sm text-foreground/80 mb-2">Are you sure you want to completely erase <strong>ALL</strong> extracted transactions from this workspace?</p>
+           <p className="text-sm text-destructive font-semibold">This action is permanent and cannot be undone.</p>
+        </div>
+        <ModalFooterActions>
+           <Button variant="secondary" onClick={() => setShowClearConfirm(false)} disabled={clearLoading}>Cancel</Button>
+           <Button variant="destructive" onClick={handleClearAll} loading={clearLoading}>Yes, Erase All</Button>
+        </ModalFooterActions>
+      </Modal>
+
       <AdminPageLayout
         title="Statements & Transactions"
         description="View your extracted transactions and upload new bank statements."
@@ -235,6 +331,12 @@ export default function StatementsPage() {
             variant: "secondary"
           },
           {
+            label: "Delete All",
+            icon: <Trash2 className="h-4 w-4" />,
+            onClick: () => setShowClearConfirm(true),
+            variant: "destructive"
+          },
+          {
             label: "Add Statement",
             icon: <Plus className="h-4 w-4" />,
             onClick: () => setUploadModalOpen(true),
@@ -248,13 +350,8 @@ export default function StatementsPage() {
             type: "select",
             value: bankFilter,
             onChange: (v: string) => { setBankFilter(v); setPage(1); },
-            options: [
-              { label: "Federal Bank", value: "Federal Bank" },
-              { label: "HDFC Bank", value: "HDFC Bank" },
-              { label: "ICICI Bank", value: "ICICI Bank" },
-              { label: "SBI", value: "SBI" }
-            ],
-            placeholder: "All Banks"
+            options: dynamicBanks.map(b => ({ label: b, value: b })),
+            placeholder: dynamicBanks.length === 0 ? "Upload to filter..." : "All Banks"
           },
           {
             key: "startDate",
@@ -269,9 +366,31 @@ export default function StatementsPage() {
             type: "date",
             value: endDate,
             onChange: (v: string) => { setEndDate(v); setPage(1); }
+          },
+          {
+            key: "type",
+            label: "Transaction Type",
+            type: "select",
+            value: typeFilter,
+            onChange: (v: string) => { setTypeFilter(v); setPage(1); },
+            options: [
+              { label: "All Transactions", value: "all" },
+              { label: "Credit (+)", value: "credit" },
+              { label: "Debit (-)", value: "debit" }
+            ],
+            placeholder: "All Transactions"
+          },
+          {
+            key: "amount",
+            label: "Filter by Amount",
+            type: "input",
+            placeholder: "Enter exact amount...",
+            value: amountFilter,
+            onChange: (v: string) => { setAmountFilter(v); setPage(1); }
           }
         ]}
-        onClearFilters={() => { setBankFilter(""); setStartDate(""); setEndDate(""); setPage(1); }}
+        filterCount={[bankFilter, typeFilter !== "all" ? typeFilter : "", startDate, endDate, search, amountFilter].filter(Boolean).length}
+        onClearFilters={() => { setBankFilter(""); setTypeFilter("all"); setStartDate(""); setEndDate(""); setSearch(""); setAmountFilter(""); setPage(1); }}
         searchValue={search}
         onSearchChange={(val: string) => { setSearch(val); setPage(1); }}
         searchPlaceholder="Search descriptions/payees..."
@@ -297,16 +416,65 @@ export default function StatementsPage() {
             searchable={false} // Hidden inside Datatable because it's handled by AdminPageLayout
             hideToolbar
             
+            footerSummarySlot={
+              !loading && transactions.length > 0 && (
+                <div className="px-5 py-4 flex flex-col sm:flex-row items-center justify-between gap-5 sm:gap-6">
+                  {/* Label Group */}
+                  <div className="flex items-center gap-2 self-start sm:self-center">
+                    <div className="h-2 w-2 rounded-full bg-primary/40 animate-pulse" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                      Filtered Summary
+                    </span>
+                  </div>
+                  
+                  {/* Stats Group */}
+                  <div className="flex flex-wrap items-center justify-between sm:justify-end gap-x-8 gap-y-4 w-full sm:w-auto">
+                    <div className="flex flex-col items-end min-w-[100px]">
+                      <span className="text-[9px] uppercase text-muted-foreground font-bold tracking-tight">Total Credits</span>
+                      <span className="text-sm font-bold text-emerald-500 tabular-nums">
+                        +{currencySymbol}{summary.total_credit.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    
+                    <div className="flex flex-col items-end min-w-[100px]">
+                      <span className="text-[9px] uppercase text-muted-foreground font-bold tracking-tight">Total Debits</span>
+                      <span className="text-sm font-bold text-destructive tabular-nums">
+                        -{currencySymbol}{summary.total_debit.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    
+                    <div className="pt-4 sm:pt-0 sm:pl-6 border-t sm:border-t-0 sm:border-l border-border/60 flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center w-full sm:w-auto mt-2 sm:mt-0">
+                      <span className="text-[10px] uppercase text-foreground font-black tracking-tight sm:mb-1">Net Cashflow</span>
+                      <span className={cn(
+                        "text-base sm:text-lg font-black tabular-nums tracking-tighter leading-none",
+                        (summary.total_credit - summary.total_debit) >= 0 ? "text-emerald-500" : "text-destructive"
+                      )}>
+                        {(summary.total_credit - summary.total_debit) >= 0 ? "+" : "-"}{currencySymbol}{Math.abs(summary.total_credit - summary.total_debit).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+            
             emptyState={
                <div className="flex flex-col items-center justify-center p-10 text-muted-foreground">
                   <FileText className="h-10 w-10 mb-3 opacity-40" />
                   <p className="text-sm font-medium">No transactions found</p>
                   <p className="text-xs max-w-sm text-center mt-1">Upload a bank statement using the Add Statement button to extract and view transactions.</p>
                </div>
-            }
-          />
-        </div>
+           }
+         />
+       </div>
       </AdminPageLayout>
     </>
+  );
+}
+
+export default function StatementsPage() {
+  return (
+    <Suspense fallback={<div className="flex h-[calc(100vh-200px)] items-center justify-center text-muted-foreground">Loading...</div>}>
+      <StatementsPageContent />
+    </Suspense>
   );
 }

@@ -94,6 +94,8 @@ export interface DataTableProps<T = Record<string, unknown>> {
   className?: string;
   tableClassName?: string;
   rowClassName?: (row: T, index: number) => string;
+  tfoot?: ReactNode;
+  footerSummarySlot?: ReactNode;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -401,6 +403,8 @@ export function DataTable<T = Record<string, unknown>>({
   className,
   tableClassName,
   rowClassName,
+  tfoot,
+  footerSummarySlot,
 }: DataTableProps<T>) {
   // ── Internal state ──────────────────────────────────────────────────────────
   const [internalSearch, setInternalSearch] = useState("");
@@ -797,8 +801,15 @@ export function DataTable<T = Record<string, unknown>>({
               );
             })}
           </tbody>
+          {tfoot && tfoot}
         </table>
       </div>
+      
+      {footerSummarySlot && (
+        <div className="border-t border-[var(--dt-border-strong)] bg-[color-mix(in_oklch,var(--dt-row-hover)_50%,transparent)]">
+          {footerSummarySlot}
+        </div>
+      )}
 
       {/* ── Pagination ── */}
       {pagination && (
