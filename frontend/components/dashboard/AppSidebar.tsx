@@ -11,16 +11,18 @@ import {
   BarChart3,
   Settings,
   X,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Statements", href: "/statements", icon: FileText },
   { label: "Transactions", href: "/dashboard/transactions", icon: ArrowLeftRight },
   { label: "Savings", href: "/dashboard/savings", icon: PiggyBank },
   { label: "Cards", href: "/dashboard/cards", icon: CreditCard },
   { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
-  { label: "Settings", href: "/dashboard/settings", icon: Settings },
+  { label: "Settings", href: "/settings", icon: Settings },
 ];
 
 interface AppSidebarProps {

@@ -8,13 +8,20 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 interface ImageUploadProps {
   currentImage?: string;
-  onUploadSuccess: (url: string) => void;
+  onUploadSuccess?: (url: string) => void;
+  onFileChange?: (file: File) => void;
   disabled?: boolean;
 }
 
-export function ImageUpload({ currentImage, onUploadSuccess, disabled }: ImageUploadProps) {
+export function ImageUpload({ 
+  currentImage, 
+  onUploadSuccess, 
+  onFileChange,
+  disabled 
+}: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,36 +42,49 @@ export function ImageUpload({ currentImage, onUploadSuccess, disabled }: ImageUp
       return;
     }
 
-    setUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
+    // Create local preview
+    const previewUrl = URL.createObjectURL(file);
+    setPreview(previewUrl);
 
-    try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+    // If onFileChange is provided, we defer the upload to the parent
+    if (onFileChange) {
+      onFileChange(file);
+      return;
+    }
 
-      if (!res.ok) {
+    // Otherwise, handle the upload immediately if onUploadSuccess is provided
+    if (onUploadSuccess) {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Upload failed");
+        }
+
         const data = await res.json();
-        throw new Error(data.error || "Upload failed");
+        onUploadSuccess(data.url);
+      } catch (err: any) {
+        console.error("Upload error:", err);
+        setError(err.message || "Failed to upload image.");
+      } finally {
+        setUploading(false);
       }
-
-      const data = await res.json();
-      onUploadSuccess(data.url);
-    } catch (err: any) {
-      console.error("Upload error:", err);
-      setError(err.message || "Failed to upload image.");
-    } finally {
-      setUploading(false);
     }
   };
 
-  const displayImage = currentImage 
+  const displayImage = preview || (currentImage 
     ? (currentImage.startsWith("http") || currentImage.startsWith("https") || currentImage.startsWith("data:") 
         ? currentImage 
         : `${API_BASE_URL}${currentImage}`)
-    : null;
+    : null);
 
   return (
     <div className="relative">
@@ -82,7 +102,7 @@ export function ImageUpload({ currentImage, onUploadSuccess, disabled }: ImageUp
           "group relative flex items-center justify-center h-20 w-20 rounded-2xl border-2 border-dashed overflow-hidden transition-all",
           !disabled && !uploading && "cursor-pointer hover:border-primary/50 hover:bg-muted/50 border-border",
           (disabled || uploading) && "opacity-60 cursor-not-allowed border-border/50",
-          !currentImage && !uploading && "bg-muted/30"
+          !displayImage && !uploading && "bg-muted/30"
         )}
       >
         {displayImage ? (

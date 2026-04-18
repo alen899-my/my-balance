@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from typing import Optional, List
+from bson import ObjectId
 from app.utils.dependencies import get_current_user
 from app.models.transaction import Transaction
 from app.db.session import init_db
@@ -138,3 +139,35 @@ async def re_extract_payees(user=Depends(get_current_user)):
         "total": len(docs),
         "message": f"Re-extracted payee names for {updated} of {len(docs)} transactions."
     }
+@router.put("/{id}")
+async def update_transaction(id: str, update_data: dict, user = Depends(get_current_user)):
+    try:
+        doc = await Transaction.get(ObjectId(id))
+        if not doc or doc.user_id != str(user["user_id"]):
+            raise HTTPException(status_code=404, detail="Transaction not found")
+            
+        allowed_keys = {"description", "payee", "category", "bank", "debit", "credit", "balance", "date"}
+        update_doc = {k: v for k, v in update_data.items() if k in allowed_keys}
+        
+        if "date" in update_doc and isinstance(update_doc["date"], str):
+           try:
+               update_doc["date"] = datetime.fromisoformat(update_doc["date"].replace("Z", "+00:00"))
+           except Exception:
+               pass
+
+        await doc.set(update_doc)
+        return {"status": "success", "message": "Transaction updated"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/{id}")
+async def delete_transaction(id: str, user = Depends(get_current_user)):
+    try:
+        doc = await Transaction.get(ObjectId(id))
+        if not doc or doc.user_id != str(user["user_id"]):
+            raise HTTPException(status_code=404, detail="Transaction not found")
+            
+        await doc.delete()
+        return {"status": "success", "message": "Transaction deleted"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

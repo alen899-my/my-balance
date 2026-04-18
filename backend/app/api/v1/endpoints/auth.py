@@ -64,7 +64,8 @@ async def get_me(payload = Depends(get_current_user)):
         "name": user.get("name"),
         "email": user.get("email"),
         "phone": user.get("phone"),
-        "profile_picture": user.get("profile_picture")
+        "profile_picture": user.get("profile_picture"),
+        "currency": user.get("currency", "INR")
     }
 
 from pydantic import BaseModel
@@ -76,6 +77,7 @@ class ProfileUpdate(BaseModel):
     phone: Optional[str] = None
     profile_picture: Optional[str] = None
     password: Optional[str] = None
+    currency: Optional[str] = None
 
 @router.put("/me")
 async def update_profile(data: ProfileUpdate, payload = Depends(get_current_user)):
@@ -91,6 +93,8 @@ async def update_profile(data: ProfileUpdate, payload = Depends(get_current_user
         update_data["profile_picture"] = data.profile_picture
     if data.password is not None:
         update_data["password"] = hash_password(data.password)
+    if data.currency is not None:
+        update_data["currency"] = data.currency
         
     if update_data:
         users.update_one(

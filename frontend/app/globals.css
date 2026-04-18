@@ -60,11 +60,11 @@
 
 :root {
     /* ── Backgrounds ── */
-    --background:          oklch(1 0 0);                      /* pure white/ivory */
-    --foreground:          oklch(0.250 0.020 250);            /* deep slate dark */
+    --background:          oklch(1 0 0);
+    --foreground:          oklch(0.250 0.020 250);
 
     /* ── Cards ── */
-    --card:                oklch(0.985 0.005 250);            /* crisp card white */
+    --card:                oklch(0.985 0.005 250);
     --card-foreground:     oklch(0.250 0.020 250);
 
     /* ── Popovers ── */
@@ -72,11 +72,11 @@
     --popover-foreground:  oklch(0.250 0.020 250);
 
     /* ── Primary — currency teal ── */
-    --primary:             oklch(0.530 0.090 168);            /* #2E7D6B (keeping teal as accent) */
-    --primary-foreground:  oklch(1 0 0);                      /* white on teal */
+    --primary:             oklch(0.530 0.090 168);
+    --primary-foreground:  oklch(1 0 0);
 
-    /* ── Secondary — neutral surface ── */
-    --secondary:           oklch(0.950 0.010 250);            /* soft light grey */
+    /* ── Secondary ── */
+    --secondary:           oklch(0.950 0.010 250);
     --secondary-foreground: oklch(0.300 0.030 250);
 
     /* ── Muted ── */
@@ -88,7 +88,7 @@
     --accent-foreground:   oklch(0.250 0.020 250);
 
     /* ── Destructive ── */
-    --destructive:         oklch(0.550 0.180 25);             /* crisp red */
+    --destructive:         oklch(0.550 0.180 25);
 
     /* ── Borders & inputs ── */
     --border:              oklch(0.900 0.010 250);
@@ -113,23 +113,70 @@
     --sidebar-accent-foreground:  oklch(0.300 0.030 250);
     --sidebar-border:             oklch(0.920 0.010 250);
     --sidebar-ring:               oklch(0.530 0.090 168);
+
+    /* ════════════════════════════════════════════════════
+       TABLE DESIGN TOKENS — LIGHT MODE
+       ════════════════════════════════════════════════════ */
+
+    /* Header gradient — deep teal engraving look */
+    --dt-header-from:         oklch(0.350 0.085 168);   /* deep teal */
+    --dt-header-to:           oklch(0.280 0.070 160);   /* near-engraving dark */
+    --dt-header-fg:           oklch(0.970 0.010 168);   /* near-white */
+    --dt-header-border:       oklch(0.420 0.090 168);   /* teal mid-tone */
+    --dt-header-sort-active:  oklch(0.820 0.110 168);   /* bright teal accent */
+
+    /* Banded rows */
+    --dt-row-odd:             oklch(1 0 0);                        /* pure white */
+    --dt-row-even:            oklch(0.966 0.018 168);              /* very faint teal tint */
+    --dt-row-hover:           oklch(0.940 0.040 168);              /* soft teal hover */
+    --dt-row-selected:        oklch(0.910 0.065 168);              /* teal selection */
+    --dt-row-selected-border: oklch(0.530 0.090 168);
+
+    /* Row text */
+    --dt-cell-fg:             oklch(0.240 0.020 250);
+    --dt-cell-fg-muted:       oklch(0.520 0.020 250);
+
+    /* Borders */
+    --dt-border:              oklch(0.895 0.015 168);              /* faint teal border */
+    --dt-border-strong:       oklch(0.820 0.030 168);
+
+    /* Toolbar */
+    --dt-toolbar-bg:          oklch(0.978 0.008 168);
+    --dt-toolbar-border:      oklch(0.900 0.020 168);
+
+    /* Footer/pagination */
+    --dt-footer-bg:           oklch(0.972 0.010 168);
+    --dt-footer-border:       oklch(0.900 0.018 168);
+
+    /* Filter row */
+    --dt-filter-row-bg:       oklch(0.955 0.025 168);
+
+    /* Accent band colors for column groups (optional use) */
+    --dt-band-teal:           oklch(0.940 0.040 168);
+    --dt-band-mint:           oklch(0.945 0.030 155);
+    --dt-band-sage:           oklch(0.950 0.022 145);
+    --dt-band-khaki:          oklch(0.950 0.022 88);
+
+    /* Page number active */
+    --dt-page-active-bg:      oklch(0.530 0.090 168);
+    --dt-page-active-fg:      oklch(1 0 0);
 }
 
 .dark {
     /* ── Backgrounds — deep black ── */
-    --background:          oklch(0.080 0.005 250);            /* sophisticated black */
-    --foreground:          oklch(0.980 0.005 250);            /* near-white */
+    --background:          oklch(0.080 0.005 250);
+    --foreground:          oklch(0.980 0.005 250);
 
     /* ── Cards ── */
-    --card:                oklch(0.120 0.010 250);            /* lighter dark depth */
+    --card:                oklch(0.120 0.010 250);
     --card-foreground:     oklch(0.980 0.005 250);
 
     --popover:             oklch(0.120 0.010 250);
     --popover-foreground:  oklch(0.980 0.005 250);
 
-    /* ── Primary — bright currency teal ── */
-    --primary:             oklch(0.680 0.110 168);            /* brighter teal for dark usage */
-    --primary-foreground:  oklch(0.080 0.005 250);            /* black text on teal */
+    /* ── Primary ── */
+    --primary:             oklch(0.680 0.110 168);
+    --primary-foreground:  oklch(0.080 0.005 250);
 
     /* ── Secondary ── */
     --secondary:           oklch(0.180 0.015 250);
@@ -158,7 +205,7 @@
     --chart-4:             oklch(0.790 0.055 88);
     --chart-5:             oklch(0.560 0.170 22);
 
-    /* ── Sidebar — pure depth ── */
+    /* ── Sidebar ── */
     --sidebar:                    oklch(0.060 0.005 250);
     --sidebar-foreground:         oklch(0.980 0.005 250);
     --sidebar-primary:            oklch(0.680 0.110 168);
@@ -167,6 +214,47 @@
     --sidebar-accent-foreground:  oklch(0.980 0.005 250);
     --sidebar-border:             oklch(1 0 0 / 10%);
     --sidebar-ring:               oklch(0.680 0.110 168);
+
+    /* ════════════════════════════════════════════════════
+       TABLE DESIGN TOKENS — DARK MODE
+       ════════════════════════════════════════════════════ */
+
+    /* Header — glowing teal on deep dark */
+    --dt-header-from:         oklch(0.220 0.055 168);   /* very dark teal */
+    --dt-header-to:           oklch(0.155 0.040 162);   /* near-black teal */
+    --dt-header-fg:           oklch(0.880 0.060 168);   /* soft teal-white */
+    --dt-header-border:       oklch(0.340 0.075 168);
+    --dt-header-sort-active:  oklch(0.680 0.110 168);
+
+    /* Banded rows */
+    --dt-row-odd:             oklch(0.130 0.012 250);   /* base dark */
+    --dt-row-even:            oklch(0.148 0.022 168);   /* subtle teal-dark */
+    --dt-row-hover:           oklch(0.195 0.045 168);   /* teal hover glow */
+    --dt-row-selected:        oklch(0.220 0.065 168);
+    --dt-row-selected-border: oklch(0.680 0.110 168);
+
+    /* Row text */
+    --dt-cell-fg:             oklch(0.930 0.010 250);
+    --dt-cell-fg-muted:       oklch(0.580 0.015 250);
+
+    /* Borders */
+    --dt-border:              oklch(1 0 0 / 9%);
+    --dt-border-strong:       oklch(1 0 0 / 16%);
+
+    /* Toolbar */
+    --dt-toolbar-bg:          oklch(0.110 0.012 250);
+    --dt-toolbar-border:      oklch(1 0 0 / 10%);
+
+    /* Footer/pagination */
+    --dt-footer-bg:           oklch(0.105 0.010 250);
+    --dt-footer-border:       oklch(1 0 0 / 10%);
+
+    /* Filter row */
+    --dt-filter-row-bg:       oklch(0.160 0.025 168);
+
+    /* Page number active */
+    --dt-page-active-bg:      oklch(0.680 0.110 168);
+    --dt-page-active-fg:      oklch(0.080 0.005 250);
 }
 
 @layer base {
@@ -180,31 +268,479 @@
         @apply font-sans;
     }
 
-    /* ─── Custom Premium Scrollbar (Global) ─── */
-    *::-webkit-scrollbar {
-        width: 10px;
-        height: 10px;
+    /* ─── Custom Premium Scrollbar ─── */
+    .custom-scrollbar::-webkit-scrollbar,
+    .dt-scroll::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
     }
-
-    *::-webkit-scrollbar-track {
+    .custom-scrollbar::-webkit-scrollbar-track,
+    .dt-scroll::-webkit-scrollbar-track {
         background: transparent;
     }
-
-    *::-webkit-scrollbar-thumb {
+    .custom-scrollbar::-webkit-scrollbar-thumb,
+    .dt-scroll::-webkit-scrollbar-thumb {
         background: var(--muted-foreground);
-        border-radius: 20px;
-        border: 3px solid transparent;
+        border-radius: 10px;
+        border: 2px solid transparent;
         background-clip: content-box;
     }
-
-    *::-webkit-scrollbar-thumb:hover {
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+    .dt-scroll::-webkit-scrollbar-thumb:hover {
         background: var(--primary);
         background-clip: content-box;
     }
+}
 
-    /* Firefox fallback - ensure it's truly global */
-    * {
-        scrollbar-width: thin;
-        scrollbar-color: var(--muted-foreground) transparent;
-    }
+/* ═══════════════════════════════════════════════════════════════════════════
+   DATA TABLE — GLOBAL STYLES
+   Applied via .dt-* class names on the DataTable component wrapper/elements.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Wrapper card ── */
+.dt-root {
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--dt-border-strong);
+    background: var(--card);
+    overflow: hidden;
+    box-shadow:
+        0 1px 3px oklch(0 0 0 / 8%),
+        0 4px 16px oklch(0 0 0 / 6%),
+        inset 0 1px 0 oklch(1 0 0 / 20%);
+}
+
+/* ── Toolbar ── */
+.dt-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 0.875rem;
+    background: var(--dt-toolbar-bg);
+    border-bottom: 1px solid var(--dt-toolbar-border);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+/* ── Scroll container ── */
+.dt-scroll {
+    overflow: auto;
+    flex: 1;
+}
+
+/* ── Table ── */
+.dt-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+    min-width: 600px;
+}
+
+/* ════════════════════════════
+   THEAD — Rich colored header
+   ════════════════════════════ */
+.dt-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.dt-table thead tr.dt-header-row {
+    background: linear-gradient(
+        135deg,
+        var(--dt-header-from) 0%,
+        var(--dt-header-to) 100%
+    );
+    border-bottom: 2px solid var(--dt-header-border);
+    /* Subtle engraved top highlight */
+    box-shadow:
+        inset 0 1px 0 oklch(1 0 0 / 15%),
+        0 2px 8px oklch(0 0 0 / 20%);
+}
+
+.dt-table thead th {
+    padding: 0.6875rem 0.875rem;
+    text-align: left;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--dt-header-fg);
+    white-space: nowrap;
+    user-select: none;
+    border-right: 1px solid oklch(1 0 0 / 8%);
+    position: relative;
+}
+
+.dt-table thead th:last-child {
+    border-right: none;
+}
+
+/* Sortable column hover */
+.dt-table thead th.dt-sortable {
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.dt-table thead th.dt-sortable:hover {
+    background: oklch(1 0 0 / 10%);
+}
+
+/* Active sort column gets a subtle bottom indicator */
+.dt-table thead th.dt-sort-active {
+    background: oklch(1 0 0 / 12%);
+    color: var(--dt-header-sort-active);
+}
+
+.dt-table thead th.dt-sort-active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--dt-header-sort-active);
+    border-radius: 2px 2px 0 0;
+}
+
+/* Right / center alignment */
+.dt-table thead th.dt-align-right  { text-align: right; }
+.dt-table thead th.dt-align-center { text-align: center; }
+
+/* Checkbox header cell */
+.dt-table thead th.dt-col-checkbox {
+    width: 2.5rem;
+    padding-left: 0.875rem;
+    padding-right: 0.5rem;
+}
+
+/* Actions column */
+.dt-table thead th.dt-col-actions {
+    width: 2.75rem;
+    padding: 0;
+}
+
+/* ── Column filter row ── */
+.dt-table thead tr.dt-filter-row {
+    background: var(--dt-filter-row-bg);
+    border-bottom: 1px solid var(--dt-border-strong);
+}
+
+.dt-table thead tr.dt-filter-row td {
+    padding: 0.3125rem 0.5rem;
+    border-right: 1px solid var(--dt-border);
+}
+.dt-table thead tr.dt-filter-row td:last-child {
+    border-right: none;
+}
+
+/* ════════════════════════════
+   TBODY — Banded rows
+   ════════════════════════════ */
+.dt-table tbody tr {
+    transition: background 0.12s ease, box-shadow 0.12s ease;
+    border-bottom: 1px solid var(--dt-border);
+    background: var(--dt-row-odd);
+}
+
+.dt-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+/* Even rows get a teal-tinted background */
+.dt-table tbody tr:nth-child(even) {
+    background: var(--dt-row-even);
+}
+
+/* Hover — applies to both odd and even */
+.dt-table tbody tr:hover {
+    background: var(--dt-row-hover) !important;
+    box-shadow: inset 3px 0 0 var(--dt-row-selected-border);
+}
+
+/* Selected row */
+.dt-table tbody tr.dt-row-selected {
+    background: var(--dt-row-selected) !important;
+    box-shadow: inset 3px 0 0 var(--dt-row-selected-border);
+}
+
+/* Clickable row cursor */
+.dt-table tbody tr.dt-row-clickable {
+    cursor: pointer;
+}
+
+/* Loading state */
+.dt-table tbody tr.dt-row-loading {
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+/* ── Cells ── */
+.dt-table tbody td {
+    padding: 0.6875rem 0.875rem;
+    font-size: 0.8125rem;
+    color: var(--dt-cell-fg);
+    vertical-align: middle;
+    border-right: 1px solid var(--dt-border);
+    max-width: 200px;
+}
+
+.dt-table tbody td:last-child {
+    border-right: none;
+}
+
+.dt-table tbody td.dt-align-right  { text-align: right; }
+.dt-table tbody td.dt-align-center { text-align: center; }
+
+/* Compact mode */
+.dt-table.dt-compact thead th {
+    padding-top: 0.4375rem;
+    padding-bottom: 0.4375rem;
+}
+.dt-table.dt-compact tbody td {
+    padding-top: 0.4375rem;
+    padding-bottom: 0.4375rem;
+}
+
+/* Truncation */
+.dt-cell-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+}
+
+/* Sticky column */
+.dt-table td.dt-sticky,
+.dt-table th.dt-sticky {
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    /* Shadow to the right */
+    box-shadow: 2px 0 6px oklch(0 0 0 / 10%);
+}
+
+.dt-table thead th.dt-sticky {
+    background: linear-gradient(135deg, var(--dt-header-from), var(--dt-header-to));
+    z-index: 15;
+}
+
+.dt-table tbody td.dt-sticky {
+    background: inherit;
+}
+
+/* ════════════════════════════
+   FOOTER — pagination
+   ════════════════════════════ */
+.dt-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0.875rem;
+    background: var(--dt-footer-bg);
+    border-top: 1px solid var(--dt-footer-border);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+/* ── Pagination buttons ── */
+.dt-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.875rem;
+    height: 1.875rem;
+    border-radius: calc(var(--radius) * 0.7);
+    border: 1px solid var(--dt-border-strong);
+    background: transparent;
+    color: var(--dt-cell-fg-muted);
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+    line-height: 1;
+}
+
+.dt-page-btn:hover:not(:disabled) {
+    background: var(--dt-row-hover);
+    color: var(--dt-cell-fg);
+    border-color: var(--dt-header-sort-active);
+}
+
+.dt-page-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.dt-page-btn.dt-page-active {
+    background: var(--dt-page-active-bg);
+    color: var(--dt-page-active-fg);
+    border-color: var(--dt-page-active-bg);
+    font-weight: 700;
+    box-shadow: 0 1px 4px oklch(0 0 0 / 20%);
+}
+
+/* ════════════════════════════
+   EMPTY STATE
+   ════════════════════════════ */
+.dt-empty {
+    padding: 4rem 1.5rem;
+    text-align: center;
+    color: var(--dt-cell-fg-muted);
+}
+
+/* ════════════════════════════
+   LOADING SKELETON
+   ════════════════════════════ */
+@keyframes dt-shimmer {
+    0%   { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+}
+
+.dt-skeleton {
+    height: 1rem;
+    border-radius: 0.25rem;
+    background: linear-gradient(
+        90deg,
+        var(--muted) 25%,
+        var(--dt-row-hover) 50%,
+        var(--muted) 75%
+    );
+    background-size: 800px 100%;
+    animation: dt-shimmer 1.4s ease-in-out infinite;
+}
+
+/* ════════════════════════════
+   CHECKBOX styling
+   ════════════════════════════ */
+.dt-checkbox {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 0.25rem;
+    border: 1.5px solid var(--dt-border-strong);
+    cursor: pointer;
+    accent-color: var(--primary);
+}
+
+/* ════════════════════════════
+   TOOLBAR inputs
+   ════════════════════════════ */
+.dt-search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 160px;
+    max-width: 20rem;
+}
+
+.dt-search-icon {
+    position: absolute;
+    left: 0.625rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--dt-cell-fg-muted);
+    pointer-events: none;
+}
+
+.dt-search-input {
+    width: 100%;
+    height: 2rem;
+    padding-left: 2rem;
+    padding-right: 0.75rem;
+    font-size: 0.8125rem;
+    border: 1px solid var(--dt-border-strong);
+    border-radius: calc(var(--radius) * 0.8);
+    background: var(--background);
+    color: var(--dt-cell-fg);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.dt-search-input::placeholder {
+    color: var(--dt-cell-fg-muted);
+}
+
+.dt-search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px oklch(from var(--primary) l c h / 20%);
+}
+
+/* Column filter inputs */
+.dt-col-filter-input {
+    width: 100%;
+    height: 1.625rem;
+    font-size: 0.6875rem;
+    padding: 0 0.375rem;
+    border: 1px solid var(--dt-border-strong);
+    border-radius: calc(var(--radius) * 0.6);
+    background: var(--background);
+    color: var(--dt-cell-fg);
+    transition: border-color 0.12s;
+}
+
+.dt-col-filter-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* ════════════════════════════
+   ACTION MENU popover
+   ════════════════════════════ */
+.dt-action-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 2px);
+    z-index: 50;
+    min-width: 10rem;
+    padding: 0.25rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: var(--popover);
+    box-shadow: 0 8px 24px oklch(0 0 0 / 18%), 0 2px 6px oklch(0 0 0 / 12%);
+}
+
+.dt-action-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.375rem 0.625rem;
+    font-size: 0.8125rem;
+    text-align: left;
+    border-radius: calc(var(--radius) * 0.6);
+    color: var(--dt-cell-fg);
+    transition: background 0.1s ease;
+    cursor: pointer;
+    border: none;
+    background: none;
+}
+
+.dt-action-item:hover:not(:disabled) {
+    background: var(--accent);
+}
+
+.dt-action-item.dt-action-danger {
+    color: var(--destructive);
+}
+
+.dt-action-item.dt-action-danger:hover:not(:disabled) {
+    background: oklch(from var(--destructive) l c h / 8%);
+}
+
+.dt-action-item:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* ════════════════════════════
+   RESPONSIVE
+   ════════════════════════════ */
+@media (max-width: 640px) {
+    .dt-table { min-width: 400px; }
+    .dt-hide-mobile { display: none !important; }
+}
+
+@media (max-width: 768px) {
+    .dt-hide-tablet { display: none !important; }
 }

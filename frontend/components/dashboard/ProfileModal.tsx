@@ -141,6 +141,7 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
     password: "",
     confirmPassword: "",
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -148,6 +149,7 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
       setEditMode(false);
       setSaveSuccess(false);
       setError(null);
+      setSelectedFile(null);
       fetchProfile();
     }
   }, [open]);
@@ -192,11 +194,32 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
     setError(null);
     try {
       const token = localStorage.getItem("token");
+      let currentProfilePicture = formData.profile_picture;
+
+      // Handle cloud upload if a new file was selected
+      if (selectedFile) {
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", selectedFile);
+        
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: uploadFormData,
+        });
+
+        if (!uploadRes.ok) {
+          const uploadData = await uploadRes.json();
+          throw new Error(uploadData.error || "Failed to upload image");
+        }
+
+        const uploadData = await uploadRes.json();
+        currentProfilePicture = uploadData.url;
+      }
+
       const payload: any = {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        profile_picture: formData.profile_picture,
+        profile_picture: currentProfilePicture,
       };
       if (formData.password) payload.password = formData.password;
 
@@ -221,10 +244,11 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        profile_picture: formData.profile_picture,
+        profile_picture: currentProfilePicture,
       };
       setProfile(updated);
       setFormData({ ...updated, password: "", confirmPassword: "" });
+      setSelectedFile(null);
       setEditMode(false);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3500);
@@ -242,6 +266,7 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
       confirmPassword: "",
     });
     setError(null);
+    setSelectedFile(null);
     setEditMode(false);
   };
 
@@ -345,8 +370,8 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
                 <div className="rounded-2xl overflow-hidden ring-4 ring-background">
                   <ImageUpload
                     currentImage={formData.profile_picture}
-                    onUploadSuccess={(url) => set("profile_picture", url)}
-                    disabled={false}
+                    onFileChange={setSelectedFile}
+                    disabled={saving}
                   />
                 </div>
               ) : (
