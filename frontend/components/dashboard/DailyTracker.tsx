@@ -26,6 +26,7 @@ import { Modal, ModalFooterActions } from "@/components/common/Modal";
 import { Button } from "@/components/ui/Button";
 import { FormInput } from "@/components/ui/Forminput";
 import { Select } from "@/components/ui/Select";
+import { ImageUpload } from "@/components/ui/ImageUpload";
 import getSymbolFromCurrency from "currency-symbol-map";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -134,74 +135,29 @@ function ReceiptUpload({
   onClear: () => void;
   disabled?: boolean;
 }) {
-  const [preview, setPreview] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const displayImg = preview || currentUrl || null;
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setError(null);
-    if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
-      setError("Only images or PDFs accepted.");
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      setError("Max file size is 10 MB.");
-      return;
-    }
-    if (file.type.startsWith("image/")) {
-      setPreview(URL.createObjectURL(file));
-    } else {
-      setPreview(null); // PDF – no preview
-    }
-    onFileChange(file);
-  };
-
   return (
     <div className="flex flex-col gap-2">
       <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
         Receipt / Bill Image
       </label>
-      <div className="flex items-center gap-3">
-        {/* Thumbnail */}
-        <div
-          onClick={() => !disabled && fileInputRef.current?.click()}
-          className={cn(
-            "group relative flex items-center justify-center h-20 w-20 rounded-xl border-2 border-dashed overflow-hidden transition-all shrink-0",
-            !disabled && "cursor-pointer hover:border-primary/60 hover:bg-primary/5",
-            disabled && "opacity-50 cursor-not-allowed",
-            !displayImg && "border-border bg-muted/20"
-          )}
-        >
-          {displayImg ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={displayImg} alt="Receipt preview" className="h-full w-full object-cover" />
-          ) : (
-            <div className="flex flex-col items-center gap-1 p-2">
-              <Receipt className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-              <span className="text-[9px] font-bold uppercase text-muted-foreground group-hover:text-primary text-center leading-tight">
-                Upload
-              </span>
-            </div>
-          )}
-          {displayImg && !disabled && (
-            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <Camera className="h-5 w-5 text-white" />
-            </div>
-          )}
+      <div className="flex items-center gap-4">
+        {/* Thumb via standard ImageUpload */}
+        <div className="shrink-0">
+          <ImageUpload
+            currentImage={currentUrl || undefined}
+            onFileChange={onFileChange}
+            disabled={disabled}
+          />
         </div>
 
         {/* Info text + clear */}
         <div className="flex flex-col gap-1.5 min-w-0">
-          {displayImg ? (
+          {currentUrl ? (
             <>
               <span className="text-xs text-foreground font-medium truncate">Receipt attached</span>
               <button
                 type="button"
-                onClick={() => { setPreview(null); onClear(); }}
+                onClick={onClear}
                 disabled={disabled}
                 className="inline-flex items-center gap-1 text-xs text-destructive hover:text-destructive/80 transition-colors disabled:opacity-50"
               >
@@ -213,27 +169,13 @@ function ReceiptUpload({
               <span className="text-xs text-muted-foreground">
                 Attach a photo of your bill or receipt.
               </span>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={disabled}
-                className="inline-flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium transition-colors disabled:opacity-50 cursor-pointer"
-              >
-                <Upload className="h-3 w-3" /> Choose file
-              </button>
+              <p className="text-[10px] text-muted-foreground/60 italic leading-tight">
+                Click box on left to choose file
+              </p>
             </>
           )}
-          {error && <p className="text-[11px] text-destructive font-medium">{error}</p>}
         </div>
       </div>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*,application/pdf"
-        onChange={handleChange}
-        className="hidden"
-        disabled={disabled}
-      />
     </div>
   );
 }
