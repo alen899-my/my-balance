@@ -4,8 +4,8 @@ from beanie import Document, Indexed, PydanticObjectId
 from pydantic import Field, BaseModel
 
 class CalculationRow(BaseModel):
-    label: str
-    value: float
+    description: str
+    amount: float
 
 class DailyBudgetEntry(Document):
     user_id: Indexed(PydanticObjectId)
@@ -15,6 +15,7 @@ class DailyBudgetEntry(Document):
     
     amount: float
     calculation_rows: Optional[List[CalculationRow]] = None
+    receipt_url: Optional[str] = None  # Vercel Blob URL for uploaded bill/receipt image
     
     is_completed: bool = False
     

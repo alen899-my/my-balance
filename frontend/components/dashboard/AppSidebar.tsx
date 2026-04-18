@@ -12,6 +12,7 @@ import {
   X,
   FileText,
   CalendarDays,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,7 @@ const NAV = [
   { label: "Overview",      href: "/dashboard",                  icon: LayoutDashboard },
   { label: "Statements",    href: "/statements",                  icon: FileText        },
   { label: "Bill Calendar", href: "/bill-calendar",              icon: CalendarDays    },
+  { label: "Daily Tracker", href: "/daily",                       icon: ClipboardList   },
   { label: "Savings",       href: "/dashboard/savings",           icon: PiggyBank       },
   { label: "Cards",         href: "/dashboard/cards",             icon: CreditCard      },
   { label: "Analytics",     href: "/dashboard/analytics",         icon: BarChart3       },
