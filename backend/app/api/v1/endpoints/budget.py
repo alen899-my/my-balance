@@ -4,6 +4,7 @@ from app.utils.dependencies import get_current_user
 from app.models.budget import BudgetEntry, CalculationRow
 from datetime import datetime
 from pydantic import BaseModel
+from beanie import PydanticObjectId
 
 router = APIRouter(prefix="/budget", tags=["budget"])
 
@@ -18,6 +19,7 @@ class BudgetPayload(BaseModel):
     amount: float
     calculation_rows: Optional[List[CalculationRow]] = None
     type: str = "expense"
+    notes: Optional[str] = None
     month: int
     year: int
 class ClonePayload(BaseModel):
@@ -62,19 +64,18 @@ async def get_monthly_summary_stats(
     }
         
 @router.delete("/purge")
-async def purge_monthly_expenses(
+async def purge_monthly_budget(
     month: int = Query(...),
     year: int = Query(...),
     user = Depends(get_current_user)
 ):
     user_id = PydanticObjectId(user["user_id"])
     
-    # Delete only expenses, leave the 'income' intact
+    # Delete all properties (both income and expense)
     result = await BudgetEntry.find(
         BudgetEntry.user_id == user_id,
         BudgetEntry.month == month,
-        BudgetEntry.year == year,
-        BudgetEntry.type == "expense"
+        BudgetEntry.year == year
     ).delete()
     
     return {"status": "success", "deleted_count": result.deleted_count}
@@ -85,12 +86,11 @@ async def clone_monthly_plan(
 ):
     user_id = PydanticObjectId(user["user_id"])
     
-    # 1. Fetch items from previous month (only expenses)
+    # 1. Fetch all items from previous month (both income and expenses)
     previous_items = await BudgetEntry.find(
         BudgetEntry.user_id == user_id,
         BudgetEntry.month == payload.from_month,
-        BudgetEntry.year == payload.from_year,
-        BudgetEntry.type == "expense"
+        BudgetEntry.year == payload.from_year
     ).to_list()
 
     if not previous_items:
@@ -127,9 +127,24 @@ async def get_budgets(
         BudgetEntry.month == month,
         BudgetEntry.year == year
     ).to_list()
-    return {"items": items}
-
-from beanie import PydanticObjectId
+    # Serialize for JSON
+    serialized = []
+    for item in items:
+        serialized.append({
+            "_id": str(item.id),
+            "category": item.category,
+            "title": item.title,
+            "type": item.type,
+            "amount": item.amount,
+            "is_completed": item.is_completed,
+            "month": item.month,
+            "year": item.year,
+            "calculation_rows": [
+                {"description": r.description, "amount": r.amount}
+                for r in (item.calculation_rows or [])
+            ] if item.calculation_rows else []
+        })
+    return {"items": serialized}
 
 @router.post("/")
 async def add_budget_item(
@@ -144,13 +159,28 @@ async def add_budget_item(
         title=payload.title,
         type=payload.type,
         amount=payload.amount,
+        notes=payload.notes,
         calculation_rows=payload.calculation_rows,
         month=payload.month,
         year=payload.year,
         is_completed=False
     )
     await budget_item.insert()
-    return budget_item
+    return {
+        "_id": str(budget_item.id),
+        "category": budget_item.category,
+        "title": budget_item.title,
+        "type": budget_item.type,
+        "amount": budget_item.amount,
+        "notes": budget_item.notes,
+        "is_completed": budget_item.is_completed,
+        "month": budget_item.month,
+        "year": budget_item.year,
+        "calculation_rows": [
+            {"description": r.description, "amount": r.amount}
+            for r in (budget_item.calculation_rows or [])
+        ]
+    }
 
 @router.post("/income")
 async def upsert_income(
@@ -198,12 +228,27 @@ async def update_budget_item(
     item.title = payload.title
     item.type = payload.type
     item.amount = payload.amount
+    item.notes = payload.notes
     item.calculation_rows = payload.calculation_rows
     item.month = payload.month
     item.year = payload.year
-    
+
     await item.save()
-    return item
+    return {
+        "_id": str(item.id),
+        "category": item.category,
+        "title": item.title,
+        "type": item.type,
+        "amount": item.amount,
+        "notes": item.notes,
+        "is_completed": item.is_completed,
+        "month": item.month,
+        "year": item.year,
+        "calculation_rows": [
+            {"description": r.description, "amount": r.amount}
+            for r in (item.calculation_rows or [])
+        ]
+    }
 
 @router.patch("/{id}/toggle")
 async def toggle_status(id: str, user = Depends(get_current_user)):

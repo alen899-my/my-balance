@@ -22,6 +22,7 @@ const NAV = [
   { label: "Statements",    href: "/statements",                  icon: FileText        },
   { label: "Bill Calendar", href: "/bill-calendar",              icon: CalendarDays    },
   { label: "Daily Tracker", href: "/daily",                       icon: ClipboardList   },
+  { label: "Budget Planner", href: "/budget",                     icon: PiggyBank       },
   { label: "Savings",       href: "/dashboard/savings",           icon: PiggyBank       },
   { label: "Cards",         href: "/dashboard/cards",             icon: CreditCard      },
   { label: "Analytics",     href: "/dashboard/analytics",         icon: BarChart3       },
