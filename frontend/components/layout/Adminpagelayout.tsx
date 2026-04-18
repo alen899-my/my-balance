@@ -12,6 +12,7 @@ export interface AdminPageAction {
   onClick: () => void;
   variant?: "primary" | "secondary" | "destructive";
   disabled?: boolean;
+  loading?: boolean;
 }
 
 export interface AdminPageFilter {
@@ -172,7 +173,7 @@ export function AdminPageLayout({
     <div className={cn("flex flex-col min-h-full", className)}>
 
       {/* ── Top bar ──────────────────────────────────────────── */}
-      <div className="bg-background border-b border-border px-4 sm:px-6 py-4">
+      <div className="bg-background px-3 sm:px-6 py-3 sm:py-4">
 
         {/* Breadcrumbs */}
         {breadcrumbs && breadcrumbs.length > 0 && (
@@ -233,12 +234,19 @@ export function AdminPageLayout({
                     actionStyles[action.variant ?? "secondary"]
                   )}
                 >
-                  {action.icon && (
+                  {action.loading ? (
+                    <span className="w-3.5 h-3.5 flex items-center justify-center animate-spin">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2.5" strokeOpacity="0.25"/>
+                        <path d="M12 3a9 9 0 0 1 9 9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+                      </svg>
+                    </span>
+                  ) : action.icon && (
                     <span className="w-3.5 h-3.5 flex items-center justify-center">
                       {action.icon}
                     </span>
                   )}
-                  {action.label}
+                  {action.loading ? "Exporting..." : action.label}
                 </button>
               ))}
             </div>
@@ -278,7 +286,7 @@ export function AdminPageLayout({
 
       {/* ── Stats strip ──────────────────────────────────────── */}
       {stats.length > 0 && (
-        <div className="bg-background border-b border-border px-4 sm:px-6 py-3">
+        <div className="bg-background px-3 sm:px-6 py-2.5 sm:py-3">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6">
             {stats.map((stat, i) => (
               <div key={i} className="flex flex-col gap-0.5">
@@ -308,7 +316,7 @@ export function AdminPageLayout({
 
       {/* ── Toolbar (search + filters) ───────────────────────── */}
       {(onSearchChange || filters.length > 0) && (
-        <div className="bg-background border-b border-border px-4 sm:px-6 py-3 space-y-3">
+        <div className="bg-background border-b border-border px-3 sm:px-6 py-2.5 sm:py-3 space-y-3">
           <div className="flex items-center gap-2 flex-wrap">
 
             {/* Search */}
@@ -375,13 +383,13 @@ export function AdminPageLayout({
                       placeholder={filter.placeholder ?? "All"}
                     />
                   ) : (
-                    <input
-                      type={filter.type === "date" ? "date" : "text"}
-                      value={filter.value ?? ""}
-                      onChange={(e) => filter.onChange(e.target.value)}
-                      placeholder={filter.placeholder}
-                      className="h-8 w-full px-2.5 text-sm border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring dark:[color-scheme:dark]"
-                    />
+                      <input
+                        type={filter.type === "date" ? "date" : "text"}
+                        value={filter.value ?? ""}
+                        onChange={(e) => filter.onChange(e.target.value)}
+                        placeholder={filter.placeholder}
+                        className="h-8 w-full px-2.5 text-sm border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring [color-scheme:light] dark:[color-scheme:dark] block"
+                      />
                   )}
                 </div>
               ))}
@@ -401,7 +409,7 @@ export function AdminPageLayout({
             </div>
           </div>
         )}
-        <div className="px-4 sm:px-6 py-5">
+        <div className="px-3 sm:px-6 py-3 sm:py-5">
           {children}
         </div>
       </div>

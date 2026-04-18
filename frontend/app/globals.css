@@ -266,6 +266,12 @@
     }
     html {
         @apply font-sans;
+        color-scheme: light dark;
+    }
+
+    /* ─── Date Input Icon Fix ─── */
+    .dark input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(1);
     }
 
     /* ─── Custom Premium Scrollbar ─── */
@@ -360,9 +366,9 @@
 }
 
 .dt-table thead th {
-    padding: 0.6875rem 0.875rem;
+    padding: 1rem 0.875rem;
     text-align: left;
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -495,8 +501,8 @@
 
 /* Compact mode */
 .dt-table.dt-compact thead th {
-    padding-top: 0.4375rem;
-    padding-bottom: 0.4375rem;
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
 }
 .dt-table.dt-compact tbody td {
     padding-top: 0.4375rem;

@@ -43,6 +43,7 @@ function StatementsPageContent() {
 
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [clearLoading, setClearLoading] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
   const [summary, setSummary] = useState({ total_debit: 0, total_credit: 0 });
   
   // Datatable state
@@ -204,6 +205,43 @@ function StatementsPageContent() {
     }
   };
 
+  const handleExportCSV = async () => {
+    try {
+      setExportLoading(true);
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const params = new URLSearchParams();
+      if (search) params.append("search", search);
+      if (bankFilter && bankFilter !== "All Banks") params.append("bank", bankFilter);
+      if (typeFilter && typeFilter !== "all") params.append("type", typeFilter);
+      if (startDate) params.append("start_date", startDate);
+      if (endDate) params.append("end_date", endDate);
+      if (amountFilter) params.append("amount", amountFilter);
+
+      const res = await fetch(`${API_BASE_URL}/transactions/export?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!res.ok) throw new Error("Export failed");
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `transactions_export_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+    } catch (err) {
+      console.error(err);
+      alert("Error exporting CSV");
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   const columns: ColumnDef<Transaction>[] = [
     { key: "date", header: "Date", width: "120px" },
     { 
@@ -222,12 +260,7 @@ function StatementsPageContent() {
       noTruncate: true,
       cell: (val: unknown) => <span className="text-muted-foreground text-xs">{String(val)}</span>
     },
-    { 
-      key: "payee", 
-      header: "Payee", 
-      width: "160px",
-      cell: (val: unknown) => <span className="font-semibold text-foreground tracking-tight">{String(val)}</span>
-    },
+  
     {
       key: "amount",
       header: "Amount",
@@ -327,8 +360,9 @@ function StatementsPageContent() {
           {
             label: "Export CSV",
             icon: <Download className="h-4 w-4" />,
-            onClick: () => { /* Export logic placeholder */ },
-            variant: "secondary"
+            onClick: handleExportCSV,
+            variant: "secondary",
+            loading: exportLoading
           },
           {
             label: "Delete All",

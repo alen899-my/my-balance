@@ -134,6 +134,91 @@ async def get_transactions(
         }
     }
 
+@router.get("/export")
+async def export_transactions(
+    search: Optional[str] = None,
+    type: str = "all",
+    bank: Optional[str] = Query(None),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    amount: Optional[float] = Query(None),
+    user = Depends(get_current_user)
+):
+    """
+    Exports filtered transactions as a CSV file.
+    """
+    import csv
+    import io
+    from fastapi.responses import StreamingResponse
+
+    # Reuse filtering logic (simplified fetch for speed)
+    find_query = Transaction.find(Transaction.user_id == str(user["user_id"]))
+    
+    if bank and bank != "All Banks":
+        find_query = find_query.find(RegEx(Transaction.bank, bank, "i"))
+
+    if search:
+        import re
+        fuzzy_pattern = r"\s*".join(re.escape(char) for char in search if not char.isspace())
+        search_or = [
+            RegEx(Transaction.description, fuzzy_pattern, "i"),
+            RegEx(Transaction.payee, fuzzy_pattern, "i"),
+            RegEx(Transaction.bank, fuzzy_pattern, "i")
+        ]
+        if search.lower() in ["debit", "deb"]: search_or.append(Transaction.debit > 0)
+        if search.lower() in ["credit", "cred"]: search_or.append(Transaction.credit > 0)
+        find_query = find_query.find(Or(*search_or))
+        
+    if type == "debit": find_query = find_query.find(Transaction.debit > 0)
+    elif type == "credit": find_query = find_query.find(Transaction.credit > 0)
+
+    if start_date:
+        try:
+            dt_start = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+            find_query = find_query.find(Transaction.date >= dt_start)
+        except: pass
+    
+    if end_date:
+        try:
+            dt_end = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+            dt_end = dt_end.replace(hour=23, minute=59, second=59, microsecond=999999)
+            find_query = find_query.find(Transaction.date <= dt_end)
+        except: pass
+
+    if amount is not None:
+        find_query = find_query.find(Or(Transaction.debit == amount, Transaction.credit == amount))
+
+    # Fetch all matching transactions
+    transactions = await find_query.sort("-date").to_list()
+
+    # Generate CSV in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Header
+    writer.writerow(["Date", "Bank", "Description", "Payee", "Category", "Debit", "Credit", "Balance"])
+    
+    for t in transactions:
+        writer.writerow([
+            t.date.strftime("%Y-%m-%d") if t.date else "N/A",
+            t.bank,
+            t.description,
+            t.payee,
+            t.category,
+            f"{t.debit:.2f}" if t.debit else "0.00",
+            f"{t.credit:.2f}" if t.credit else "0.00",
+            f"{t.balance:.2f}"
+        ])
+
+    output.seek(0)
+    
+    filename = f"transactions_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
 @router.delete("/clear")
 async def clear_all_transactions(user = Depends(get_current_user)):
     try:
