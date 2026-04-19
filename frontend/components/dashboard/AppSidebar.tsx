@@ -16,6 +16,7 @@ import {
   Wallet,
   HandCoins,
   Gem,
+  Home,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +30,7 @@ const NAV = [
   { label: "Wallet",         href: "/wallet",                      icon: Wallet          },
   { label: "Lend / Borrow",  href: "/lend-borrow",                  icon: HandCoins       },
   { label: "Metals",         href: "/metals",                       icon: Gem             },
+  { label: "Properties",     href: "/properties",                   icon: Home            },
   { label: "Savings",       href: "/dashboard/savings",           icon: PiggyBank       },
   { label: "Cards",         href: "/dashboard/cards",             icon: CreditCard      },
   { label: "Analytics",     href: "/dashboard/analytics",         icon: BarChart3       },

@@ -168,11 +168,11 @@ function EntryModal({
         {/* Amount + Date */}
         <div className="grid grid-cols-2 gap-3">
           <FormInput label={`Amount (${currencySymbol})`} type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" />
-          <FormInput 
-            label="Transaction Date" 
-            type="date" 
-            value={date} 
-            onChange={e => setDate(e.target.value)} 
+          <FormInput
+            label="Transaction Date"
+            type="date"
+            value={date}
+            onChange={e => setDate(e.target.value)}
           />
         </div>
 
@@ -201,11 +201,11 @@ function EntryModal({
         </button>
 
         {isSettled && (
-          <FormInput 
-            label="Completed Date" 
-            type="date" 
-            value={completionDate} 
-            onChange={e => setCompletionDate(e.target.value)} 
+          <FormInput
+            label="Completed Date"
+            type="date"
+            value={completionDate}
+            onChange={e => setCompletionDate(e.target.value)}
             hint="The exact date when the money was given back or settled."
           />
         )}
@@ -404,10 +404,10 @@ export function LendBorrowTracker() {
       await fetch(`${API_BASE_URL}/lend-borrow/${entry._id}/settle`, {
         method: "PATCH",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          is_settled: newState, 
+        body: JSON.stringify({
+          is_settled: newState,
           settled_date: newState ? new Date().toISOString() : null,
-          completion_date: newState ? new Date().toISOString() : null 
+          completion_date: newState ? new Date().toISOString() : null
         }),
       });
       await fetchData();
@@ -423,10 +423,10 @@ export function LendBorrowTracker() {
     // Type filter
     const matchesType = activeTab === "all" || e.direction === activeTab;
     // Status filter
-    const matchesStatus = activeStatus === "all" || 
-      (activeStatus === "pending" && !e.is_settled) || 
+    const matchesStatus = activeStatus === "all" ||
+      (activeStatus === "pending" && !e.is_settled) ||
       (activeStatus === "settled" && e.is_settled);
-    
+
     return matchesType && matchesStatus;
   });
 
@@ -615,8 +615,8 @@ export function LendBorrowTracker() {
                   value: t.key,
                   label: `${t.label} (${entries.filter(e => {
                     const matchesType = t.key === "all" || e.direction === t.key;
-                    const matchesStatus = activeStatus === "all" || 
-                      (activeStatus === "pending" && !e.is_settled) || 
+                    const matchesStatus = activeStatus === "all" ||
+                      (activeStatus === "pending" && !e.is_settled) ||
                       (activeStatus === "settled" && e.is_settled);
                     return matchesType && matchesStatus;
                   }).length})`
