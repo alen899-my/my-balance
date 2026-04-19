@@ -604,65 +604,45 @@ export function LendBorrowTracker() {
         </div>
 
         {/* ── Toolbar ── */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            {/* Type Tabs */}
-            <div className="flex items-center bg-muted/40 rounded-xl p-1 gap-1">
-              {tabs.map(tab => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={cn(
-                    "px-4 h-8 rounded-lg text-sm font-semibold transition-all whitespace-nowrap",
-                    activeTab === tab.key
-                      ? "bg-background text-foreground shadow-sm border border-border"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {tab.label}
-                  <span className={cn(
-                    "ml-1.5 text-[10px] font-bold inline-flex items-center justify-center rounded-full min-w-[16px] h-4 px-1",
-                    activeTab === tab.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                  )}>
-                    {entries.filter(e => {
-                      const matchesType = tab.key === "all" || e.direction === tab.key;
-                      const matchesStatus = activeStatus === "all" || 
-                        (activeStatus === "pending" && !e.is_settled) || 
-                        (activeStatus === "settled" && e.is_settled);
-                      return matchesType && matchesStatus;
-                    }).length}
-                  </span>
-                </button>
-              ))}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-50">
+          <div className="flex flex-row flex-wrap items-center gap-3 relative z-50">
+            {/* Type Dropdown */}
+            <div className="relative w-44">
+              <Select
+                value={activeTab}
+                onChange={(val) => setActiveTab((val || "all") as "all" | "lent" | "borrowed")}
+                options={tabs.map(t => ({
+                  value: t.key,
+                  label: `${t.label} (${entries.filter(e => {
+                    const matchesType = t.key === "all" || e.direction === t.key;
+                    const matchesStatus = activeStatus === "all" || 
+                      (activeStatus === "pending" && !e.is_settled) || 
+                      (activeStatus === "settled" && e.is_settled);
+                    return matchesType && matchesStatus;
+                  }).length})`
+                }))}
+                placeholder="Types"
+              />
             </div>
 
             {/* Separator for desktop */}
             <div className="hidden sm:block h-6 w-px bg-border/60 mx-1" />
 
-            {/* Status Tabs */}
-            <div className="flex items-center bg-muted/20 border border-border/40 rounded-xl p-0.5 gap-0.5">
-              {statusFilters.map(filter => (
-                <button
-                  key={filter.key}
-                  onClick={() => setActiveStatus(filter.key)}
-                  className={cn(
-                    "px-3 h-7 rounded-lg text-[11px] font-bold uppercase tracking-tight transition-all whitespace-nowrap",
-                    activeStatus === filter.key
-                      ? "bg-background text-primary shadow-sm ring-1 ring-border"
-                      : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
-                  )}
-                >
-                  {filter.label}
-                </button>
-              ))}
+            {/* Status Dropdown */}
+            <div className="relative w-40">
+              <Select
+                value={activeStatus}
+                onChange={(val) => setActiveStatus((val || "all") as "all" | "pending" | "settled")}
+                options={statusFilters.map(f => ({ value: f.key, label: f.label }))}
+                placeholder="Status"
+              />
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mt-2 lg:mt-0">
             <Button
               variant="primary"
               onClick={() => { setEditEntry(null); setAddOpen(true); }}
-              className="w-full sm:w-auto"
               leftIcon={<Plus className="h-4 w-4" />}
             >
               Add Entry
