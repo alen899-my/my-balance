@@ -604,23 +604,14 @@ export function LendBorrowTracker() {
         </div>
 
         {/* ── Toolbar ── */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-50">
-          <div className="flex flex-row flex-wrap items-center gap-3 relative z-50">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-row flex-wrap items-center gap-3">
             {/* Type Dropdown */}
-            <div className="relative w-44">
+            <div className="relative w-44 z-20">
               <Select
                 value={activeTab}
                 onChange={(val) => setActiveTab((val || "all") as "all" | "lent" | "borrowed")}
-                options={tabs.map(t => ({
-                  value: t.key,
-                  label: `${t.label} (${entries.filter(e => {
-                    const matchesType = t.key === "all" || e.direction === t.key;
-                    const matchesStatus = activeStatus === "all" ||
-                      (activeStatus === "pending" && !e.is_settled) ||
-                      (activeStatus === "settled" && e.is_settled);
-                    return matchesType && matchesStatus;
-                  }).length})`
-                }))}
+                options={tabs.map(t => ({ value: t.key, label: t.label }))}
                 placeholder="Types"
               />
             </div>
@@ -629,7 +620,7 @@ export function LendBorrowTracker() {
             <div className="hidden sm:block h-6 w-px bg-border/60 mx-1" />
 
             {/* Status Dropdown */}
-            <div className="relative w-40">
+            <div className="relative w-40 z-20">
               <Select
                 value={activeStatus}
                 onChange={(val) => setActiveStatus((val || "all") as "all" | "pending" | "settled")}
@@ -639,7 +630,7 @@ export function LendBorrowTracker() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 mt-2 lg:mt-0">
+          <div className="flex items-center gap-2">
             <Button
               variant="primary"
               onClick={() => { setEditEntry(null); setAddOpen(true); }}
