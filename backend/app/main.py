@@ -1,9 +1,10 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
-# Added budget to the imports below
-from app.api.v1.endpoints import auth, transactions, upload, insights, budget ,webhooks, daily_budget, reports, subscriptions, goals, calendar, ocr, wallet, lendborrow, metals, properties, income
+from app.api.v1.endpoints import auth, transactions, upload, insights, budget, webhooks, daily_budget, reports, subscriptions, goals, calendar, ocr, wallet, lendborrow, metals, properties, income, my_subscriptions
 from app.db.session import init_db
+from app.services.subscription_scheduler import start_scheduler, stop_scheduler
 import logging
 
 # Global Logging Config
@@ -14,7 +15,18 @@ logging.basicConfig(
 
 load_dotenv()
 
-app = FastAPI(title="Bank App API", version="2.0")
+# ── Lifespan: startup + shutdown ───────────────────────────────────────────────
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await init_db()
+    start_scheduler()           # 🕐 auto subscription reminders every 24 h
+    yield
+    # Shutdown
+    stop_scheduler()
+
+app = FastAPI(title="Bank App API", version="2.0", lifespan=lifespan)
 
 # CORS
 origins = [
@@ -32,12 +44,11 @@ app.add_middleware(
 )
 
 # Routes
-app.include_router(auth.router) 
-app.include_router(upload.router) 
-app.include_router(transactions.router) 
+app.include_router(auth.router)
+app.include_router(upload.router)
+app.include_router(transactions.router)
 app.include_router(insights.router)
-# Added the budget router inclusion
-app.include_router(budget.router) 
+app.include_router(budget.router)
 app.include_router(webhooks.router, prefix="/transactions")
 app.include_router(daily_budget.router)
 app.include_router(reports.router)
@@ -50,10 +61,7 @@ app.include_router(lendborrow.router)
 app.include_router(metals.router)
 app.include_router(properties.router)
 app.include_router(income.router)
-
-@app.on_event("startup")
-async def on_startup():
-    await init_db()
+app.include_router(my_subscriptions.router)
 
 @app.get("/")
 def health_check():
