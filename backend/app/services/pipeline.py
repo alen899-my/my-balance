@@ -55,6 +55,9 @@ async def process_statement_pipeline(file_path: str, bank: str, password: str | 
         valid_batch = []
         user_oid = str(user_id)
         account_id = f"{user_id}_{bank_upper}"
+        
+        # Track hashes processed in this session to avoid internal duplicates
+        processed_hashes = set()
 
         # 4. Stream pages
         with pdfplumber.open(io.BytesIO(unlocked_bytes)) as pdf:
@@ -75,10 +78,16 @@ async def process_statement_pipeline(file_path: str, bank: str, password: str | 
                         continue
 
                     txn_hash = make_hash(account_id, clean)
+                    
+                    # Prevent processing the same transaction twice in the same upload
+                    # (Common in multi-page statements where rows overlap)
+                    if txn_hash in processed_hashes:
+                        continue
+                    processed_hashes.add(txn_hash)
 
                     valid_batch.append(
                         UpdateOne(
-                            {"hash": txn_hash},
+                            {"hash": txn_hash, "user_id": user_oid},
                             {
                                 "$setOnInsert": {
                                     "user_id": user_oid,

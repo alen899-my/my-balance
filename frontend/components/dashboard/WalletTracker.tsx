@@ -348,6 +348,15 @@ export function WalletTracker() {
 
   const columns: ColumnDef<WalletItem>[] = [
     {
+      key: "sno",
+      header: "#",
+      align: "center",
+      noTruncate: true,
+      cell: (_: unknown, __: WalletItem, index: number) => (
+        <span className="text-muted-foreground/60 font-mono text-[11px]">{index + 1}</span>
+      ),
+    },
+    {
       key: "transaction_date",
       header: "Date / Time",
       cell: (val) => (
@@ -422,43 +431,35 @@ export function WalletTracker() {
 
   return (
     <>
+      {/* Modals */}
+      <WalletActionModal 
+        open={modalOpen} 
+        onClose={() => setModalOpen(false)} 
+        onSuccess={() => fetchWalletData()} 
+        editItem={editItem}
+        defaultType={actionType}
+        currencySymbol={currencySymbol}
+      />
+
+      <ViewWalletItemModal
+        open={!!viewItem}
+        onClose={() => setViewItem(null)}
+        item={viewItem}
+        currencySymbol={currencySymbol}
+      />
+
       <div className="flex flex-col gap-6">
-        {/* ── Summary Cards ── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="flex flex-col p-5 rounded-none bg-card border border-border shadow-sm relative overflow-hidden group hover:border-emerald-500/30 transition-colors">
-            <div className="flex items-center justify-between mb-3 z-10 w-full">
-              <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total Added</span>
-              <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 text-emerald-500 rounded-none border border-emerald-500/20">
-                <Plus className="w-4 h-4" />
-              </div>
-            </div>
-            <span className="text-2xl font-black tabular-nums text-emerald-500 dark:text-emerald-400 relative z-10 tracking-tight">{currencySymbol}{(summary?.total_added || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-          </div>
-
-          <div className="flex flex-col p-5 rounded-none bg-card border border-border shadow-sm relative overflow-hidden group hover:border-destructive/30 transition-colors">
-            <div className="flex items-center justify-between mb-3 z-10 w-full">
-              <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total Spent</span>
-              <div className="w-8 h-8 flex items-center justify-center bg-destructive/10 text-destructive rounded-none border border-destructive/20">
-                <Minus className="w-4 h-4" />
-              </div>
-            </div>
-            <span className="text-2xl font-black tabular-nums text-destructive relative z-10 tracking-tight">{currencySymbol}{(summary?.total_spent || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-          </div>
-
-          <div className="flex flex-col p-5 rounded-none bg-card border border-border shadow-sm relative overflow-hidden group hover:border-primary/30 transition-colors">
-            <div className="flex items-center justify-between mb-3 z-10 w-full">
-              <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Wallet Balance</span>
-              <div className="w-8 h-8 flex items-center justify-center bg-primary/10 text-primary rounded-none border border-primary/20">
-                <Wallet className="w-4 h-4" />
-              </div>
-            </div>
-            <span className={cn("text-2xl font-black tabular-nums relative z-10 tracking-tight", (summary?.balance || 0) >= 0 ? "text-emerald-500 dark:text-emerald-400" : "text-destructive")}>{(summary?.balance || 0) < 0 ? "-" : ""}{currencySymbol}{Math.abs(summary?.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-          </div>
-        </div>
-
-        {/* ── Navigator & Actions ── */}
+        {/* ── Action Toolbar ── */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-         
+          <div className="flex items-center gap-2">
+            <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
+              <Wallet className="h-5 w-5" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-bold text-foreground leading-tight">Cash Transactions</span>
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Physical Wallet</span>
+            </div>
+          </div>
 
           <div className="sm:ml-auto flex flex-wrap items-center gap-2">
             <Button
@@ -471,7 +472,7 @@ export function WalletTracker() {
               }}
               leftIcon={<Settings2 className="h-4 w-4" />}
             >
-              Edit Wallet Balance
+              Edit Balance
             </Button>
             <Button
               variant="ghost"
@@ -492,6 +493,7 @@ export function WalletTracker() {
           </div>
         </div>
 
+        {/* ── Transactions Table ── */}
         <DataTable 
           data={items.filter(i => i.type !== "set_balance")} 
           columns={columns} 
@@ -512,24 +514,46 @@ export function WalletTracker() {
               </p>
             </div>
           }
+          footerSummarySlot={
+            !loading && items.length > 0 ? (
+              <div className="px-5 py-4 flex flex-col sm:flex-row items-center justify-between gap-5 sm:gap-6">
+                {/* Daily Status */}
+                <div className="flex items-center gap-2 self-start sm:self-center">
+                  <div className="h-2 w-2 rounded-full bg-primary/40 animate-pulse" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                    Wallet Summary
+                  </span>
+                </div>
+
+                {/* Totals */}
+                <div className="flex flex-wrap items-center justify-between sm:justify-end gap-x-8 gap-y-4 w-full sm:w-auto">
+                  <div className="flex flex-col items-end min-w-[100px]">
+                    <span className="text-[9px] uppercase text-muted-foreground font-bold tracking-tight">Total Added</span>
+                    <span className="text-sm font-bold text-emerald-500 tabular-nums uppercase">
+                      +{currencySymbol}{(summary?.total_added || 0).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex flex-col items-end min-w-[100px]">
+                    <span className="text-[9px] uppercase text-muted-foreground font-bold tracking-tight">Total Spent</span>
+                    <span className="text-sm font-bold text-destructive tabular-nums uppercase">
+                      -{currencySymbol}{(summary?.total_spent || 0).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="pt-4 sm:pt-0 sm:pl-6 border-t sm:border-t-0 sm:border-l border-border/60 flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center w-full sm:w-auto mt-2 sm:mt-0">
+                    <span className="text-[10px] uppercase text-foreground font-black tracking-tight sm:mb-1">Available balance</span>
+                    <span className={cn(
+                      "text-base sm:text-lg font-black tabular-nums tracking-tighter leading-none",
+                      (summary?.balance || 0) >= 0 ? "text-emerald-500" : "text-destructive"
+                    )}>
+                      {(summary?.balance || 0) >= 0 ? "+" : ""}{currencySymbol}{Math.abs(summary?.balance || 0).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : undefined
+          }
         />
       </div>
-
-      <WalletActionModal 
-        open={modalOpen} 
-        onClose={() => setModalOpen(false)} 
-        onSuccess={() => fetchWalletData()} 
-        editItem={editItem}
-        defaultType={actionType}
-        currencySymbol={currencySymbol}
-      />
-
-      <ViewWalletItemModal
-        open={!!viewItem}
-        onClose={() => setViewItem(null)}
-        item={viewItem}
-        currencySymbol={currencySymbol}
-      />
     </>
   );
 }

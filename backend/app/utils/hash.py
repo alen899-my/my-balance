@@ -1,13 +1,17 @@
 import hashlib
+import re
 
 def make_hash(account_id, txn):
     # 1. Standardize the Date (Ensure it's a string even if passed as a datetime object)
     dt = txn['date']
     date_str = dt.strftime("%Y-%m-%d") if hasattr(dt, 'strftime') else str(dt)
 
-    # 2. Clean the Description
-    # Remove all extra spaces/newlines so "UPI / NAME / 123" is same as "UPI/NAME/123"
-    clean_desc = "".join(str(txn.get('description', '')).split()).upper()
+    # 2. Ultra-Clean the Description
+    # We remove all special characters and collapse all whitespace to ensure 
+    # that "UPI / NAME / 123" and "UPI/NAME/123" result in the same hash.
+    # This protects against different PDF parsers yielding slightly different spacing.
+    raw_desc = str(txn.get('description', '')).upper()
+    clean_desc = "".join(re.findall(r'[A-Z0-9]', raw_desc))
 
     # 3. Create a unique pipe-separated string
     # We use 0.0 to avoid hash misses between "0" and "0.0"
