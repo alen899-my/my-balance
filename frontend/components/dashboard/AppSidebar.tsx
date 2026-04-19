@@ -19,6 +19,7 @@ import {
   Home,
   TrendingUp,
   Bell,
+  Landmark,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +36,7 @@ const NAV = [
   { label: "Properties",     href: "/properties",                   icon: Home            },
   { label: "Income",          href: "/income",                        icon: TrendingUp      },
   { label: "Subscriptions",   href: "/my-subscriptions",              icon: Bell            },
+  { label: "EMI Tracker",     href: "/emi",                           icon: Landmark        },
   { label: "Savings",       href: "/dashboard/savings",           icon: PiggyBank       },
   { label: "Cards",         href: "/dashboard/cards",             icon: CreditCard      },
   { label: "Analytics",     href: "/dashboard/analytics",         icon: BarChart3       },

@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1.endpoints import auth, transactions, upload, insights, budget, webhooks, daily_budget, reports, subscriptions, goals, calendar, ocr, wallet, lendborrow, metals, properties, income, my_subscriptions
+from app.api.v1.endpoints import auth, transactions, upload, insights, budget, webhooks, daily_budget, reports, subscriptions, goals, calendar, ocr, wallet, lendborrow, metals, properties, income, my_subscriptions, emi
 from app.db.session import init_db
 from app.services.subscription_scheduler import start_scheduler, stop_scheduler
 import logging
@@ -62,6 +62,7 @@ app.include_router(metals.router)
 app.include_router(properties.router)
 app.include_router(income.router)
 app.include_router(my_subscriptions.router)
+app.include_router(emi.router)
 
 @app.get("/")
 def health_check():

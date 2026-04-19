@@ -358,3 +358,148 @@ def send_subscription_reminder(
     except Exception as e:
         logger.error(f"❌ Failed to send email to {to_email}: {e}", exc_info=True)
         return False
+
+
+def send_emi_reminder(
+    to_email: str,
+    emi_name: str,
+    monthly_emi: float,
+    payment_day: int,
+    days_before: int,
+    category: str = "Loan",
+    bank_name: str = "",
+    currency_symbol: str = "₹",
+) -> bool:
+    """
+    Sends an EMI payment due reminder email.
+    Returns True if sent successfully, False otherwise.
+    """
+    if not GMAIL_USER or not GMAIL_PASS:
+        logger.warning("GMAIL_USER/GMAIL_PASS not set – skipping EMI email.")
+        return False
+
+    due_label = "Due today!" if days_before == 0 else f"Due in {days_before} day(s)"
+    subject = f"🏦 EMI Reminder: {emi_name} — {due_label}"
+    bank_row = f"""
+              <tr>
+                <td class="col-label">Bank / Lender</td>
+                <td class="col-value">{bank_name}</td>
+              </tr>""" if bank_name else ""
+
+    html_body = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Vaultly EMI Reminder</title>
+      <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{
+          font-family: 'Georgia', 'Times New Roman', serif;
+          background-color: {_COLOR['bg']};
+          padding: 40px 16px;
+          -webkit-font-smoothing: antialiased;
+        }}
+        .wrapper {{ max-width: 540px; margin: 0 auto; }}
+        .card {{
+          background: {_COLOR['card']};
+          border-radius: 14px;
+          border: 1px solid {_COLOR['card_border']};
+          overflow: hidden;
+          box-shadow: 0 2px 6px {_COLOR['shadow']}, 0 8px 28px {_COLOR['shadow']}, inset 0 1px 0 rgba(255,255,255,0.55);
+        }}
+        .header {{
+          background: linear-gradient(135deg, {_COLOR['header_from']} 0%, {_COLOR['header_to']} 100%);
+          border-bottom: 2px solid {_COLOR['header_border']};
+          padding: 32px 28px 26px;
+          text-align: center;
+          position: relative;
+        }}
+        .header::after {{
+          content: ''; display: block; margin: 18px auto 0; width: 60px; height: 2px;
+          background: {_COLOR['accent_line']}; border-radius: 2px; opacity: 0.6;
+        }}
+        .header-eyebrow {{ font-family: 'Courier New', monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.25em; text-transform: uppercase; color: rgba(234,244,240,0.65); margin-bottom: 8px; }}
+        .header-title {{ font-size: 22px; font-weight: 700; color: {_COLOR['header_fg']}; letter-spacing: 0.02em; line-height: 1.25; }}
+        .header-sub {{ font-size: 12px; color: rgba(234,244,240,0.70); margin-top: 6px; font-style: italic; }}
+        .body {{ padding: 28px 28px 24px; }}
+        .amount-block {{ text-align: center; margin-bottom: 24px; padding: 20px 0 18px; border-bottom: 1px solid {_COLOR['divider']}; }}
+        .amount-label {{ font-family: 'Courier New', monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: {_COLOR['label_fg']}; margin-bottom: 6px; }}
+        .amount-value {{ font-size: 44px; font-weight: 900; color: {_COLOR['amount_fg']}; letter-spacing: -0.02em; line-height: 1; font-family: 'Georgia', serif; }}
+        .info-table {{ width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 22px; border: 1px solid {_COLOR['divider']}; border-radius: 10px; overflow: hidden; }}
+        .info-table tr:nth-child(even) {{ background: {_COLOR['row_even']}; }}
+        .info-table tr:nth-child(odd) {{ background: {_COLOR['card']}; }}
+        .info-table td {{ padding: 11px 14px; border-bottom: 1px solid {_COLOR['divider']}; vertical-align: middle; }}
+        .info-table tr:last-child td {{ border-bottom: none; }}
+        .info-table td.col-label {{ font-family: 'Courier New', monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: {_COLOR['label_fg']}; width: 42%; }}
+        .info-table td.col-value {{ font-size: 13px; font-weight: 700; color: {_COLOR['body_fg']}; text-align: right; }}
+        .badge {{ display: inline-block; background: {_COLOR['badge_bg']}; color: {_COLOR['badge_fg']}; border-radius: 20px; padding: 3px 12px; font-size: 12px; font-weight: 700; font-family: 'Courier New', monospace; letter-spacing: 0.05em; border: 1px solid {_COLOR['card_border']}; }}
+        .notice {{ font-size: 12.5px; color: {_COLOR['label_fg']}; line-height: 1.65; border-left: 3px solid {_COLOR['accent_line']}; padding-left: 12px; font-style: italic; }}
+        .footer {{ background: {_COLOR['footer_bg']}; border-top: 1px solid {_COLOR['divider']}; padding: 16px 28px; text-align: center; font-size: 11px; color: {_COLOR['footer_fg']}; font-family: 'Courier New', monospace; letter-spacing: 0.04em; }}
+        .footer strong {{ color: {_COLOR['header_from']}; }}
+      </style>
+    </head>
+    <body>
+      <div class="wrapper">
+        <div class="card">
+          <div class="header">
+            <div class="header-eyebrow">Vaultly · EMI Alert</div>
+            <div class="header-title">🏦 EMI Payment Reminder</div>
+            <div class="header-sub">Your upcoming EMI payment notification</div>
+          </div>
+          <div class="body">
+            <div class="amount-block">
+              <div class="amount-label">Monthly EMI Due</div>
+              <div class="amount-value">{currency_symbol}{monthly_emi:,.2f}</div>
+            </div>
+            <table class="info-table">
+              <tr>
+                <td class="col-label">Loan</td>
+                <td class="col-value">{emi_name}</td>
+              </tr>
+              <tr>
+                <td class="col-label">Category</td>
+                <td class="col-value">{category}</td>
+              </tr>{bank_row}
+              <tr>
+                <td class="col-label">Payment Day</td>
+                <td class="col-value">Day {payment_day} of every month</td>
+              </tr>
+              <tr>
+                <td class="col-label">Due In</td>
+                <td class="col-value"><span class="badge">⏰ {due_label}</span></td>
+              </tr>
+            </table>
+            <p class="notice">
+              Ensure sufficient funds in your bank account before the EMI date
+              to avoid late payment charges or loan default.
+            </p>
+          </div>
+          <div class="footer">
+            Automated reminder from <strong>Vaultly</strong> &nbsp;·&nbsp;
+            Manage notifications in your EMI Tracker settings.
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+    """
+
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"]    = f"Vaultly <{GMAIL_USER}>"
+        msg["To"]      = to_email
+        msg.attach(MIMEText(html_body, "html"))
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(GMAIL_USER, GMAIL_PASS)
+            server.sendmail(GMAIL_USER, to_email, msg.as_string())
+
+        logger.info(f"✅ EMI reminder sent to {to_email} for '{emi_name}'")
+        return True
+
+    except Exception as e:
+        logger.error(f"❌ Failed to send EMI email to {to_email}: {e}", exc_info=True)
+        return False

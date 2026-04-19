@@ -13,6 +13,7 @@ from app.models.metals import MetalAsset
 from app.models.property import PropertyAsset
 from app.models.income import IncomeEntry
 from app.models.subscription import Subscription
+from app.models.emi import EMIEntry
 import logging
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ async def init_db():
         logger.info("🔌 Connecting to MongoDB...")
         client = AsyncIOMotorClient(os.getenv("MONGO_URI"))
         db = client[os.getenv("DB_NAME")]
-        await init_beanie(database=db, document_models=[Transaction, BudgetEntry, JobStatus, DailyBudgetEntry, Goal, CalendarNeed, WalletTransaction, LendBorrowEntry, MetalAsset, PropertyAsset, IncomeEntry, Subscription])
+        await init_beanie(database=db, document_models=[Transaction, BudgetEntry, JobStatus, DailyBudgetEntry, Goal, CalendarNeed, WalletTransaction, LendBorrowEntry, MetalAsset, PropertyAsset, IncomeEntry, Subscription, EMIEntry])
         logger.info("✅ MongoDB & Beanie Initialized Successfully")
     except Exception as e:
         logger.critical(f"🔥 DATABASE CONNECTION FAILED: {e}", exc_info=True)
