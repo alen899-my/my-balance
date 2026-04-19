@@ -243,37 +243,44 @@ function ViewWalletItemModal({
   return (
     <Modal open={open} onClose={onClose} title="Activity Details" size="sm">
       <div className="flex flex-col gap-4 py-2">
-        <div className="flex flex-col items-center justify-center py-4 bg-muted/20 border border-border rounded-none">
-          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">{isSet ? "Adjustment" : (isAdd ? "Added" : "Spent")}</span>
+        <div className={cn(
+          "flex flex-col items-center justify-center py-6 px-4 rounded-2xl border transition-colors",
+          isSet ? "bg-primary/10 border-primary/20" : 
+          isAdd ? "bg-emerald-500/10 border-emerald-500/20" : "bg-destructive/10 border-destructive/20"
+        )}>
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-2">{isSet ? "Adjustment" : (isAdd ? "Money Added" : "Money Spent")}</span>
           <span className={cn(
-            "text-3xl font-black tabular-nums tracking-tighter",
+            "text-4xl font-black tabular-nums tracking-tighter",
             isSet ? "text-primary" : (isAdd ? "text-emerald-500" : "text-destructive")
           )}>
             {isSet ? "" : (isAdd ? "+" : "-")}{currencySymbol}{item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </span>
         </div>
 
-        <div className="grid gap-4">
-          <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Description</span>
-            <span className="text-sm font-semibold text-foreground">{item.description}</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Category</span>
-            <span className="text-sm font-semibold text-foreground">{item.category}</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Date</span>
-            <span className="text-sm font-semibold text-foreground">{new Date(item.transaction_date).toLocaleString()}</span>
-          </div>
+        <div className="flex flex-col gap-0">
+          {[
+            { label: "Description", value: item.description, icon: <FileText /> },
+            { label: "Category", value: item.category, icon: <Plus className="rotate-45" /> },
+            { label: "Date", value: new Date(item.transaction_date).toLocaleString("en-IN", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }), icon: <Plus className="scale-75" /> },
+          ].map((row, i) => (
+            <div key={i} className="flex items-center gap-3 py-3 border-b border-border/50 last:border-0">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary shrink-0">
+                {React.cloneElement(row.icon as React.ReactElement<{ className?: string }>, { className: "w-3.5 h-3.5" })}
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-[10px] text-muted-foreground uppercase font-bold leading-none mb-1">{row.label}</span>
+                <span className="text-sm font-medium text-foreground truncate">{row.value}</span>
+              </div>
+            </div>
+          ))}
           
           {item.receipt_url && (
-            <div className="flex flex-col mt-2">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Attached Receipt</span>
-              <div className="rounded-xl overflow-hidden border border-border bg-muted/10 relative max-h-[300px]">
+            <div className="flex flex-col mt-4">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">Attached Receipt</span>
+              <div className="rounded-2xl overflow-hidden border border-border bg-muted/10 relative max-h-[300px]">
                  <img src={item.receipt_url} alt="Receipt" className="w-full h-auto object-contain bg-white/5" />
-                 <a href={item.receipt_url} target="_blank" rel="noopener noreferrer" className="absolute top-2 right-2 flex items-center gap-1 text-[10px] bg-background/80 backdrop-blur border border-border px-2 py-1 rounded-md font-bold uppercase hover:bg-background transition-colors">
-                   <Eye className="w-3 h-3" /> Full View
+                 <a href={item.receipt_url} target="_blank" rel="noopener noreferrer" className="absolute top-3 right-3 flex items-center gap-2 text-[10px] bg-background/80 backdrop-blur border border-border px-3 py-1.5 rounded-xl font-bold uppercase hover:bg-background transition-colors">
+                   <Eye className="w-3.5 h-3.5" /> Full View
                  </a>
               </div>
             </div>
@@ -288,6 +295,52 @@ function ViewWalletItemModal({
 }
 
 
+function DeleteWalletModal({
+  open,
+  item,
+  onClose,
+  onSuccess,
+}: {
+  open: boolean;
+  item: WalletItem | null;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+
+  const handleDelete = async () => {
+    if (!item) return;
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      await fetch(`${API_BASE_URL}/wallet/${item._id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      onSuccess();
+      onClose();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title="Delete Record" size="sm">
+      <div className="py-2">
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Are you sure you want to delete this record? <strong className="text-foreground">"{item?.description}"</strong> for <strong className="text-foreground">{item?.amount.toFixed(2)}</strong>. This cannot be undone.
+        </p>
+      </div>
+      <ModalFooterActions>
+        <Button variant="ghost" onClick={onClose} disabled={loading}>Cancel</Button>
+        <Button variant="destructive" onClick={handleDelete} loading={loading} leftIcon={<Trash2 className="h-4 w-4" />}>
+          Delete
+        </Button>
+      </ModalFooterActions>
+    </Modal>
+  );
+}
+
 // --- Main Component ---
 
 export function WalletTracker() {
@@ -300,6 +353,7 @@ export function WalletTracker() {
   const [actionType, setActionType] = useState<"add" | "spend" | "set_balance">("spend");
   const [editItem, setEditItem] = useState<WalletItem | null>(null);
   const [viewItem, setViewItem] = useState<WalletItem | null>(null);
+  const [deleteItem, setDeleteItem] = useState<WalletItem | null>(null);
 
   const fetchWalletData = useCallback(async () => {
     setLoading(true);
@@ -334,17 +388,6 @@ export function WalletTracker() {
     fetchWalletData();
   }, [fetchWalletData]);
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Delete this wallet record?")) return;
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE_URL}/wallet/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) fetchWalletData();
-    } catch (e) { console.error(e); }
-  };
 
   const columns: ColumnDef<WalletItem>[] = [
     {
@@ -418,7 +461,7 @@ export function WalletTracker() {
             <Edit3 className="w-3.5 h-3.5" />
           </button>
           <button
-            onClick={() => handleDelete(row._id)}
+            onClick={() => setDeleteItem(row)}
             className="w-7 h-7 flex items-center justify-center rounded-md text-destructive bg-destructive/10 border border-destructive/20 hover:bg-destructive/20 transition-colors"
             title="Delete"
           >
@@ -448,17 +491,62 @@ export function WalletTracker() {
         currencySymbol={currencySymbol}
       />
 
+      <DeleteWalletModal
+        open={!!deleteItem}
+        onClose={() => setDeleteItem(null)}
+        item={deleteItem}
+        onSuccess={fetchWalletData}
+      />
+
       <div className="flex flex-col gap-6">
+        {/* ── Summary Cards ── */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {[
+            { 
+              label: "Current Balance", 
+              value: summary.balance, 
+              icon: <Wallet />, 
+              color: summary.balance >= 0 ? "emerald" : "rose" 
+            },
+            { 
+              label: "Cash Added", 
+              value: summary.total_added, 
+              icon: <Plus />, 
+              color: "emerald" 
+            },
+            { 
+              label: "Total Spent", 
+              value: summary.total_spent, 
+              icon: <Minus />, 
+              color: "rose" 
+            },
+          ].map((card, i) => {
+            const colorMap: Record<string, string> = {
+              emerald: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
+              rose: "text-rose-500 bg-rose-500/10 border-rose-500/20",
+              primary: "text-primary bg-primary/10 border-primary/20",
+            };
+            const cls = colorMap[card.color];
+            return (
+              <div key={i} className="flex flex-col p-4 rounded-xl bg-card border border-border shadow-sm hover:border-primary/20 transition-colors">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground leading-tight">{card.label}</span>
+                  <div className={cn("w-7 h-7 flex items-center justify-center rounded-lg border", cls)}>
+                    {React.cloneElement(card.icon as React.ReactElement<{ className?: string }>, { className: "w-3.5 h-3.5" })}
+                  </div>
+                </div>
+                <span className={cn("text-xl font-black tabular-nums tracking-tight", cls.split(" ")[0])}>
+                  {currencySymbol}{Math.abs(card.value).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
         {/* ── Action Toolbar ── */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
-              <Wallet className="h-5 w-5" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-bold text-foreground leading-tight">Cash Transactions</span>
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Physical Wallet</span>
-            </div>
+          
           </div>
 
           <div className="sm:ml-auto flex flex-wrap items-center gap-2">
@@ -513,44 +601,6 @@ export function WalletTracker() {
                 Try adding some cash or adjusting your initial balance to get started!
               </p>
             </div>
-          }
-          footerSummarySlot={
-            !loading && items.length > 0 ? (
-              <div className="px-5 py-4 flex flex-col sm:flex-row items-center justify-between gap-5 sm:gap-6">
-                {/* Daily Status */}
-                <div className="flex items-center gap-2 self-start sm:self-center">
-                  <div className="h-2 w-2 rounded-full bg-primary/40 animate-pulse" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
-                    Wallet Summary
-                  </span>
-                </div>
-
-                {/* Totals */}
-                <div className="flex flex-wrap items-center justify-between sm:justify-end gap-x-8 gap-y-4 w-full sm:w-auto">
-                  <div className="flex flex-col items-end min-w-[100px]">
-                    <span className="text-[9px] uppercase text-muted-foreground font-bold tracking-tight">Total Added</span>
-                    <span className="text-sm font-bold text-emerald-500 tabular-nums uppercase">
-                      +{currencySymbol}{(summary?.total_added || 0).toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex flex-col items-end min-w-[100px]">
-                    <span className="text-[9px] uppercase text-muted-foreground font-bold tracking-tight">Total Spent</span>
-                    <span className="text-sm font-bold text-destructive tabular-nums uppercase">
-                      -{currencySymbol}{(summary?.total_spent || 0).toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="pt-4 sm:pt-0 sm:pl-6 border-t sm:border-t-0 sm:border-l border-border/60 flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center w-full sm:w-auto mt-2 sm:mt-0">
-                    <span className="text-[10px] uppercase text-foreground font-black tracking-tight sm:mb-1">Available balance</span>
-                    <span className={cn(
-                      "text-base sm:text-lg font-black tabular-nums tracking-tighter leading-none",
-                      (summary?.balance || 0) >= 0 ? "text-emerald-500" : "text-destructive"
-                    )}>
-                      {(summary?.balance || 0) >= 0 ? "+" : ""}{currencySymbol}{Math.abs(summary?.balance || 0).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ) : undefined
           }
         />
       </div>

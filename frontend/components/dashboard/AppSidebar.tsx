@@ -14,6 +14,7 @@ import {
   CalendarDays,
   ClipboardList,
   Wallet,
+  HandCoins,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +25,8 @@ const NAV = [
   { label: "Bill Calendar", href: "/bill-calendar",              icon: CalendarDays    },
   { label: "Daily Tracker", href: "/daily",                       icon: ClipboardList   },
   { label: "Budget Planner", href: "/budget",                     icon: PiggyBank       },
-  { label: "Wallet",        href: "/wallet",                      icon: Wallet          },
+  { label: "Wallet",         href: "/wallet",                      icon: Wallet          },
+  { label: "Lend / Borrow",  href: "/lend-borrow",                  icon: HandCoins       },
   { label: "Savings",       href: "/dashboard/savings",           icon: PiggyBank       },
   { label: "Cards",         href: "/dashboard/cards",             icon: CreditCard      },
   { label: "Analytics",     href: "/dashboard/analytics",         icon: BarChart3       },
