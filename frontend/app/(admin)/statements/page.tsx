@@ -10,6 +10,7 @@ import { StatementUploadModal } from "@/components/dashboard/StatementUploadModa
 import { TransactionActionModal } from "@/components/dashboard/TransactionActionModal";
 import { Modal, ModalFooterActions } from "@/components/common/Modal";
 import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
 import getSymbolFromCurrency from "currency-symbol-map";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
