@@ -250,6 +250,54 @@ async def get_unique_banks(user = Depends(get_current_user)):
     )
     return sorted([b for b in banks if b])
 
+@router.get("/banks-summary")
+async def get_banks_summary(user = Depends(get_current_user)):
+    user_id = str(user["user_id"])
+    
+    # Aggregate transaction banks
+    pipeline = [
+        {"$match": {"user_id": user_id, "bank": {"$nin": ["Manually Added", "Cash/Manual", "Manual"]}}},
+        {"$sort": {"date": -1, "_id": -1}}, # ensure we get the latest transaction first
+        {"$group": {
+            "_id": "$bank",
+            "total_transactions": {"$sum": 1},
+            "current_balance": {"$first": "$balance"}
+        }},
+        {"$project": {
+            "bank_name": "$_id",
+            "total_transactions": 1,
+            "current_balance": 1,
+            "_id": 0
+        }}
+    ]
+    
+    bank_results = await Transaction.get_pymongo_collection().aggregate(pipeline).to_list(length=None)
+    
+    # Also fetch Wallet Information
+    from app.models.wallet import WalletTransaction
+    from beanie import PydanticObjectId
+    
+    wallet_q = await WalletTransaction.find(WalletTransaction.user_id == PydanticObjectId(user["user_id"])).to_list()
+    if wallet_q:
+        # Calculate wallet balance (reuse logic from wallet summary)
+        wallet_q.sort(key=lambda x: x.transaction_date)
+        wallet_balance = 0.0
+        for t in wallet_q:
+            if t.type == "add":
+                wallet_balance += t.amount
+            elif t.type == "spend":
+                wallet_balance -= t.amount
+            elif t.type == "set_balance":
+                wallet_balance = t.amount
+                
+        bank_results.append({
+            "bank_name": "My Wallet",
+            "total_transactions": len(wallet_q),
+            "current_balance": wallet_balance
+        })
+
+    return {"data": bank_results}
+
 
 @router.post("/re-extract-payees")
 async def re_extract_payees(user=Depends(get_current_user)):

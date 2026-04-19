@@ -20,6 +20,7 @@ import {
   TrendingUp,
   Bell,
   Landmark,
+  Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +28,7 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { label: "Overview",      href: "/dashboard",                  icon: LayoutDashboard },
   { label: "Statements",    href: "/statements",                  icon: FileText        },
+  { label: "Banks",         href: "/banks",                       icon: Building2       },
   { label: "Bill Calendar", href: "/bill-calendar",              icon: CalendarDays    },
   { label: "Daily Tracker", href: "/daily",                       icon: ClipboardList   },
   { label: "Budget Planner", href: "/budget",                     icon: PiggyBank       },
