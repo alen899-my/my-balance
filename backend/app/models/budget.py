@@ -4,8 +4,10 @@ from beanie import Document, Indexed, PydanticObjectId
 from pydantic import Field, BaseModel
 
 class CalculationRow(BaseModel):
-    description: str
-    amount: float
+    label: Optional[str] = None
+    value: Optional[float] = None
+    description: Optional[str] = None
+    amount: Optional[float] = None
 
 class BudgetEntry(Document):
     user_id: Annotated[PydanticObjectId, Indexed()]

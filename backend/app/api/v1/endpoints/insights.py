@@ -4,6 +4,7 @@ from bson import ObjectId
 from app.utils.dependencies import get_current_user
 from app.models.transaction import Transaction
 from app.models.income import IncomeEntry
+from app.models.budget import BudgetEntry
 from app.utils.analysis import classify_category
 from app.utils.normalize import extract_payee_name
 from datetime import datetime
@@ -49,41 +50,36 @@ async def get_insights(
             "$facet": {
                 "totals": [
                     {"$group": {
-                        "_id": None,
-                        "income": {"$sum": {"$ifNull": ["$credit", 0]}},
-                        "expense": {"$sum": {"$ifNull": ["$debit", 0]}},
-                        "count": {"$sum": 1}
+                         "_id": None,
+                         "income": {"$sum": {"$ifNull": ["$credit", 0]}},
+                         "expense": {"$sum": {"$ifNull": ["$debit", 0]}},
+                         "count": {"$sum": 1}
                     }}
                 ],
                 "highest_single_debit": [
                     {"$match": {"debit": {"$gt": 0}}},
-                    {"$sort": {"debit": -1}},
-                    {"$limit": 1},
+                    {"$sort": {"debit": -1}}, {"$limit": 1},
                     {"$project": {"amount": "$debit", "name": "$payee", "desc": "$description"}}
                 ],
                 "highest_single_credit": [
                     {"$match": {"credit": {"$gt": 0}}},
-                    {"$sort": {"credit": -1}},
-                    {"$limit": 1},
+                    {"$sort": {"credit": -1}}, {"$limit": 1},
                     {"$project": {"amount": "$credit", "name": "$payee", "desc": "$description"}}
                 ],
                 "frequent_amount": [
                     {"$match": {"debit": {"$gt": 5}}},
                     {"$group": {"_id": "$debit", "count": {"$sum": 1}}},
-                    {"$sort": {"count": -1}},
-                    {"$limit": 1}
+                    {"$sort": {"count": -1}}, {"$limit": 1}
                 ],
                 "debit_raw": [
                     {"$match": {"debit": {"$gt": 0}}},
                     {"$group": {"_id": "$description", "amount": {"$sum": "$debit"}, "count": {"$sum": 1}}},
-                    {"$sort": {"amount": -1}},
-                    {"$limit": 100}
+                    {"$sort": {"amount": -1}}, {"$limit": 100}
                 ],
                 "credit_raw": [
                     {"$match": {"credit": {"$gt": 0}}},
                     {"$group": {"_id": "$description", "amount": {"$sum": "$credit"}, "count": {"$sum": 1}}},
-                    {"$sort": {"amount": -1}},
-                    {"$limit": 100}
+                    {"$sort": {"amount": -1}}, {"$limit": 100}
                 ],
                 "daily_trend": [
                     {"$group": {
@@ -109,19 +105,52 @@ async def get_insights(
     docs = await cursor.to_list(length=1)
     res = docs[0] if docs else {}
     
-    # 2. Income Module Stats (Using get_pymongo_collection as confirmed by the sys error)
+    # 2. Income Module Stats
     income_col = IncomeEntry.get_pymongo_collection()
     income_pipeline = [
         {"$match": {"user_id": uid}},
         {"$group": {"_id": "$source", "total": {"$sum": "$amount"}}},
-        {"$sort": {"total": -1}},
-        {"$limit": 1}
+        {"$sort": {"total": -1}}, {"$limit": 2}
     ]
     income_cursor = income_col.aggregate(income_pipeline)
-    income_res = await income_cursor.to_list(length=1)
-    top_income_source = income_res[0] if income_res else {"_id": "None", "total": 0}
+    income_res = await income_cursor.to_list(length=2)
+    top_income_source = income_res[0] if income_res else {"_id": "N/A", "total": 0}
 
-    # Entity Clustering
+    # 3. Refined Budget Module Stats (Prioritizing specific Titles over categories)
+    budget_col = BudgetEntry.get_pymongo_collection()
+    all_budget_entries = await budget_col.find({"user_id": uid, "type": "expense"}).to_list(length=1000)
+    
+    budget_clusters = {}
+    for entry in all_budget_entries:
+        # Prioritize title if it exists, fallback to category
+        raw_name = entry.get("title") or entry.get("category") or "Unsorted"
+        # Standardize using the same regex-engine as bank payees
+        canonical = extract_payee_name(raw_name)
+        month_key = f"{entry.get('month')}/{entry.get('year')}"
+        
+        if canonical not in budget_clusters:
+            budget_clusters[canonical] = {"name": canonical, "display_name": raw_name, "total_amt": 0, "entries_count": 0, "months": set()}
+        
+        budget_clusters[canonical]["total_amt"] += entry.get("amount", 0)
+        budget_clusters[canonical]["entries_count"] += 1
+        budget_clusters[canonical]["months"].add(month_key)
+
+    # Sort Priority: 1. Monthly Consistency, 2. Average Amount
+    top_consistent_budget = sorted(
+        budget_clusters.values(), 
+        key=lambda x: (len(x["months"]), x["total_amt"] / x["entries_count"]), 
+        reverse=True
+    )[:3]
+    
+    top_budget_items_final = []
+    for item in top_consistent_budget:
+        top_budget_items_final.append({
+            "name": item["display_name"], # Display the original specific title/category
+            "count": len(item["months"]),
+            "amount": item["total_amt"] / item["entries_count"] if item["entries_count"] > 0 else 0
+        })
+
+    # Entity Clustering for Transactions
     def cluster_entities(raw_items):
         if not raw_items: return []
         merged = {}
@@ -153,26 +182,12 @@ async def get_insights(
     return {
         "summary": { "income": totals.get("income", 0), "expense": totals.get("expense", 0), "balance": actual_balance, "total_transactions": totals.get("count", 0) },
         "records": {
-            "highest_payment": {
-                "amount": highest_debit.get("amount", 0),
-                "name": highest_debit.get("name") or highest_debit.get("desc", "N/A")
-            },
-            "highest_income": {
-                "amount": highest_credit.get("amount", 0),
-                "name": highest_credit.get("name") or highest_credit.get("desc", "N/A")
-            },
-            "frequent_spender": {
-                "name": max_freq_entity.get("_id", "N/A"),
-                "count": max_freq_entity.get("count", 0)
-            },
-            "frequent_amount": {
-                "amount": common_amt.get("_id", 0),
-                "count": common_amt.get("count", 0)
-            },
-            "top_income_source": {
-                "source": top_income_source.get("_id", "N/A"),
-                "amount": top_income_source.get("total", 0)
-            }
+            "highest_payment": { "amount": highest_debit.get("amount", 0), "name": highest_debit.get("name") or highest_debit.get("desc", "N/A") },
+            "highest_income": { "amount": highest_credit.get("amount", 0), "name": highest_credit.get("name") or highest_credit.get("desc", "N/A") },
+            "frequent_spender": { "name": max_freq_entity.get("_id", "N/A"), "count": max_freq_entity.get("count", 0) },
+            "frequent_amount": { "amount": common_amt.get("_id", 0), "count": common_amt.get("count", 0) },
+            "top_income_source": { "source": top_income_source.get("_id", "N/A"), "amount": top_income_source.get("total", 0) },
+            "top_budget_items": top_budget_items_final
         },
         "top_debits": clustered_debits[:10],
         "top_credits": clustered_credits[:10],

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import getSymbolFromCurrency from "currency-symbol-map";
-import { Wallet, Activity, ArrowDownRight, ArrowUpRight, ArrowUp, ArrowDown, MoveRight, Trophy, TrendingDown, TrendingUp, Medal, Zap, Repeat, Target, Sparkles, Coins, Star } from "lucide-react";
+import { Wallet, Activity, ArrowDownRight, ArrowUpRight, ArrowUp, ArrowDown, MoveRight, Trophy, TrendingDown, TrendingUp, Medal, Zap, Repeat, Target, Sparkles, Coins, Star, ShoppingBag, Flame, Skull, Search, Crosshair } from "lucide-react";
 import { AdminPageLayout } from "@/components/layout/Adminpagelayout";
 import { StatCard } from "@/components/ui/StatCard";
 import { WalletCard } from "@/components/dashboard/WalletCard";
@@ -37,6 +37,67 @@ function MiniMilestoneCard({ title, subtitle, value, icon, colorClass, loading }
       <div className="opacity-10 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 text-muted-foreground">
         {icon}
       </div>
+    </div>
+  )
+}
+
+function HorizontalBountyBoard({ items, currencySymbol, loading }: any) {
+  if (loading) return <div className="w-full h-32 bg-muted/20 animate-pulse rounded-none" />;
+  if (!items || items.length === 0) return null;
+
+  return (
+    <div className="w-full bg-[#0a0a0a] border-y-4 border-amber-600/30 py-6 relative overflow-hidden group shadow-2xl">
+       <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
+       
+       <div className="container mx-auto px-4 relative z-10">
+          <div className="flex items-center gap-4 mb-6">
+             <div className="px-5 py-1 bg-amber-600 text-black text-[12px] font-black uppercase tracking-[0.4em] shadow-lg flex items-center gap-3">
+                <Skull className="w-4 h-4 animate-pulse" />
+                MOST WANTED BUDGETS
+                <Crosshair className="w-4 h-4" />
+             </div>
+             <div className="flex-1 h-[2px] bg-amber-600/20" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+             {items.map((item: any, idx: number) => {
+                const isTop = idx === 0;
+                return (
+                   <div key={idx} className={cn(
+                      "relative p-6 border-2 flex flex-col justify-between transition-all duration-500 group/poster",
+                      isTop ? "bg-amber-600/5 border-amber-600/40 shadow-[0_0_30px_rgba(217,119,6,0.1)]" : "border-white/5 hover:border-amber-600/20 hover:bg-white/[0.02]"
+                   )}>
+                      <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none group-hover/poster:opacity-20 transition-opacity">
+                         {isTop ? <Skull className="w-12 h-12" /> : <Target className="w-12 h-12" />}
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                         <span className="text-[9px] font-black text-amber-500/40 uppercase tracking-[0.2em] leading-none mb-1">Most Wanted Monthly</span>
+                         <h3 className="text-xl font-black text-foreground uppercase tracking-tight truncate leading-tight group-hover/poster:text-amber-500 transition-colors">
+                            {item.name}
+                         </h3>
+                         <div className="flex items-center gap-2 mt-1">
+                            <span className="w-1 h-1 rounded-full bg-amber-500 animate-pulse" />
+                            <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">{item.count} Months of Activity</span>
+                         </div>
+                      </div>
+
+                      <div className="mt-8 flex items-end justify-between">
+                         <div className="flex flex-col">
+                            <span className="text-[9px] font-black text-muted-foreground/40 uppercase tracking-widest">Amount</span>
+                            <div className="text-4xl font-black text-amber-600 dark:text-amber-500 tabular-nums leading-none tracking-tighter mt-2 group-hover/poster:scale-110 origin-left transition-transform">
+                               {currencySymbol}{Math.round(item.amount).toLocaleString()}
+                            </div>
+                         </div>
+                         <div className="opacity-0 group-hover/poster:opacity-100 transition-all transform translate-x-2 group-hover/poster:translate-x-0">
+                            <MoveRight className="w-6 h-6 text-amber-500" />
+                         </div>
+                      </div>
+                   </div>
+                )
+             })}
+          </div>
+       </div>
     </div>
   )
 }
@@ -237,45 +298,31 @@ export default function DashboardPage() {
 
          {/* ROW 2: INCOME HUB & LEADERBOARDS */}
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
-            
-            {/* REDESIGNED INCOME HUB CARD - Gold/Amber Theme */}
             <div className="group h-[480px]">
                <div className="h-full bg-gradient-to-br from-amber-600/20 via-card to-background border-2 border-amber-500/20 p-6 flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-500 hover:border-amber-500/60 shadow-xl group-hover:shadow-amber-500/5">
                    <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none group-hover:opacity-[0.08] transition-all duration-700"><Star className="w-48 h-48 -rotate-12" /></div>
-                   
-                   <div className="w-20 h-20 bg-amber-500/10 border-2 border-amber-500/10 flex items-center justify-center rotate-12 group-hover:rotate-0 transition-transform duration-500 mb-6">
-                      <Trophy className="w-10 h-10 text-amber-500 -rotate-12 group-hover:rotate-0 transition-transform duration-500" />
+                   <div className="w-16 h-16 bg-amber-500/10 border-2 border-amber-500/10 flex items-center justify-center rotate-12 group-hover:rotate-0 transition-transform duration-500 mb-4">
+                      <Trophy className="w-8 h-8 text-amber-500 -rotate-12 group-hover:rotate-0 transition-transform duration-500" />
                    </div>
-                   
-                   <h2 className="text-[11px] font-black uppercase tracking-[0.3em] text-amber-600/60 leading-none mb-6">My primary source of income</h2>
-                   
-                   <div className="flex flex-col items-center gap-2">
-                       <span className="text-4xl font-black tracking-tighter text-foreground decoration-amber-500 decoration-4 underline-offset-8">
-                          {recordStats?.top_income_source?.source || "N/A"}
-                       </span>
-                       <div className="w-12 h-1.5 bg-amber-500 rounded-none mt-4 mb-4" />
+                   <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-600/60 leading-none mb-4">My primary source of income</h2>
+                   <div className="flex flex-col items-center gap-1 mb-4">
+                       <span className="text-3xl font-black tracking-tighter text-foreground underline decoration-amber-500/40 decoration-2 underline-offset-4">{recordStats?.top_income_source?.source || "N/A"}</span>
                    </div>
-                   
-                   <div className="flex flex-col items-center mt-4">
-
-                      <div className="text-5xl font-black text-amber-600 dark:text-amber-500 tabular-nums tracking-tighter drop-shadow-md">
-                         {currencySymbol}{recordStats?.top_income_source?.amount?.toLocaleString()}
-                      </div>
+                   <div className="flex flex-col items-center">
+                      <span className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/40 mb-2">Total Confirmed</span>
+                      <div className="text-5xl font-black text-amber-600 dark:text-amber-500 tabular-nums tracking-tighter drop-shadow-md">{currencySymbol}{recordStats?.top_income_source?.amount?.toLocaleString()}</div>
                    </div>
-                   
-                   <div className="absolute bottom-6 left-0 right-0">
-                      <div className="flex items-center justify-center gap-2 px-4">
-                         <div className="w-1 h-1 bg-amber-500 rounded-full animate-ping" />
-                      </div>
-                   </div>
+                   <div className="absolute bottom-4 left-0 right-0"><div className="flex items-center justify-center gap-2 px-4"><div className="w-1 h-1 bg-amber-500 rounded-full animate-ping" /><p className="text-[8px] font-black text-amber-600/40 uppercase tracking-widest leading-none">Module Verified</p></div></div>
                </div>
             </div>
-
             <LeaderboardWidget title="Spent Power Rankings" data={topDebits} currencySymbol={currencySymbol} loading={loading} type="debit" />
             <LeaderboardWidget title="Received Power Rankings" data={topCredits} currencySymbol={currencySymbol} loading={loading} type="credit" />
          </div>
 
-         {/* ROW 3: GRAPHS, LISTS & MILESTONES */}
+         {/* ROW 3: HORIZONTAL BOUNTY BOARD (Simplified Labels) */}
+         <HorizontalBountyBoard items={recordStats?.top_budget_items} currencySymbol={currencySymbol} loading={loading} />
+
+         {/* ROW 4: GRAPHS, LISTS & MILESTONES */}
          <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 w-full">
             <div className="lg:col-span-3 space-y-4">
                 <SpendingPulseGraph trendData={monthlyTrend} totalSpend={transactionsData.total_debit} currencySymbol={currencySymbol} loading={loading} />
@@ -286,12 +333,14 @@ export default function DashboardPage() {
                <RecentTransactionsList title="Recent Credited" subtitle="Latest 15 Credits" transactions={recentCredit} currencySymbol={currencySymbol} loading={loading} colorScheme="emerald" />
             </div>
             <div className="lg:col-span-1 flex flex-col gap-2">
-                <div className="h-full flex flex-col gap-2">
+                <div className="flex flex-col gap-3 h-full overflow-y-auto custom-scrollbar">
                     <WalletCard balance={walletBalance} currencySymbol={currencySymbol} loading={loading} />
-                    <MiniMilestoneCard title="Largest Payment" value={formatCompact(recordStats?.highest_payment?.amount || 0, currencySymbol)} subtitle={recordStats?.highest_payment?.name} icon={<Zap className="w-4 h-4 text-destructive" />} colorClass="border-destructive/40" loading={loading} />
-                    <MiniMilestoneCard title="Largest Income" value={formatCompact(recordStats?.highest_income?.amount || 0, currencySymbol)} subtitle={recordStats?.highest_income?.name} icon={<Sparkles className="w-4 h-4 text-emerald-500" />} colorClass="border-emerald-500/40" loading={loading} />
-                    <MiniMilestoneCard title="Common Amount" value={formatCompact(recordStats?.frequent_amount?.amount || 0, currencySymbol)} subtitle={`Used ${recordStats?.frequent_amount?.count}x`} icon={<Repeat className="w-4 h-4 text-amber-500" />} colorClass="border-amber-500/40" loading={loading} />
-                    <MiniMilestoneCard title="Top Entity" value={recordStats?.frequent_spender?.name} subtitle={`${recordStats?.frequent_spender?.count} TXNS`} icon={<Target className="w-4 h-4 text-indigo-500" />} colorClass="border-indigo-500/40" loading={loading} />
+                    <div className="flex flex-col gap-2">
+                        <MiniMilestoneCard title="Largest Payment" value={formatCompact(recordStats?.highest_payment?.amount || 0, currencySymbol)} subtitle={recordStats?.highest_payment?.name} icon={<Zap className="w-4 h-4 text-destructive" />} colorClass="border-destructive/40" loading={loading} />
+                        <MiniMilestoneCard title="Largest Income" value={formatCompact(recordStats?.highest_income?.amount || 0, currencySymbol)} subtitle={recordStats?.highest_income?.name} icon={<Sparkles className="w-4 h-4 text-emerald-500" />} colorClass="border-emerald-500/40" loading={loading} />
+                        <MiniMilestoneCard title="Common Amount" value={formatCompact(recordStats?.frequent_amount?.amount || 0, currencySymbol)} subtitle={`Used ${recordStats?.frequent_amount?.count}x`} icon={<Repeat className="w-4 h-4 text-amber-500" />} colorClass="border-amber-500/40" loading={loading} />
+                        <MiniMilestoneCard title="Top Entity" value={recordStats?.frequent_spender?.name} subtitle={`${recordStats?.frequent_spender?.count} TXNS`} icon={<Target className="w-4 h-4 text-indigo-500" />} colorClass="border-indigo-500/40" loading={loading} />
+                    </div>
                 </div>
             </div>
          </div>
