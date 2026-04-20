@@ -18,10 +18,13 @@ export interface AdminPageAction {
 export interface AdminPageFilter {
   key: string;
   label: string;
-  type: "select" | "input" | "date" | "daterange";
+  type: "select" | "input" | "date" | "daterange" | "number";
   placeholder?: string;
   options?: { label: string; value: string }[];
   value?: string;
+  min?: number;
+  max?: number;
+  searchable?: boolean;
   onChange: (value: string) => void;
 }
 
@@ -316,7 +319,7 @@ export function AdminPageLayout({
 
       {/* ── Toolbar (search + filters) ───────────────────────── */}
       {(onSearchChange || filters.length > 0) && (
-        <div className="bg-background border-b border-border px-2 sm:px-4 py-2.5 sm:py-3 space-y-3">
+        <div className="bg-background px-2 sm:px-4 py-2.5 sm:py-3 space-y-3">
           <div className="flex items-center gap-2 flex-wrap">
 
             {/* Search */}
@@ -381,10 +384,13 @@ export function AdminPageLayout({
                       onChange={(val) => filter.onChange(val)}
                       options={filter.options ?? []}
                       placeholder={filter.placeholder ?? "All"}
+                      searchable={filter.searchable}
                     />
                   ) : (
                       <input
-                        type={filter.type === "date" ? "date" : "text"}
+                        type={filter.type === "date" ? "date" : (filter.type === "number" ? "number" : "text")}
+                        min={filter.min}
+                        max={filter.max}
                         value={filter.value ?? ""}
                         onChange={(e) => filter.onChange(e.target.value)}
                         placeholder={filter.placeholder}
