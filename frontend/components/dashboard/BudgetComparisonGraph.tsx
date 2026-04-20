@@ -12,7 +12,7 @@ import {
   Cell,
   Legend
 } from "recharts";
-import { Target, ShieldCheck, Search, Activity, TrendUp, History } from "lucide-react";
+import { Target, ShieldCheck, Search, Activity, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BudgetComparisonGraphProps {
@@ -72,7 +72,7 @@ export function BudgetComparisonGraph({ budgetData, currencySymbol, loading }: B
     return budgetData.map(item => ({
       ...item,
       income: Number(item.income || 0),
-      expense: Number(item.need || 0),
+      need: Number(item.need || 0),
       monthLabel: item.month ? item.month.split('/')[0] : ""
     })).slice(-12);
   }, [budgetData]);
@@ -97,16 +97,34 @@ export function BudgetComparisonGraph({ budgetData, currencySymbol, loading }: B
                <Target className="w-5 h-5 text-indigo-500 -rotate-45 group-hover:rotate-0 transition-all duration-700" />
             </div>
             <div>
-               <h3 className="text-[12px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-[0.3em] leading-none">Fiscal Flow Comparison</h3>
-               <p className="text-[10px] text-muted-foreground mt-1.5 uppercase font-bold tracking-tight opacity-70">Revenue Target vs Allocation Monitoring</p>
+               <h3 className="text-[12px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-[0.3em] leading-none">Monthly Budget Plan</h3>
+               <p className="text-[10px] text-muted-foreground mt-1.5 uppercase font-bold tracking-tight opacity-70">Monthly Income vs Budgeted Need</p>
             </div>
          </div>
-         <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-emerald-500 opacity-60" />
-            <div className="h-6 w-[1px] bg-border/40 mx-2" />
-            <div className="flex flex-col items-end">
-               <span className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-widest">Analytics Mode</span>
-               <span className="text-[10px] font-black text-indigo-500 uppercase">Precision-V2</span>
+         <div className="flex items-center gap-6">
+            <div className="flex items-center gap-6 mr-6 hidden md:flex">
+               <div className="flex flex-col items-end">
+                  <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Monthly Income</span>
+                  <span className="text-sm font-black tabular-nums">{currencySymbol}{Math.round(data.reduce((acc, d) => acc + d.income, 0) / (data.length || 1)).toLocaleString()}</span>
+               </div>
+               <div className="flex flex-col items-end">
+                  <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest">Monthly Need</span>
+                  <span className="text-sm font-black tabular-nums">{currencySymbol}{Math.round(data.reduce((acc, d) => acc + d.need, 0) / (data.length || 1)).toLocaleString()}</span>
+               </div>
+               <div className="flex flex-col items-end">
+                  <span className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-widest">Net Surplus</span>
+                  <span className={cn("text-sm font-black tabular-nums", (data.reduce((acc, d) => acc + d.income, 0) - data.reduce((acc, d) => acc + d.need, 0)) >= 0 ? "text-emerald-500" : "text-destructive")}>
+                    {currencySymbol}{Math.round(Math.abs(data.reduce((acc, d) => acc + d.income, 0) - data.reduce((acc, d) => acc + d.need, 0)) / (data.length || 1)).toLocaleString()}
+                  </span>
+               </div>
+            </div>
+            <div className="flex items-center gap-2">
+               <ShieldCheck className="w-5 h-5 text-emerald-500 opacity-60" />
+               <div className="h-6 w-[1px] bg-border/40 mx-2" />
+               <div className="flex flex-col items-end">
+                  <span className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-widest">Analytics Mode</span>
+                  <span className="text-[10px] font-black text-indigo-500 uppercase">Precision-V2</span>
+               </div>
             </div>
          </div>
       </div>
@@ -153,15 +171,15 @@ export function BudgetComparisonGraph({ budgetData, currencySymbol, loading }: B
                         </div>
                         <div className="space-y-2">
                            <div className="flex justify-between items-center">
-                              <span className="text-[9px] font-bold text-emerald-500 uppercase">Expected Revenue</span>
+                              <span className="text-[9px] font-bold text-emerald-500 uppercase">Monthly Income</span>
                               <span className="text-[12px] font-black tabular-nums">{currencySymbol}{inc.toLocaleString()}</span>
                            </div>
                            <div className="flex justify-between items-center">
-                              <span className="text-[9px] font-bold text-indigo-500 uppercase">Allocation Plan</span>
+                              <span className="text-[9px] font-bold text-indigo-500 uppercase">Monthly Need</span>
                               <span className="text-[12px] font-black tabular-nums">{currencySymbol}{exp.toLocaleString()}</span>
                            </div>
                            <div className="pt-2 mt-2 border-t border-border/40 flex justify-between items-center">
-                              <span className="text-[9px] font-black uppercase text-foreground">Projected Delta</span>
+                              <span className="text-[9px] font-black uppercase text-foreground">Projected Surplus</span>
                               <span className={cn("text-[14px] font-black tabular-nums", inc >= exp ? "text-emerald-500" : "text-destructive")}>
                                  {currencySymbol}{Math.abs(inc - exp).toLocaleString()}
                               </span>
@@ -182,8 +200,8 @@ export function BudgetComparisonGraph({ budgetData, currencySymbol, loading }: B
                 radius={[2, 2, 0, 0]}
               />
               <Bar 
-                name="Expense" 
-                dataKey="expense" 
+                name="Need" 
+                dataKey="need" 
                 fill="url(#expenseGrad)" 
                 shape={<CustomBar />}
                 animationDuration={1500}

@@ -67,30 +67,7 @@ async def get_insights(
     # Combine start/end dates into month/year ranges for BudgetEntry
     budget_query = {"$or": [{"user_id": uid}, {"user_id": uid_str}]}
     
-    if start_date:
-        try:
-            sd = datetime.strptime(start_date, "%Y-%m-%d")
-            # We want months >= sd.month AND years >= sd.year (complex in mongo, easier to filter in python or use a sort_val)
-            # Actually, let's just fetch and filter in memory since budget entries are few
-            pass 
-        except: pass
-
     all_budget_entries = await BudgetEntry.find(budget_query).to_list()
-    
-    # Filter in memory for precise control
-    if start_date or end_date:
-        filtered = []
-        try:
-            s_dt = datetime.strptime(start_date, "%Y-%m-%d") if start_date else datetime.min
-            e_dt = datetime.strptime(end_date, "%Y-%m-%d") if end_date else datetime.max
-            
-            for entry in all_budget_entries:
-                # Create a date object for the entry (1st of month)
-                entry_dt = datetime(entry.year, entry.month, 1)
-                if s_dt <= entry_dt <= e_dt:
-                    filtered.append(entry)
-            all_budget_entries = filtered
-        except: pass
     
     budget_clusters = {}
     budget_monthly_comp = {}

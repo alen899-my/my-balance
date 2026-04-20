@@ -59,6 +59,10 @@ function HorizontalBountyBoard({ items, currencySymbol, loading }: any) {
                 const isTop = idx === 0;
                 return (
                    <div key={idx} className={cn("relative p-6 border-2 flex flex-col justify-between transition-all duration-500 group/poster", isTop ? "bg-amber-500/5 dark:bg-amber-600/5 border-amber-600/40 shadow-[0_0_30px_rgba(217,119,6,0.1)]" : "border-black/5 dark:border-white/5 hover:border-amber-600/20 hover:bg-black/[0.02] dark:hover:bg-white/[0.02]")}>
+                      {/* Ranking Badge */}
+                      <div className="absolute -top-3 -left-3 w-8 h-8 bg-amber-600 text-black flex items-center justify-center text-sm font-black shadow-lg z-20">
+                         {idx + 1}
+                      </div>
                       <div className="absolute top-0 right-0 p-4 opacity-5 dark:opacity-10 pointer-events-none group-hover/poster:opacity-20 transition-opacity">{isTop ? <Skull className="w-12 h-12" /> : <Target className="w-12 h-12" />}</div>
                       <div className="flex flex-col gap-1">
                          <span className="text-[9px] font-black text-amber-600/60 dark:text-amber-500/40 uppercase tracking-[0.2em] leading-none mb-1">Most Wanted Monthly</span>
