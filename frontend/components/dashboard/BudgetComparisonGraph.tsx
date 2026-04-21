@@ -1,224 +1,177 @@
 "use client";
 
-import React, { useMemo } from "react";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer, 
-  Cell,
-  Legend
+import React, { useMemo, useState, useEffect } from "react";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { Target, ShieldCheck, Search, Activity, TrendingUp } from "lucide-react";
+import { Target, Search, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BudgetComparisonGraphProps {
-  budgetData: any[]; // { month: "1/2026", income: 5000, need: 4500 }
+  budgetData: any[];
   currencySymbol: string;
   loading: boolean;
 }
 
-/**
- * Premium Custom Bar to mimic "High-Sensitivity" look in Recharts
- */
 const CustomBar = (props: any) => {
-  const { fill, x, y, width, height, radius } = props;
-  if (!height) return null;
-
+  const { fill, x, y, width, height } = props;
+  if (!height || height <= 0) return null;
   return (
     <g>
-      {/* Main Bar with Gradient Fill via CSS or ID */}
-      <rect 
-        x={x} 
-        y={y} 
-        width={width} 
-        height={height} 
-        fill={fill} 
-        rx={radius} 
-        ry={radius} 
-        className="transition-all duration-500" 
-      />
-      {/* Precision Cap (Bright Top Line) */}
-      <rect 
-        x={x} 
-        y={y} 
-        width={width} 
-        height={2} 
-        fill="white" 
-        fillOpacity={0.4} 
-        className="shadow-[0_0_8px_white]"
-      />
-      {/* Vertical Highlight Line */}
-      <line 
-        x1={x + width / 2} 
-        y1={y} 
-        x2={x + width / 2} 
-        y2={y + height} 
-        stroke="white" 
-        strokeOpacity={0.1} 
-        strokeWidth={1} 
-      />
+      <rect x={x} y={y} width={width} height={height} fill={fill} rx={3} ry={3} />
+      <rect x={x} y={y} width={width} height={3} fill="white" fillOpacity={0.3} rx={3} />
     </g>
   );
 };
 
 export function BudgetComparisonGraph({ budgetData, currencySymbol, loading }: BudgetComparisonGraphProps) {
-  const data = useMemo(() => {
+  const availableMonths = useMemo<string[]>(() => {
     if (!budgetData || budgetData.length === 0) return [];
-    
-    return budgetData.map(item => ({
-      ...item,
-      income: Number(item.income || 0),
-      need: Number(item.need || 0),
-      monthLabel: item.month ? item.month.split('/')[0] : ""
-    })).slice(-12);
+    const seen = new Set<string>();
+    const list: string[] = [];
+    for (const d of budgetData) {
+      if (d.month && !seen.has(d.month)) { seen.add(d.month); list.push(d.month); }
+    }
+    return list.sort((a, b) => {
+      const [m1, y1] = a.split("/").map(Number);
+      const [m2, y2] = b.split("/").map(Number);
+      return y1 !== y2 ? y1 - y2 : m1 - m2;
+    });
   }, [budgetData]);
 
-  if (loading) {
-    return (
-      <div className="w-full h-80 bg-card border border-border animate-pulse flex flex-col items-center justify-center gap-4">
-        <Activity className="w-8 h-8 text-indigo-500 animate-spin" />
-        <div className="text-muted-foreground/20 text-[10px] font-black uppercase tracking-[0.5em]">Synchronizing Analytics...</div>
-      </div>
-    );
-  }
+  const toInputVal = (m: string) => {
+    const [mo, yr] = m.split("/");
+    return `${yr}-${mo.padStart(2, "0")}`;
+  };
+  const fromInputVal = (v: string) => {
+    const [yr, mo] = v.split("-");
+    return `${Number(mo)}/${yr}`;
+  };
 
-  const hasData = data.length > 0;
+  const defaultInputVal = useMemo(() => {
+    if (availableMonths.length === 0) return "";
+    return toInputVal(availableMonths[availableMonths.length - 1]);
+  }, [availableMonths]);
+
+  const [inputVal, setInputVal] = useState("");
+  useEffect(() => { if (defaultInputVal && !inputVal) setInputVal(defaultInputVal); }, [defaultInputVal, inputVal]);
+
+  const selectedKey = inputVal ? fromInputVal(inputVal) : "";
+
+  const data = useMemo(() => {
+    if (!budgetData || budgetData.length === 0) return [];
+    return budgetData
+      .filter(d => !selectedKey || d.month === selectedKey)
+      .map(d => ({ ...d, income: Number(d.income || 0), need: Number(d.need || 0), label: "Budget" }));
+  }, [budgetData, selectedKey]);
+
+  const totalIncome = data.reduce((a, d) => a + d.income, 0);
+  const totalNeed = data.reduce((a, d) => a + d.need, 0);
+  const surplus = totalIncome - totalNeed;
+
+  const minVal = availableMonths.length ? toInputVal(availableMonths[0]) : "";
+  const maxVal = availableMonths.length ? toInputVal(availableMonths[availableMonths.length - 1]) : "";
+
+  if (loading) return (
+    <div className="w-full bg-card border border-border animate-pulse flex items-center justify-center h-[280px] gap-3">
+      <Activity className="w-5 h-5 text-violet-500 animate-spin" />
+      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/30">Loading...</span>
+    </div>
+  );
 
   return (
-    <div className="w-full h-80 bg-card border border-border rounded-none flex flex-col relative overflow-hidden group shadow-sm transition-all duration-500 hover:shadow-xl">
-      {/* Visual Accents & Headers */}
-      <div className="absolute top-0 left-0 right-0 p-6 flex items-start justify-between z-40">
-         <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-none border border-indigo-500/30 bg-indigo-500/10 flex items-center justify-center rotate-45 group-hover:rotate-0 transition-all duration-700">
-               <Target className="w-5 h-5 text-indigo-500 -rotate-45 group-hover:rotate-0 transition-all duration-700" />
-            </div>
-            <div>
-               <h3 className="text-[12px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-[0.3em] leading-none">Monthly Budget Plan</h3>
-               <p className="text-[10px] text-muted-foreground mt-1.5 uppercase font-bold tracking-tight opacity-70">Monthly Income vs Budgeted Need</p>
-            </div>
-         </div>
-         <div className="flex items-center gap-6">
-            <div className="flex items-center gap-6 mr-6 hidden md:flex">
-               <div className="flex flex-col items-end">
-                  <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Monthly Income</span>
-                  <span className="text-sm font-black tabular-nums">{currencySymbol}{Math.round(data.reduce((acc, d) => acc + d.income, 0) / (data.length || 1)).toLocaleString()}</span>
-               </div>
-               <div className="flex flex-col items-end">
-                  <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest">Monthly Need</span>
-                  <span className="text-sm font-black tabular-nums">{currencySymbol}{Math.round(data.reduce((acc, d) => acc + d.need, 0) / (data.length || 1)).toLocaleString()}</span>
-               </div>
-               <div className="flex flex-col items-end">
-                  <span className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-widest">Net Surplus</span>
-                  <span className={cn("text-sm font-black tabular-nums", (data.reduce((acc, d) => acc + d.income, 0) - data.reduce((acc, d) => acc + d.need, 0)) >= 0 ? "text-emerald-500" : "text-destructive")}>
-                    {currencySymbol}{Math.round(Math.abs(data.reduce((acc, d) => acc + d.income, 0) - data.reduce((acc, d) => acc + d.need, 0)) / (data.length || 1)).toLocaleString()}
-                  </span>
-               </div>
-            </div>
-            <div className="flex items-center gap-2">
-               <ShieldCheck className="w-5 h-5 text-emerald-500 opacity-60" />
-               <div className="h-6 w-[1px] bg-border/40 mx-2" />
-               <div className="flex flex-col items-end">
-                  <span className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-widest">Analytics Mode</span>
-                  <span className="text-[10px] font-black text-indigo-500 uppercase">Precision-V2</span>
-               </div>
-            </div>
-         </div>
+    <div className="w-full bg-card border border-border flex flex-col overflow-hidden">
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-border/50 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-7 h-7 shrink-0 bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
+            <Target className="w-3.5 h-3.5 text-violet-500" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-[10px] font-black text-violet-500 uppercase tracking-[0.2em] leading-none">Budget vs Income</h3>
+            <p className="text-[8px] text-muted-foreground/50 uppercase font-bold mt-0.5 hidden sm:block">Monthly plan vs what came in</p>
+          </div>
+        </div>
+        <input
+          type="month"
+          value={inputVal}
+          min={minVal}
+          max={maxVal}
+          onChange={e => setInputVal(e.target.value)}
+          className="bg-card border border-violet-500/20 text-[10px] font-bold text-violet-400 px-2 py-1
+                     focus:outline-none focus:border-violet-500 cursor-pointer appearance-none
+                     hover:border-violet-500/50 transition-colors"
+        />
       </div>
 
-      <div className="flex-1 w-full relative z-10 px-6 pt-24 pb-6 h-full">
-        {hasData ? (
+      {/* Summary pills */}
+      <div className="grid grid-cols-3 border-b border-border/20">
+        <div className="px-3 py-2 border-r border-border/20">
+          <p className="text-[7px] font-black text-emerald-500 uppercase tracking-widest">In</p>
+          <p className="text-sm font-black tabular-nums">{currencySymbol}{totalIncome.toLocaleString()}</p>
+        </div>
+        <div className="px-3 py-2 border-r border-border/20">
+          <p className="text-[7px] font-black text-violet-500 uppercase tracking-widest">Planned</p>
+          <p className="text-sm font-black tabular-nums">{currencySymbol}{totalNeed.toLocaleString()}</p>
+        </div>
+        <div className="px-3 py-2">
+          <p className="text-[7px] font-black text-muted-foreground/40 uppercase tracking-widest">{surplus >= 0 ? "Left" : "Short"}</p>
+          <p className={cn("text-sm font-black tabular-nums", surplus >= 0 ? "text-emerald-500" : "text-destructive")}>
+            {surplus >= 0 ? "+" : "-"}{currencySymbol}{Math.abs(surplus).toLocaleString()}
+          </p>
+        </div>
+      </div>
+
+      {/* Chart */}
+      <div className="h-44 w-full px-2 py-3">
+        {data.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 0, right: 0, left: -25, bottom: 0 }} barGap={6}>
+            <BarChart data={data} margin={{ top: 2, right: 4, left: -22, bottom: 0 }} barGap={10} barCategoryGap="40%">
               <defs>
-                <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10b981" />
-                  <stop offset="100%" stopColor="#065f46" />
+                <linearGradient id="bgIncome" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#10b981" /><stop offset="100%" stopColor="#065f46" />
                 </linearGradient>
-                <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#6366f1" />
-                  <stop offset="100%" stopColor="#3730a3" />
+                <linearGradient id="bgNeed" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#8b5cf6" /><stop offset="100%" stopColor="#4c1d95" />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsla(var(--border), 0.3)" />
-              <XAxis 
-                dataKey="monthLabel" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fill: "currentColor", fontSize: 10, fontWeight: 900, opacity: 0.3 }}
-                className="text-muted-foreground"
-                dy={10}
-              />
-              <YAxis 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fill: "currentColor", fontSize: 9, fontWeight: 900, opacity: 0.3 }}
-                tickFormatter={(v) => `${currencySymbol}${Intl.NumberFormat('en-US', { notation: 'compact' }).format(v)}`}
-              />
-              <Tooltip 
-                cursor={{ fill: 'hsla(var(--primary), 0.03)' }}
+              <CartesianGrid strokeDasharray="2 4" vertical={false} stroke="hsla(var(--border),0.4)" />
+              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: "currentColor", fontSize: 8, fontWeight: 900, opacity: 0.3 }} dy={6} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fill: "currentColor", fontSize: 7, fontWeight: 700, opacity: 0.3 }}
+                tickFormatter={v => `${currencySymbol}${Intl.NumberFormat("en-US", { notation: "compact" }).format(v)}`} width={40} />
+              <Tooltip cursor={{ fill: "hsla(var(--primary),0.03)" }}
                 content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    const inc = payload[0].value as number;
-                    const exp = payload[1].value as number;
-                    return (
-                      <div className="bg-popover/90 border border-border p-4 shadow-2xl backdrop-blur-xl rounded-none min-w-[200px] border-l-4 border-l-indigo-500">
-                        <div className="text-[10px] font-black text-muted-foreground uppercase mb-3 border-b border-border/40 pb-2">
-                           Month: {payload[0].payload.month}
-                        </div>
-                        <div className="space-y-2">
-                           <div className="flex justify-between items-center">
-                              <span className="text-[9px] font-bold text-emerald-500 uppercase">Monthly Income</span>
-                              <span className="text-[12px] font-black tabular-nums">{currencySymbol}{inc.toLocaleString()}</span>
-                           </div>
-                           <div className="flex justify-between items-center">
-                              <span className="text-[9px] font-bold text-indigo-500 uppercase">Monthly Need</span>
-                              <span className="text-[12px] font-black tabular-nums">{currencySymbol}{exp.toLocaleString()}</span>
-                           </div>
-                           <div className="pt-2 mt-2 border-t border-border/40 flex justify-between items-center">
-                              <span className="text-[9px] font-black uppercase text-foreground">Projected Surplus</span>
-                              <span className={cn("text-[14px] font-black tabular-nums", inc >= exp ? "text-emerald-500" : "text-destructive")}>
-                                 {currencySymbol}{Math.abs(inc - exp).toLocaleString()}
-                              </span>
-                           </div>
+                  if (!active || !payload || payload.length < 2) return null;
+                  const inc = Number(payload[0]?.value || 0);
+                  const exp = Number(payload[1]?.value || 0);
+                  return (
+                    <div className="bg-popover border border-border p-3 shadow-xl min-w-[150px] border-l-4 border-l-violet-500 text-xs">
+                      <p className="text-[9px] font-black uppercase text-muted-foreground mb-2">{selectedKey}</p>
+                      <div className="space-y-1">
+                        <div className="flex justify-between gap-4"><span className="text-emerald-500 font-bold">In</span><span className="font-black">{currencySymbol}{inc.toLocaleString()}</span></div>
+                        <div className="flex justify-between gap-4"><span className="text-violet-500 font-bold">Plan</span><span className="font-black">{currencySymbol}{exp.toLocaleString()}</span></div>
+                        <div className="flex justify-between gap-4 pt-1 border-t border-border/40">
+                          <span className="font-black">Balance</span>
+                          <span className={cn("font-black", inc >= exp ? "text-emerald-500" : "text-destructive")}>
+                            {inc >= exp ? "+" : "-"}{currencySymbol}{Math.abs(inc - exp).toLocaleString()}
+                          </span>
                         </div>
                       </div>
-                    );
-                  }
-                  return null;
+                    </div>
+                  );
                 }}
               />
-              <Bar 
-                name="Income" 
-                dataKey="income" 
-                fill="url(#incomeGrad)" 
-                shape={<CustomBar />}
-                animationDuration={1500}
-                radius={[2, 2, 0, 0]}
-              />
-              <Bar 
-                name="Need" 
-                dataKey="need" 
-                fill="url(#expenseGrad)" 
-                shape={<CustomBar />}
-                animationDuration={1500}
-                radius={[2, 2, 0, 0]}
-              />
+              <Bar name="Income" dataKey="income" fill="url(#bgIncome)" shape={<CustomBar />} animationDuration={900} />
+              <Bar name="Need" dataKey="need" fill="url(#bgNeed)" shape={<CustomBar />} animationDuration={900} />
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div className="h-full flex flex-col items-center justify-center opacity-10 select-none">
-             <Search className="w-12 h-12 mb-4" />
-             <p className="text-[14px] font-black uppercase tracking-[0.5em]">Analytics Offline</p>
+          <div className="h-full flex flex-col items-center justify-center gap-2 opacity-20">
+            <Search className="w-8 h-8" />
+            <p className="text-[10px] font-black uppercase tracking-widest">No data</p>
           </div>
         )}
       </div>
-
-      {/* Decorative Grid Perspective */}
-      <div className="absolute inset-x-0 bottom-0 h-10 bg-[linear-gradient(transparent,rgba(var(--primary),0.02))] pointer-events-none" />
     </div>
   );
 }

@@ -6,7 +6,7 @@ from app.models.transaction import Transaction
 from app.models.income import IncomeEntry
 from app.models.budget import BudgetEntry
 from app.utils.analysis import classify_category
-from app.utils.normalize import extract_payee_name
+from app.utils.normalize import extract_payee_name, normalize_description_for_grouping
 from datetime import datetime
 from beanie import PydanticObjectId
 import re
@@ -47,7 +47,25 @@ async def get_insights(
         ]
 
     tx_col = Transaction.get_pymongo_collection()
-    pipeline = [{"$match": match_stage}, {"$facet": {"totals": [{"$group": {"_id": None, "income": {"$sum": {"$ifNull": ["$credit", 0]}}, "expense": {"$sum": {"$ifNull": ["$debit", 0]}}, "count": {"$sum": 1}}}], "highest_single_debit": [{"$match": {"debit": {"$gt": 0}}}, {"$sort": {"debit": -1}}, {"$limit": 1}], "highest_single_credit": [{"$match": {"credit": {"$gt": 0}}}, {"$sort": {"credit": -1}}, {"$limit": 1}], "frequent_amount": [{"$match": {"debit": {"$gt": 5}}}, {"$group": {"_id": "$debit", "count": {"$sum": 1}}}, {"$sort": {"count": -1}}, {"$limit": 1}], "debit_raw": [{"$match": {"debit": {"$gt": 0}}}, {"$group": {"_id": "$description", "amount": {"$sum": "$debit"}, "count": {"$sum": 1}}}, {"$sort": {"amount": -1}}, {"$limit": 100}], "credit_raw": [{"$match": {"credit": {"$gt": 0}}}, {"$group": {"_id": "$description", "amount": {"$sum": "$credit"}, "count": {"$sum": 1}}}, {"$sort": {"amount": -1}}, {"$limit": 100}], "daily_trend": [{"$group": {"_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$date"}}, "daily_spend": {"$sum": {"$ifNull": ["$debit", 0]}}}}, {"$sort": {"_id": 1}}], "monthly_trend": [{"$group": {"_id": {"month": {"$month": "$date"}, "year": {"$year": "$date"}}, "total": {"$sum": {"$ifNull": ["$debit", 0]}}, "income": {"$sum": {"$ifNull": ["$credit", 0]}}}}, {"$sort": {"_id.year": 1, "_id.month": 1}}]}}]
+    pipeline = [{"$match": match_stage}, {"$facet": {
+        "totals": [{"$group": {"_id": None, "income": {"$sum": {"$ifNull": ["$credit", 0]}}, "expense": {"$sum": {"$ifNull": ["$debit", 0]}}, "count": {"$sum": 1}}}],
+        "highest_single_debit":  [{"$match": {"debit": {"$gt": 0}}}, {"$sort": {"debit": -1}}, {"$limit": 1}],
+        "highest_single_credit": [{"$match": {"credit": {"$gt": 0}}}, {"$sort": {"credit": -1}}, {"$limit": 1}],
+        "frequent_amount": [{"$match": {"debit": {"$gt": 5}}}, {"$group": {"_id": "$debit", "count": {"$sum": 1}}}, {"$sort": {"count": -1}}, {"$limit": 1}],
+        # Group by raw description — Python will cluster similar ones below
+        "debit_raw": [
+            {"$match": {"debit": {"$gt": 0}}},
+            {"$group": {"_id": "$description", "amount": {"$sum": "$debit"}, "count": {"$sum": 1}}},
+            {"$sort": {"amount": -1}}, {"$limit": 500}
+        ],
+        "credit_raw": [
+            {"$match": {"credit": {"$gt": 0}}},
+            {"$group": {"_id": "$description", "amount": {"$sum": "$credit"}, "count": {"$sum": 1}}},
+            {"$sort": {"amount": -1}}, {"$limit": 500}
+        ],
+        "daily_trend":   [{"$group": {"_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$date"}}, "daily_spend": {"$sum": {"$ifNull": ["$debit", 0]}}}}, {"$sort": {"_id": 1}}],
+        "monthly_trend": [{"$group": {"_id": {"month": {"$month": "$date"}, "year": {"$year": "$date"}}, "total": {"$sum": {"$ifNull": ["$debit", 0]}}, "income": {"$sum": {"$ifNull": ["$credit", 0]}}}}, {"$sort": {"_id.year": 1, "_id.month": 1}}]
+    }}]
     cursor = tx_col.aggregate(pipeline)
     docs = await cursor.to_list(length=1)
     res = docs[0] if docs else {}
@@ -106,16 +124,25 @@ async def get_insights(
     top_budget_items_final = [{"name": item["display_name"], "count": len(item["months"]), "amount": item["total_amt"] / (item["count"] or 1)} for item in top_consistent_budget]
     budget_trend = sorted(budget_monthly_comp.values(), key=lambda x: x["sort_val"])
 
-    # Transaction Clustering logic
+    # Transaction Clustering — normalize description to group similar narrations together
     def cluster_entities(raw_items):
         if not raw_items: return []
         merged = {}
         for item in raw_items:
-            canonical = extract_payee_name(item["_id"])
-            if canonical in merged:
-                merged[canonical]["amount"] += item["amount"]
-                merged[canonical]["count"] += item["count"]
-            else: merged[canonical] = {"_id": canonical, "amount": item["amount"], "count": item["count"]}
+            raw_desc = (item.get("_id") or "").strip()
+            if not raw_desc:
+                normalized = "Other"
+            else:
+                normalized = normalize_description_for_grouping(raw_desc)
+                if not normalized or len(normalized) < 2:
+                    normalized = "Other"
+
+            key = normalized.upper()  # case-insensitive merge
+            if key in merged:
+                merged[key]["amount"] += item["amount"]
+                merged[key]["count"]  += item["count"]
+            else:
+                merged[key] = {"_id": normalized, "amount": item["amount"], "count": item["count"]}
         return sorted(merged.values(), key=lambda x: x["amount"], reverse=True)
 
     clustered_debits = cluster_entities(res.get("debit_raw", []))
