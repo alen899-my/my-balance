@@ -986,7 +986,7 @@ function SubscriptionsWidget({ sym }: { sym: string }) {
         
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-6">
-            <div className="p-2 bg-purple-500/10 rounded-lg border border-purple-500/20 text-purple-500">
+            <div className="p-2 bg-primary/10 rounded-lg border border-primary/20 text-primary">
                <RefreshCw className="w-4 h-4" />
             </div>
             <div>
@@ -1009,7 +1009,7 @@ function SubscriptionsWidget({ sym }: { sym: string }) {
              <p className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Active Links</p>
           </div>
           <div className="text-right">
-             <p className="text-lg font-black text-purple-500">
+             <p className="text-lg font-black text-primary">
                {sym}{Math.round(totalMonthly / 30).toLocaleString()}
              </p>
              <p className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Daily Average</p>
@@ -1030,11 +1030,11 @@ function SubscriptionsWidget({ sym }: { sym: string }) {
                
                return (
                   <div key={s._id} className="flex items-center p-3 border border-border/40 rounded-xl bg-card hover:bg-muted/30 hover:border-border/80 transition-all group/sub relative overflow-hidden">
-                     {isUrgent && <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500" />}
+                     {isUrgent && <div className="absolute left-0 top-0 bottom-0 w-1 bg-destructive" />}
                      
                      <div className={cn(
                         "w-9 h-9 rounded-lg flex items-center justify-center text-[10px] font-black shrink-0 border transition-colors",
-                        isUrgent ? "bg-red-500/10 text-red-500 border-red-500/20" : "bg-purple-500/5 text-purple-600 border-purple-500/10 group-hover/sub:bg-purple-500/10 group-hover/sub:border-purple-500/30"
+                        isUrgent ? "bg-destructive/10 text-destructive border-destructive/20" : "bg-primary/5 text-primary border-primary/10 group-hover/sub:bg-primary/10 group-hover/sub:border-primary/30"
                      )}>
                         {initials}
                      </div>
@@ -1046,7 +1046,7 @@ function SubscriptionsWidget({ sym }: { sym: string }) {
                         </div>
                         <div className="flex items-center justify-between">
                            <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest pl-0.5 truncate">{s.category}</p>
-                           <p className={cn("text-[8px] font-black uppercase tracking-widest shrink-0", isUrgent ? "text-red-500" : "text-muted-foreground")}>
+                           <p className={cn("text-[8px] font-black uppercase tracking-widest shrink-0", isUrgent ? "text-destructive" : "text-muted-foreground")}>
                               {s.days_until_billing === 0 ? "Today" : `In ${s.days_until_billing}d`}
                            </p>
                         </div>
@@ -1096,14 +1096,14 @@ function FinancialMarquee({ sym }: { sym: string }) {
            <div key={`${item.id}-${idx}`} className="flex items-center mx-6 gap-2.5">
               <span className={cn(
                  "text-[8px] font-black uppercase px-1.5 py-0.5 rounded-sm tracking-widest",
-                 item.type === "EMI" ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" : "bg-purple-500/10 text-purple-500 border border-purple-500/20"
+                 item.type === "EMI" ? "bg-primary/10 text-primary border border-primary/20" : "bg-accent text-accent-foreground border border-border"
               )}>{item.type}</span>
               <span className="text-[11px] font-bold text-foreground">{item.name}</span>
-              <span className="text-[11px] font-black tabular-nums">{sym}{item.amount.toLocaleString()}</span>
-              <span className={cn("text-[9px] font-black uppercase tracking-widest", item.days <= 3 ? "text-red-500" : "text-muted-foreground")}>
+              <span className="text-[11px] font-black tabular-nums text-foreground">{sym}{item.amount.toLocaleString()}</span>
+              <span className={cn("text-[9px] font-black uppercase tracking-widest", item.days <= 3 ? "text-destructive" : "text-muted-foreground")}>
                  {item.days === 0 ? "Due Today" : `in ${item.days}d`}
               </span>
-              <span className="text-muted-foreground/20 ml-6 text-xs">•</span>
+              <span className="text-muted-foreground/30 ml-6 text-xs">•</span>
            </div>
          ))}
        </div>
