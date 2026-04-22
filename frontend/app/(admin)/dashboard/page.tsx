@@ -178,7 +178,7 @@ function MetalsWidget({ sym }: { sym: string }) {
   }, []);
 
   return (
-    <div className="bg-card border border-border flex flex-col overflow-hidden">
+    <div className="bg-card border border-border flex flex-col overflow-hidden h-[360px] lg:h-[420px]">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2.5 border-b border-border/40 shrink-0 gap-2 min-w-0">
         <div className="flex items-center gap-1.5 shrink-0">
@@ -188,7 +188,7 @@ function MetalsWidget({ sym }: { sym: string }) {
         </div>
         <div className="text-right min-w-0">
           <p className="text-[7px] font-black text-muted-foreground/40 uppercase">Total Value</p>
-          <p className="text-xs font-black tabular-nums truncate">{sym}{Math.round(totalVal).toLocaleString()}</p>
+          <p className="text-xs font-black tabular-nums break-all">{sym}{Math.round(totalVal).toLocaleString()}</p>
         </div>
       </div>
 
@@ -232,63 +232,61 @@ function PropertyWidget({ sym }: { sym: string }) {
       .catch(() => setBusy(false));
   }, []);
 
-  const top = useMemo(() =>
-    props.length ? [...props].sort((a, b) => (b.current_value || b.purchase_price) - (a.current_value || a.purchase_price))[0] : null,
-    [props]);
   const totalPortfolio = props.reduce((s, p) => s + (p.current_value || p.purchase_price), 0);
+  const sorted = [...props].sort((a, b) => (b.current_value || b.purchase_price) - (a.current_value || a.purchase_price));
 
   return (
     <div className="bg-card border border-border flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-2.5 border-b border-border/40">
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border/40">
         <div className="flex items-center gap-1.5">
           <Building2 className="w-3.5 h-3.5 text-emerald-500" />
           <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">Property</span>
         </div>
         <div className="text-right">
-          <p className="text-[7px] font-black text-muted-foreground/40 uppercase">{props.length} properties</p>
+          <p className="text-[7px] font-black text-muted-foreground/40 uppercase">{props.length} {props.length === 1 ? "asset" : "assets"}</p>
           <p className="text-xs font-black tabular-nums">{sym}{Math.round(totalPortfolio).toLocaleString()}</p>
         </div>
       </div>
 
       {busy ? (
-        <div className="flex-1 p-3 flex items-center justify-center min-h-[100px]"><Activity className="w-5 h-5 text-emerald-500 animate-spin" /></div>
-      ) : !top ? (
-        <div className="flex-1 flex items-center justify-center p-4 opacity-30 min-h-[80px]">
-          <p className="text-[9px] font-black uppercase tracking-widest text-center">No properties yet</p>
+        <div className="flex items-center justify-center py-5">
+          <Activity className="w-4 h-4 text-emerald-500 animate-spin" />
+        </div>
+      ) : sorted.length === 0 ? (
+        <div className="flex items-center justify-center py-5 opacity-30">
+          <p className="text-[9px] font-black uppercase tracking-widest">No properties yet</p>
         </div>
       ) : (
-        <div className="flex flex-col flex-1">
-          {top.image_url ? (
-            <div className="relative h-24 overflow-hidden shrink-0">
-              <img src={top.image_url} alt={top.title} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-card/90 to-transparent" />
-              <span className="absolute bottom-1.5 left-2 bg-emerald-600/75 text-white text-[7px] font-black uppercase px-1.5 py-0.5">{top.type}</span>
-            </div>
-          ) : (
-            <div className="h-16 bg-emerald-500/5 flex items-center justify-center shrink-0">
-              <Building2 className="w-8 h-8 text-emerald-500/20" />
-            </div>
-          )}
-          <div className="p-3 flex flex-col gap-1.5 flex-1">
-            <div>
-              <p className="text-[7px] font-black text-muted-foreground/40 uppercase">{top.type}</p>
-              <h4 className="text-sm font-black truncate leading-tight">{top.title}</h4>
-            </div>
-            <div className="flex items-end justify-between mt-auto pt-1">
-              <div>
-                <p className="text-[7px] font-black text-muted-foreground/40 uppercase">Value</p>
-                <p className="text-base font-black text-emerald-500 tabular-nums">{sym}{Math.round(top.current_value || top.purchase_price).toLocaleString()}</p>
-              </div>
-              {top.purchase_price > 0 && (
-                <div className="text-right">
-                  <p className="text-[7px] text-muted-foreground/40 uppercase font-black">Gain</p>
-                  <p className={cn("text-xs font-black", (top.current_value - top.purchase_price) >= 0 ? "text-emerald-500" : "text-destructive")}>
-                    {(((top.current_value || top.purchase_price) - top.purchase_price) / top.purchase_price * 100).toFixed(1)}%
-                  </p>
+        <div className="divide-y divide-border/10">
+          {sorted.map((p) => {
+            const val = p.current_value || p.purchase_price;
+            const gain = p.purchase_price > 0 ? ((val - p.purchase_price) / p.purchase_price) * 100 : null;
+            const isGain = gain !== null && gain >= 0;
+            return (
+              <div key={p._id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-muted/10 transition-colors">
+                {p.image_url ? (
+                  <img src={p.image_url} alt={p.title || p.name} className="w-7 h-7 object-cover shrink-0 rounded-[2px]" />
+                ) : (
+                  <div className="w-7 h-7 shrink-0 bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                    <Building2 className="w-3.5 h-3.5 text-emerald-500" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-black truncate leading-tight">{p.title || p.name}</p>
+                  <p className="text-[7px] font-bold text-muted-foreground/40 uppercase tracking-widest">{p.type}</p>
                 </div>
-              )}
-            </div>
-          </div>
+                <div className="text-right shrink-0">
+                  <p className="text-[11px] font-black tabular-nums text-emerald-500">{sym}{Math.round(val).toLocaleString()}</p>
+                  {gain !== null && (
+                    <p className={cn("text-[9px] font-black tabular-nums", isGain ? "text-emerald-400" : "text-destructive")}>
+                      {isGain ? "+" : ""}{gain.toFixed(1)}%
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -323,7 +321,7 @@ function LendBorrowWidget({ sym }: { sym: string }) {
 
   return (
     <div className="bg-card border border-border flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-2.5 border-b border-border/40">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border/40">
         <div className="flex items-center gap-1.5">
           <HandCoins className="w-3.5 h-3.5 text-orange-500" />
           <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em]">Money Tracker</span>
@@ -331,27 +329,29 @@ function LendBorrowWidget({ sym }: { sym: string }) {
       </div>
 
       {busy ? (
-        <div className="flex-1 p-3 flex items-center justify-center min-h-[100px]"><Activity className="w-5 h-5 text-orange-500 animate-spin" /></div>
+        <div className="flex items-center justify-center py-5">
+          <Activity className="w-4 h-4 text-orange-500 animate-spin" />
+        </div>
       ) : (
         <>
           <div className="grid grid-cols-2 border-b border-border/20">
-            <div className="px-3 py-2 border-r border-border/20">
+            <div className="px-3 py-2 border-r border-border/20 min-w-0">
               <p className="text-[7px] font-black text-emerald-500 uppercase tracking-widest">They owe me</p>
-              <p className="text-sm font-black tabular-nums">{sym}{Math.round(summary?.pending_lent || 0).toLocaleString()}</p>
+              <p className="text-sm font-black tabular-nums break-all">{sym}{Math.round(summary?.pending_lent || 0).toLocaleString()}</p>
               <p className="text-[7px] text-muted-foreground/40 font-bold">{lent.length} people</p>
             </div>
-            <div className="px-3 py-2">
+            <div className="px-3 py-2 min-w-0">
               <p className="text-[7px] font-black text-destructive uppercase tracking-widest">I owe them</p>
-              <p className="text-sm font-black text-destructive tabular-nums">{sym}{Math.round(summary?.pending_borrowed || 0).toLocaleString()}</p>
+              <p className="text-sm font-black text-destructive tabular-nums break-all">{sym}{Math.round(summary?.pending_borrowed || 0).toLocaleString()}</p>
               <p className="text-[7px] text-muted-foreground/40 font-bold">{bor.length} people</p>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar divide-y divide-border/10 min-h-0">
-            {lent.slice(0, 3).map((item: any) => {
+          <div className="divide-y divide-border/10">
+            {lent.slice(0, 4).map((item: any) => {
               const d = daysSince(item.date); const old = d > 30;
               return (
-                <div key={item._id} className={cn("flex items-center justify-between px-3 py-2", old && "bg-red-500/5")}>
+                <div key={item._id} className={cn("flex items-center justify-between px-3 py-1.5", old && "bg-red-500/5")}>
                   <div className="flex items-center gap-1.5 min-w-0">
                     {old && <AlertCircle className="w-3 h-3 text-red-500 shrink-0" />}
                     <div className="min-w-0">
@@ -363,8 +363,8 @@ function LendBorrowWidget({ sym }: { sym: string }) {
                 </div>
               );
             })}
-            {bor.slice(0, 2).map((item: any) => (
-              <div key={item._id} className="flex items-center justify-between px-3 py-2 bg-destructive/5">
+            {bor.slice(0, 3).map((item: any) => (
+              <div key={item._id} className="flex items-center justify-between px-3 py-1.5 bg-destructive/5">
                 <div className="min-w-0">
                   <p className="text-[10px] font-black truncate">{item.name}</p>
                   <p className="text-[7px] text-muted-foreground/40 font-bold">{daysSince(item.date)}d ago</p>
@@ -373,8 +373,8 @@ function LendBorrowWidget({ sym }: { sym: string }) {
               </div>
             ))}
             {lent.length === 0 && bor.length === 0 && (
-              <div className="py-5 flex flex-col items-center gap-1 opacity-30">
-                <CheckCircle2 className="w-6 h-6" />
+              <div className="py-4 flex flex-col items-center gap-1 opacity-30">
+                <CheckCircle2 className="w-5 h-5" />
                 <p className="text-[8px] font-black uppercase tracking-widest">All settled!</p>
               </div>
             )}
@@ -404,7 +404,6 @@ function EMIWidget({ sym }: { sym: string }) {
   }, []);
 
   const urgent = emis.filter(e => (e.days_until_payment ?? 999) <= 7);
-  const upcoming = emis.filter(e => (e.days_until_payment ?? 999) > 7 && (e.days_until_payment ?? 999) <= 30);
 
   return (
     <div className="bg-card border border-border flex flex-col overflow-hidden">
@@ -425,7 +424,7 @@ function EMIWidget({ sym }: { sym: string }) {
       </div>
 
       {busy ? (
-        <div className="flex items-center justify-center p-6 min-h-[120px]">
+        <div className="flex items-center justify-center py-5">
           <Activity className="w-5 h-5 text-blue-500 animate-spin" />
         </div>
       ) : (
@@ -434,11 +433,11 @@ function EMIWidget({ sym }: { sym: string }) {
           <div className="grid grid-cols-2 border-b border-border/20 shrink-0">
             <div className="px-3 py-2 border-r border-border/20 min-w-0">
               <p className="text-[7px] font-black text-blue-500 uppercase tracking-widest truncate">Per Month</p>
-              <p className="text-sm font-black tabular-nums truncate">{sym}{Math.round(total.monthly).toLocaleString()}</p>
+              <p className="text-sm font-black tabular-nums break-all">{sym}{Math.round(total.monthly).toLocaleString()}</p>
             </div>
             <div className="px-3 py-2 min-w-0">
               <p className="text-[7px] font-black text-muted-foreground/40 uppercase tracking-widest truncate">Still Left</p>
-              <p className="text-sm font-black text-destructive tabular-nums truncate">{sym}{Math.round(total.outstanding).toLocaleString()}</p>
+              <p className="text-sm font-black text-destructive tabular-nums break-all">{sym}{Math.round(total.outstanding).toLocaleString()}</p>
             </div>
           </div>
 
@@ -474,36 +473,8 @@ function EMIWidget({ sym }: { sym: string }) {
             </div>
           )}
 
-          {/* ── Upcoming info cards (due 8-30 days) ── */}
-          {upcoming.length > 0 && (
-            <div className="px-3 pt-2 flex flex-col gap-2 shrink-0">
-              {upcoming.slice(0, 2).map(e => (
-                <div key={e._id} className="relative overflow-hidden rounded-md border border-blue-500/20 bg-blue-500/5 p-2.5">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
-                    <div className="flex items-start gap-2 min-w-0">
-                      <div className="mt-0.5 text-blue-400/80">
-                        <Clock className="w-3.5 h-3.5" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[10px] font-bold text-blue-300 break-words whitespace-normal leading-tight">{e.name}</p>
-                        <p className="text-[8px] font-medium text-blue-400/60 mt-0.5">Due in {e.days_until_payment} days</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-end sm:items-center sm:text-right shrink-0 mt-1 sm:mt-0 self-end sm:self-auto">
-                      <div className="text-right">
-                        <p className="text-xs font-black tabular-nums text-blue-300">{sym}{Math.round(e.monthly_emi).toLocaleString()}</p>
-                        <p className="text-[8px] text-muted-foreground/40 font-bold">{e.months_remaining}mo remaining</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
           {/* ── All active loans list ── */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar divide-y divide-border/10 mt-2 min-h-0">
+          <div className="divide-y divide-border/10">
             {emis.length === 0 ? (
               <div className="py-5 flex flex-col items-center gap-1 opacity-30">
                 <CheckCircle2 className="w-6 h-6" />
@@ -559,14 +530,14 @@ function GoalsWidget({ sym }: { sym: string }) {
 
   return (
     <div className="bg-card border border-border flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border/40 shrink-0">
+      <div className="flex flex-wrap items-start justify-between px-4 py-3 border-b border-border/40 shrink-0 gap-2">
         <div className="flex items-center gap-2">
           <PiggyBank className="w-4 h-4 text-pink-500" />
           <span className="text-[10px] font-black text-pink-500 uppercase tracking-[0.2em]">Savings Goals</span>
         </div>
-        <div className="text-right">
+        <div className="text-right min-w-0">
           <p className="text-[7px] font-black text-muted-foreground/40 uppercase">Total</p>
-          <p className="text-xs font-black tabular-nums text-pink-400">{sym}{Math.round(metrics.total_saved || 0).toLocaleString()} / {sym}{Math.round(metrics.total_target || 0).toLocaleString()}</p>
+          <p className="text-xs font-black tabular-nums text-pink-400 break-all">{sym}{Math.round(metrics.total_saved || 0).toLocaleString()} / {sym}{Math.round(metrics.total_target || 0).toLocaleString()}</p>
         </div>
       </div>
       {busy ? (
@@ -658,12 +629,12 @@ function SubscriptionsWidget({ sym }: { sym: string }) {
 
   return (
     <div className="bg-card border border-border flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border/40 shrink-0">
+      <div className="flex flex-wrap items-center justify-between px-4 py-3 border-b border-border/40 shrink-0 gap-2">
         <div className="flex items-center gap-2">
           <RefreshCw className="w-4 h-4 text-purple-500" />
           <span className="text-[10px] font-black text-purple-500 uppercase tracking-[0.2em]">Subscriptions</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           {renewingSoon.length > 0 && (
             <span className="flex items-center gap-1 text-[8px] font-black text-amber-500 animate-pulse">
               <BellRing className="w-3 h-3" />{renewingSoon.length} renewing soon
@@ -752,7 +723,7 @@ function BankBreakdownWidget({ banks, sym, loading }: { banks: any[]; sym: strin
               style={{ width: `${(b.current_balance / total) * 100}%` }} title={b.bank_name} />
           ))}
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-2">
           {valid.map((b, i) => (
             <div key={b.bank_name} className="flex items-center gap-2">
               <div className={cn("w-2.5 h-2.5 shrink-0", COLORS[i % COLORS.length])} />
@@ -793,7 +764,7 @@ function SpendingInsightsBanner({ txData, monthlyTrend, sym, loading }: {
     { label: "Txn Count", value: txData.count.toLocaleString(), sub: `~${dayOfMonth > 0 ? (txData.count / dayOfMonth).toFixed(1) : "0"} per day`, color: "text-blue-400", icon: <Activity className="w-4 h-4" />, border: "border-l-blue-500/50" },
   ];
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
       {stats.map(s => (
         <div key={s.label} className={cn("bg-card border border-l-4 border-border/30 px-3 py-3 flex items-center gap-3 group hover:bg-muted/10 transition-colors", s.border)}>
           <div className={cn("opacity-20 group-hover:opacity-60 transition-opacity shrink-0", s.color)}>{s.icon}</div>
@@ -858,8 +829,8 @@ function MiniCard({ title, value, sub, icon, border, loading }: { title: string;
     <div className={cn("px-3 py-3 border-l-4 bg-card flex items-center justify-between gap-2 group border border-border/20 hover:bg-muted/20 transition-colors w-full overflow-hidden", border)}>
       <div className="flex flex-col min-w-0 flex-1">
         <p className="text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 truncate">{title}</p>
-        <p className="text-[13px] font-black truncate leading-tight mt-0.5">{value}</p>
-        {sub && <p className="text-[8px] font-bold text-muted-foreground/40 uppercase truncate mt-0.5">{sub}</p>}
+        <p className="text-[13px] font-black break-all leading-tight mt-0.5">{value}</p>
+        {sub && <p className="text-[8px] font-bold text-muted-foreground/40 uppercase break-words mt-0.5">{sub}</p>}
       </div>
       <div className="opacity-10 group-hover:opacity-60 transition-opacity shrink-0 flex-none">{icon}</div>
     </div>
@@ -996,10 +967,13 @@ function BountyBoard({ items, sym, loading }: { items: any[]; sym: string; loadi
   return (
     <div className="w-full border-y-2 border-amber-600/25 bg-amber-500/[0.02] dark:bg-amber-900/5 py-4 px-4">
       <div className="flex items-center gap-3 mb-3">
-        <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-600 text-black">
-          <Skull className="w-3 h-3" />
-          <span className="text-[9px] font-black uppercase tracking-[0.3em]">Most Expensive Habits</span>
-          <Crosshair className="w-3 h-3" />
+        <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1 bg-amber-600 text-black">
+          <Skull className="w-3 h-3 shrink-0" />
+          <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] leading-none">
+            <span className="hidden sm:inline">Most Expensive Habits</span>
+            <span className="sm:hidden">Top Habits</span>
+          </span>
+          <Crosshair className="w-3 h-3 shrink-0" />
         </div>
         <div className="flex-1 h-px bg-amber-600/20" />
       </div>
@@ -1009,13 +983,13 @@ function BountyBoard({ items, sym, loading }: { items: any[]; sym: string; loadi
             idx === 0 ? "border-amber-600/40 bg-amber-500/5" : "border-border/30 hover:border-amber-600/20 transition-colors")}>
             <div className="absolute -top-2.5 -left-2.5 w-6 h-6 bg-amber-600 flex items-center justify-center text-black text-[9px] font-black">{idx + 1}</div>
             <p className="text-[8px] font-black text-amber-600/60 uppercase tracking-widest">Budget Item</p>
-            <h4 className="text-base font-black truncate leading-tight">{item.name}</h4>
-            <div className="flex items-end justify-between">
-              <div>
+            <h4 className="text-base font-black break-words leading-tight">{item.name}</h4>
+            <div className="flex items-end justify-between gap-2">
+              <div className="min-w-0">
                 <p className="text-[7px] text-muted-foreground/40 uppercase font-black">Avg/Month</p>
-                <p className="text-xl font-black text-amber-600 tabular-nums">{sym}{Math.round(item.amount).toLocaleString()}</p>
+                <p className="text-xl font-black text-amber-600 tabular-nums break-all">{sym}{Math.round(item.amount).toLocaleString()}</p>
               </div>
-              <span className="text-[8px] font-bold text-muted-foreground/40">{item.count} months</span>
+              <span className="text-[8px] font-bold text-muted-foreground/40 shrink-0">{item.count} months</span>
             </div>
           </div>
         ))}
@@ -1110,25 +1084,25 @@ export default function DashboardPage() {
           <StatCard title="Money In" value={fmt(txData.total_credit, sym)} icon={<ArrowDownRight className="w-4 h-4" />} colorType="emerald" loading={loading} />
           <StatCard title="Money Out" value={fmt(txData.total_debit, sym)} icon={<ArrowUpRight className="w-4 h-4" />} colorType="destructive" loading={loading} />
           <StatCard title="Transactions" value={fmt(txData.count, "")} icon={<Activity className="w-4 h-4" />} colorType="amber" loading={loading} />
-          <div className="col-span-2 sm:col-span-1">
+          <div className="col-span-2 sm:col-span-1 min-h-[130px]">
             <WalletCard balance={walletBalance} currencySymbol={sym} loading={loading} />
           </div>
         </div>
 
         {/* ── Net insight banner ───────────────────────────────────────────── */}
-        <div className={cn("w-full border px-4 py-3 flex flex-wrap items-center justify-between gap-2 relative overflow-hidden",
+        <div className={cn("w-full border px-4 py-3 flex flex-col xs:flex-row items-start xs:items-center justify-between gap-3 relative overflow-hidden",
           net >= 0 ? "border-emerald-500/20 bg-emerald-500/5" : "border-destructive/20 bg-destructive/5")}>
           <div className="absolute right-3 opacity-5 pointer-events-none">
             {net >= 0 ? <TrendingUp className="w-16 h-16 text-emerald-500" /> : <TrendingDown className="w-16 h-16 text-destructive" />}
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/50">Overall</p>
-            <h3 className="text-sm font-black mt-0.5">{net >= 0 ? "✅ You're saving money" : "⚠️ Spent more than earned"}</h3>
-            <p className="text-[9px] text-muted-foreground/60 font-bold">
+            <h3 className="text-sm font-black mt-0.5 break-words">{net >= 0 ? "✅ You're saving money" : "⚠️ Spent more than earned"}</h3>
+            <p className="text-[9px] text-muted-foreground/60 font-bold break-words">
               {net >= 0 ? `${sym}${Math.abs(net).toLocaleString()} more earned than spent` : `${sym}${Math.abs(net).toLocaleString()} more spent than earned`}
             </p>
           </div>
-          <div className="text-right shrink-0">
+          <div className="shrink-0">
             <p className="text-[7px] font-black text-muted-foreground/40 uppercase">Net</p>
             <p className={cn("text-2xl font-black tabular-nums", net >= 0 ? "text-emerald-500" : "text-destructive")}>
               {net >= 0 ? "+" : "-"}{sym}{Math.abs(net).toLocaleString()}
@@ -1136,8 +1110,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* ── Asset widgets (2×2 on mobile → 4-col on xl) ──────────────────── */}
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 items-start">
+        {/* ── Asset widgets (1-col mobile → 2-col sm → 4-col xl) ─────────────── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
           <MetalsWidget sym={sym} />
           <PropertyWidget sym={sym} />
           <LendBorrowWidget sym={sym} />
@@ -1157,7 +1131,7 @@ export default function DashboardPage() {
         {/* ── Income source + Leaderboards ─────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
           {/* Primary income hero */}
-          <div className="bg-gradient-to-br from-amber-600/20 via-card to-background border-2 border-amber-500/20 p-5 flex flex-col items-center justify-center text-center relative overflow-hidden hover:border-amber-500/50 transition-all duration-500 group min-h-[260px]">
+          <div className="bg-gradient-to-br from-amber-600/20 via-card to-background border-2 border-amber-500/20 p-5 flex flex-col items-center justify-center text-center relative overflow-hidden hover:border-amber-500/50 transition-all duration-500 group min-h-[200px] md:min-h-[260px]">
             <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none group-hover:opacity-[0.06] transition-all duration-700">
               <Star className="w-48 h-48 -rotate-12" />
             </div>
@@ -1165,11 +1139,11 @@ export default function DashboardPage() {
               <Trophy className="w-6 h-6 text-amber-500 -rotate-12 group-hover:rotate-0 transition-transform duration-500" />
             </div>
             <p className="text-[8px] font-black uppercase tracking-[0.25em] text-amber-600/60 mb-2">Main Income Source</p>
-            <p className="text-xl font-black tracking-tight mb-3 underline decoration-amber-500/40 underline-offset-4">
+            <p className="text-xl font-black tracking-tight mb-3 underline decoration-amber-500/40 underline-offset-4 break-words w-full">
               {stats?.top_income_source?.source || "N/A"}
             </p>
             <p className="text-[7px] font-black uppercase tracking-widest text-foreground/30 mb-1">Total Earned</p>
-            <p className="text-3xl font-black text-amber-600 tabular-nums">{sym}{stats?.top_income_source?.amount?.toLocaleString() || "0"}</p>
+            <p className="text-3xl font-black text-amber-600 tabular-nums break-all">{sym}{stats?.top_income_source?.amount?.toLocaleString() || "0"}</p>
           </div>
           <LeaderboardWidget title="Where Money Goes" data={topDebits} sym={sym} loading={loading} type="debit" />
           <LeaderboardWidget title="Where Money Comes From" data={topCredits} sym={sym} loading={loading} type="credit" />
@@ -1192,6 +1166,15 @@ export default function DashboardPage() {
             <MiniCard title="Top Contact" value={stats?.frequent_spender?.name || "N/A"} sub={`${stats?.frequent_spender?.count} txns`} icon={<Target className="w-4 h-4 text-indigo-500" />} border="border-l-indigo-500/50" loading={loading} />
           </div>
         </div>
+
+        {/* ── Goals + Subscriptions ─────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <GoalsWidget sym={sym} />
+          <SubscriptionsWidget sym={sym} />
+        </div>
+
+        {/* ── Bank balance breakdown ────────────────────────────────────────── */}
+        <BankBreakdownWidget banks={banks} sym={sym} loading={loading} />
 
       </div>
 

@@ -106,17 +106,17 @@ export function BudgetComparisonGraph({ budgetData, currencySymbol, loading }: B
 
       {/* Summary pills */}
       <div className="grid grid-cols-3 border-b border-border/20">
-        <div className="px-3 py-2 border-r border-border/20">
+        <div className="px-2 sm:px-3 py-2 border-r border-border/20 min-w-0">
           <p className="text-[7px] font-black text-emerald-500 uppercase tracking-widest">In</p>
-          <p className="text-sm font-black tabular-nums">{currencySymbol}{totalIncome.toLocaleString()}</p>
+          <p className="text-xs sm:text-sm font-black tabular-nums break-all">{currencySymbol}{totalIncome.toLocaleString()}</p>
         </div>
-        <div className="px-3 py-2 border-r border-border/20">
+        <div className="px-2 sm:px-3 py-2 border-r border-border/20 min-w-0">
           <p className="text-[7px] font-black text-violet-500 uppercase tracking-widest">Planned</p>
-          <p className="text-sm font-black tabular-nums">{currencySymbol}{totalNeed.toLocaleString()}</p>
+          <p className="text-xs sm:text-sm font-black tabular-nums break-all">{currencySymbol}{totalNeed.toLocaleString()}</p>
         </div>
-        <div className="px-3 py-2">
+        <div className="px-2 sm:px-3 py-2 min-w-0">
           <p className="text-[7px] font-black text-muted-foreground/40 uppercase tracking-widest">{surplus >= 0 ? "Left" : "Short"}</p>
-          <p className={cn("text-sm font-black tabular-nums", surplus >= 0 ? "text-emerald-500" : "text-destructive")}>
+          <p className={cn("text-xs sm:text-sm font-black tabular-nums break-all", surplus >= 0 ? "text-emerald-500" : "text-destructive")}>
             {surplus >= 0 ? "+" : "-"}{currencySymbol}{Math.abs(surplus).toLocaleString()}
           </p>
         </div>
