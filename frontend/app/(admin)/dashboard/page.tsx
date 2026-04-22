@@ -52,11 +52,11 @@ const METAL_CONFIG: Record<string, {
   label: string; icon: string; emoji: string;
   bg: string; border: string; shine: string; text: string; sub: string;
 }> = {
-  gold: { label: "Gold", icon: "Au", emoji: "🥇", bg: "from-yellow-950 via-yellow-900 to-amber-900", border: "border-yellow-600/40", shine: "from-yellow-400/30 via-transparent to-transparent", text: "text-yellow-300", sub: "text-yellow-500/70" },
-  silver: { label: "Silver", icon: "Ag", emoji: "🥈", bg: "from-slate-800 via-slate-700 to-zinc-800", border: "border-slate-400/30", shine: "from-slate-300/25 via-transparent to-transparent", text: "text-slate-200", sub: "text-slate-400/70" },
-  platinum: { label: "Platinum", icon: "Pt", emoji: "💎", bg: "from-indigo-950 via-slate-800 to-indigo-900", border: "border-indigo-400/30", shine: "from-indigo-300/20 via-transparent to-transparent", text: "text-indigo-200", sub: "text-indigo-400/70" },
-  diamond: { label: "Diamond", icon: "Dm", emoji: "💠", bg: "from-cyan-950 via-sky-900 to-blue-900", border: "border-cyan-400/30", shine: "from-cyan-300/25 via-transparent to-transparent", text: "text-cyan-200", sub: "text-cyan-400/70" },
-  palladium: { label: "Palladium", icon: "Pd", emoji: "⚪", bg: "from-neutral-800 via-zinc-700 to-neutral-900", border: "border-neutral-400/30", shine: "from-neutral-300/20 via-transparent to-transparent", text: "text-neutral-200", sub: "text-neutral-400/70" },
+  gold: { label: "Gold", icon: "🪙", emoji: "🥇", bg: "from-yellow-950 via-yellow-900 to-amber-900", border: "border-yellow-600/40", shine: "from-yellow-400/30 via-transparent to-transparent", text: "text-yellow-300", sub: "text-yellow-500/70" },
+  silver: { label: "Silver", icon: "🥈", emoji: "🥈", bg: "from-slate-800 via-slate-700 to-zinc-800", border: "border-slate-400/30", shine: "from-slate-300/25 via-transparent to-transparent", text: "text-slate-200", sub: "text-slate-400/70" },
+  platinum: { label: "Platinum", icon: "💿", emoji: "💎", bg: "from-indigo-950 via-slate-800 to-indigo-900", border: "border-indigo-400/30", shine: "from-indigo-300/20 via-transparent to-transparent", text: "text-indigo-200", sub: "text-indigo-400/70" },
+  diamond: { label: "Diamond", icon: "💎", emoji: "💠", bg: "from-cyan-950 via-sky-900 to-blue-900", border: "border-cyan-400/30", shine: "from-cyan-300/25 via-transparent to-transparent", text: "text-cyan-200", sub: "text-cyan-400/70" },
+  palladium: { label: "Palladium", icon: "🔘", emoji: "⚪", bg: "from-neutral-800 via-zinc-700 to-neutral-900", border: "border-neutral-400/30", shine: "from-neutral-300/20 via-transparent to-transparent", text: "text-neutral-200", sub: "text-neutral-400/70" },
 };
 
 // Partial match: "Gold 22K", "GOLD", "gold916" → all match "gold"
@@ -76,7 +76,7 @@ function getMetalCfg(type: string, name: string) {
   const fallbackLabel = name || type || "Metal";
   return {
     label: fallbackLabel,
-    icon: fallbackLabel.substring(0, 2).charAt(0).toUpperCase() + fallbackLabel.substring(1, 2).toLowerCase(),
+    icon: "💰",
     emoji: "💰",
     bg: "from-amber-950 via-amber-900 to-orange-900",
     border: "border-amber-500/30",
@@ -86,57 +86,114 @@ function getMetalCfg(type: string, name: string) {
   };
 }
 
-function MetalCard({ g, sym }: { g: any; sym: string }) {
+function IndividualMetalCard({ g, sym, busy }: { g: any; sym: string; busy?: boolean }) {
   const cfg = getMetalCfg(g.type, g.name);
   const gain = g.curr - g.inv;
   const pct = g.inv > 0 ? ((gain / g.inv) * 100).toFixed(1) : "0.0";
   const isGain = gain >= 0;
 
+  if (busy) {
+    return (
+      <div className={cn("h-32 border border-border bg-muted/20 animate-pulse")} />
+    );
+  }
+
   return (
     <div className={cn(
-      "relative overflow-hidden border flex flex-col justify-between p-0 group cursor-default",
-      "transition-all duration-500 hover:-translate-y-0.5 hover:shadow-xl",
+      "relative h-32 overflow-hidden border flex flex-col justify-between p-4 group transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl cursor-default",
       `bg-gradient-to-br ${cfg.bg}`, cfg.border
     )}>
-      {/* Shine sweep overlay */}
-      <div className={cn("absolute inset-0 bg-gradient-to-br pointer-events-none", cfg.shine)} />
-      {/* Shimmer line */}
+      {/* Dynamic Shine Effect */}
+      <div className={cn("absolute inset-0 bg-gradient-to-br opacity-50 pointer-events-none", cfg.shine)} />
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -inset-x-full top-0 bottom-0 w-[200%] translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-[1.2s] ease-in-out bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <div className="absolute -inset-x-full top-0 bottom-0 w-[200%] translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-[1.5s] ease-in-out bg-gradient-to-r from-transparent via-white/10 to-transparent" />
       </div>
 
-      {/* Top section */}
-      <div className="relative z-10 px-3 pt-3 pb-2 flex items-start justify-between">
-        <div>
-          {/* Metal symbol badge */}
-          <div className={cn("inline-flex items-center justify-center w-8 h-8 rounded-none border text-[11px] font-black mb-1.5", cfg.border, cfg.text,
-            "bg-black/20 backdrop-blur-sm")}
-          >
-            {cfg.icon.length <= 2 ? cfg.icon : "M"}
+      {/* Background Icon Decoration */}
+      <div className="absolute -bottom-4 -right-4 opacity-10 group-hover:opacity-25 transition-all duration-700 rotate-12 group-hover:rotate-0 scale-110 pointer-events-none">
+        <Gem className="w-24 h-24" />
+      </div>
+
+      <div className="relative z-10 flex justify-between items-start">
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2 mb-1">
+            <div className={cn("w-7 h-7 flex items-center justify-center border text-base bg-black/40 backdrop-blur-md", cfg.border)}>
+              {cfg.icon}
+            </div>
+            <span className={cn("text-[9px] font-black uppercase tracking-[0.2em]", cfg.text)}>{cfg.label}</span>
           </div>
-          <p className={cn("text-[8px] font-black uppercase tracking-[0.2em]", cfg.sub)}>{cfg.label}</p>
+          <div className="flex items-baseline gap-2 mt-1">
+            <p className={cn("text-2xl font-black tabular-nums tracking-tighter leading-none", cfg.text)}>
+              {sym}{Math.round(g.curr).toLocaleString()}
+            </p>
+          </div>
         </div>
-        {/* Big decorative emoji */}
-        <span className="text-3xl sm:text-4xl opacity-20 group-hover:opacity-40 transition-opacity duration-500 select-none leading-none pt-1">
-          {cfg.emoji}
-        </span>
+        <div className="text-right">
+          <span className={cn("text-[10px] font-black tabular-nums flex items-center justify-end gap-0.5", isGain ? "text-emerald-400" : "text-red-400")}>
+            {isGain ? "▲" : "▼"} {Math.abs(Number(pct))}%
+          </span>
+          <p className={cn("text-[10px] font-bold mt-1", cfg.sub)}>
+            {g.grams >= 1000 ? `${(g.grams / 1000).toFixed(2)}kg` : `${g.grams.toFixed(1)}g`}
+          </p>
+        </div>
       </div>
 
-      {/* Value */}
-      <div className="relative z-10 px-3 pb-1 min-w-0">
-        <p className={cn("text-lg sm:text-xl font-black tabular-nums tracking-tight truncate", cfg.text)}>
-          {sym}{Math.round(g.curr).toLocaleString()}
+      <div className="relative z-10 mt-auto">
+        <div className="w-full bg-black/20 h-[2px] overflow-hidden">
+          <div className={cn("h-full transition-all duration-1000", isGain ? "bg-emerald-500" : "bg-red-500")} style={{ width: isGain ? "100%" : "30%" }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TotalMetalCard({ totalVal, totalGain, sym, busy }: { totalVal: number; totalGain: number; sym: string; busy: boolean }) {
+  const isGain = totalGain >= 0;
+
+  if (busy) {
+    return <div className="h-32 border border-border bg-muted/20 animate-pulse" />;
+  }
+
+  return (
+    <div className={cn(
+      "relative h-32 overflow-hidden border flex flex-col justify-between p-4 bg-zinc-950 border-white/10 group",
+      "hover:border-yellow-500/30 transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl cursor-default"
+    )}>
+      {/* Luxury Gradient Background */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(234,179,8,0.15),transparent_60%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[linear-gradient(110deg,#09090b_0%,#18181b_100%)] pointer-events-none" />
+
+      {/* Decorative corners */}
+      <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-yellow-500/20 group-hover:border-yellow-500/50 transition-colors pointer-events-none" />
+
+      <div className="relative z-10">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="p-1 bg-yellow-500 text-black">
+            <Gem className="w-3.5 h-3.5" />
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-yellow-500/80">Net Worth: Metals</span>
+        </div>
+        <p className="text-3xl font-black tabular-nums tracking-tighter text-white group-hover:text-yellow-500 transition-colors">
+          {sym}{Math.round(totalVal).toLocaleString()}
         </p>
       </div>
 
-      {/* Bottom bar */}
-      <div className="relative z-10 px-3 py-2 mt-1 border-t border-white/10 flex items-center justify-between gap-2">
-        <span className={cn("text-[8px] font-bold", cfg.sub)}>
-          {g.grams >= 1000 ? `${(g.grams / 1000).toFixed(2)}kg` : `${g.grams.toFixed(1)}g`}
-        </span>
-        <span className={cn("text-[9px] font-black tabular-nums", isGain ? "text-emerald-400" : "text-red-400")}>
-          {isGain ? "▲" : "▼"} {Math.abs(Number(pct))}%
-        </span>
+      <div className="relative z-10 flex items-center justify-between mt-auto">
+        <div className="min-w-0">
+          <p className="text-[7px] font-black uppercase tracking-widest text-muted-foreground/40 mb-0.5">Overall Performance</p>
+          <p className={cn("text-xs font-black tabular-nums flex items-center gap-1", isGain ? "text-emerald-500" : "text-destructive")}>
+            {isGain ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+            {isGain ? "+" : "-"}{sym}{Math.round(Math.abs(totalGain)).toLocaleString()}
+          </p>
+        </div>
+        <div className={cn(
+          "px-3 py-1 text-[8px] font-black border transition-all duration-500",
+          isGain
+            ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500 group-hover:bg-emerald-500 group-hover:text-black"
+            : "bg-destructive/10 border-destructive/20 text-destructive group-hover:bg-destructive group-hover:text-white"
+        )}>
+          {isGain ? "BULLISH" : "BEARISH"}
+        </div>
       </div>
     </div>
   );
@@ -168,7 +225,9 @@ function MetalsWidget({ sym }: { sym: string }) {
           map[t].inv += m.quantity * m.purchase_price;
           map[t].curr += m.quantity * (prices[t] || m.purchase_price);
         }
-        const g = Object.values(map);
+
+        // Sort by current value descending
+        const g = Object.values(map).sort((a: any, b: any) => b.curr - a.curr);
         setGroups(g);
         setTotalVal(g.reduce((s, x) => s + x.curr, 0));
         setTotalGain(g.reduce((s, x) => s + (x.curr - x.inv), 0));
@@ -177,44 +236,37 @@ function MetalsWidget({ sym }: { sym: string }) {
     })();
   }, []);
 
-  return (
-    <div className="bg-card border border-border flex flex-col overflow-hidden h-[360px] lg:h-[420px]">
-      {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2.5 border-b border-border/40 shrink-0 gap-2 min-w-0">
-        <div className="flex items-center gap-1.5 shrink-0">
-          <Gem className="w-3.5 h-3.5 text-yellow-500" />
-          <span className="text-[10px] font-black text-yellow-500 uppercase tracking-[0.2em] hidden sm:inline">Metal Portfolio</span>
-          <span className="text-[10px] font-black text-yellow-500 uppercase tracking-[0.2em] sm:hidden">Metals</span>
-        </div>
-        <div className="text-right min-w-0">
-          <p className="text-[7px] font-black text-muted-foreground/40 uppercase">Total Value</p>
-          <p className="text-xs font-black tabular-nums break-all">{sym}{Math.round(totalVal).toLocaleString()}</p>
+  // Prepare standard assets if data is missing (for UI consistency as requested)
+  const displayGroups = [...groups];
+  if (!busy && displayGroups.length === 0) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 w-full">
+        <TotalMetalCard totalVal={0} totalGain={0} sym={sym} busy={false} />
+        <div className="col-span-2 flex items-center justify-center border border-dashed border-border/40 opacity-30">
+          <p className="text-[9px] font-black uppercase tracking-widest">No metal assets trackable</p>
         </div>
       </div>
+    );
+  }
 
-      {/* Cards */}
-      {busy ? (
-        <div className="flex items-center justify-center p-6 min-h-[120px]">
-          <Activity className="w-5 h-5 text-yellow-500 animate-spin" />
-        </div>
-      ) : groups.length === 0 ? (
-        <div className="flex items-center justify-center p-6 opacity-30 min-h-[100px]">
-          <p className="text-[9px] font-black uppercase tracking-widest text-center">No metals added yet</p>
-        </div>
-      ) : (
-        /* Always stack in exactly 1 column per user request, now perfectly scrollable */
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-2 flex flex-col gap-2 min-h-0">
-          {groups.map(g => <MetalCard key={g.type} g={g} sym={sym} />)}
+  // We want to show exactly 3 cards optimally. 
+  // 1. Summary
+  // 2. Gold (top)
+  // 3. Silver (secondary) or next metal
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 w-full">
+      <TotalMetalCard totalVal={totalVal} totalGain={totalGain} sym={sym} busy={busy} />
+      {displayGroups.slice(0, 2).map(g => (
+        <IndividualMetalCard key={g.type} g={g} sym={sym} busy={busy} />
+      ))}
+      {/* If only 1 metal, add a subtle placeholder or invite to add more */}
+      {!busy && displayGroups.length === 1 && (
+        <div className="h-32 border border-dashed border-border/20 flex flex-col items-center justify-center opacity-20 hover:opacity-40 transition-opacity cursor-pointer">
+          <Gem className="w-6 h-6 mb-1" />
+          <p className="text-[8px] font-black uppercase tracking-widest">Add more assets</p>
         </div>
       )}
-
-      {/* Footer gain/loss */}
-      <div className="px-3 py-2 border-t border-border/20 flex justify-between items-center bg-muted/5 shrink-0 mt-auto">
-        <span className="text-[7px] font-black text-muted-foreground/40 uppercase tracking-widest">Overall Gain / Loss</span>
-        <span className={cn("text-xs font-black tabular-nums", totalGain >= 0 ? "text-emerald-500" : "text-destructive")}>
-          {totalGain >= 0 ? "+" : "-"}{sym}{Math.round(Math.abs(totalGain)).toLocaleString()}
-        </span>
-      </div>
     </div>
   );
 }
@@ -234,59 +286,93 @@ function PropertyWidget({ sym }: { sym: string }) {
 
   const totalPortfolio = props.reduce((s, p) => s + (p.current_value || p.purchase_price), 0);
   const sorted = [...props].sort((a, b) => (b.current_value || b.purchase_price) - (a.current_value || a.purchase_price));
+  const topProp = sorted[0];
 
   return (
-    <div className="bg-card border border-border flex flex-col overflow-hidden">
+    <div className="bg-card border border-border flex flex-col overflow-hidden group">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border/40">
+      <div className="flex items-center justify-between px-3 py-2.5 border-b border-border/40 shrink-0 bg-muted/5">
         <div className="flex items-center gap-1.5">
           <Building2 className="w-3.5 h-3.5 text-emerald-500" />
-          <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">Property</span>
+          <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">Properties</span>
         </div>
         <div className="text-right">
-          <p className="text-[7px] font-black text-muted-foreground/40 uppercase">{props.length} {props.length === 1 ? "asset" : "assets"}</p>
-          <p className="text-xs font-black tabular-nums">{sym}{Math.round(totalPortfolio).toLocaleString()}</p>
+
+
         </div>
       </div>
 
       {busy ? (
-        <div className="flex items-center justify-center py-5">
-          <Activity className="w-4 h-4 text-emerald-500 animate-spin" />
-        </div>
-      ) : sorted.length === 0 ? (
-        <div className="flex items-center justify-center py-5 opacity-30">
-          <p className="text-[9px] font-black uppercase tracking-widest">No properties yet</p>
+        <div className="h-[280px] bg-muted/20 animate-pulse" />
+      ) : !topProp ? (
+        <div className="flex items-center justify-center py-12 opacity-30">
+          <p className="text-[9px] font-black uppercase tracking-widest text-center">No properties<br />tracked in portfolio</p>
         </div>
       ) : (
-        <div className="divide-y divide-border/10">
-          {sorted.map((p) => {
-            const val = p.current_value || p.purchase_price;
-            const gain = p.purchase_price > 0 ? ((val - p.purchase_price) / p.purchase_price) * 100 : null;
-            const isGain = gain !== null && gain >= 0;
-            return (
-              <div key={p._id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-muted/10 transition-colors">
-                {p.image_url ? (
-                  <img src={p.image_url} alt={p.title || p.name} className="w-7 h-7 object-cover shrink-0 rounded-[2px]" />
-                ) : (
-                  <div className="w-7 h-7 shrink-0 bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                    <Building2 className="w-3.5 h-3.5 text-emerald-500" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-black truncate leading-tight">{p.title || p.name}</p>
-                  <p className="text-[7px] font-bold text-muted-foreground/40 uppercase tracking-widest">{p.type}</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="text-[11px] font-black tabular-nums text-emerald-500">{sym}{Math.round(val).toLocaleString()}</p>
-                  {gain !== null && (
-                    <p className={cn("text-[9px] font-black tabular-nums", isGain ? "text-emerald-400" : "text-destructive")}>
-                      {isGain ? "+" : ""}{gain.toFixed(1)}%
-                    </p>
-                  )}
+        <div className="flex flex-col">
+          {/* Top Property Hero "Sharp Card" */}
+          <div className="relative aspect-[16/10] overflow-hidden border-b border-border/20">
+            {topProp.image_url ? (
+              <img src={topProp.image_url} alt={topProp.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out" />
+            ) : (
+              <div className="w-full h-full bg-emerald-500/10 flex items-center justify-center">
+                <Building2 className="w-12 h-12 text-emerald-500/20" />
+              </div>
+            )}
+
+            {/* Luxury Badges and Overlays */}
+            <div className="absolute top-3 left-3 flex flex-col gap-1 items-start">
+              <div className="px-2 py-0.5 bg-emerald-500 text-black text-[8px] font-black uppercase tracking-widest shadow-2xl">
+                Prime Asset
+              </div>
+            </div>
+
+            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex items-end justify-between gap-4">
+              <div className="min-w-0">
+                <h4 className="text-lg font-black text-white truncate leading-tight group-hover:text-emerald-400 transition-colors">{topProp.title || topProp.name}</h4>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-[9px] font-bold text-emerald-400/80 uppercase tracking-widest truncate">{topProp.type}</p>
+                  <div className="w-1 h-1 rounded-full bg-white/20" />
+                  <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest truncate">Highest Valuable Property</p>
                 </div>
               </div>
-            );
-          })}
+              <div className="text-right shrink-0 pb-0.5">
+                <p className="text-base font-black tabular-nums text-white leading-none">
+                  {sym}{Math.round(topProp.current_value || topProp.purchase_price).toLocaleString()}
+                </p>
+                {(() => {
+                  const val = topProp.current_value || topProp.purchase_price;
+                  const gain = topProp.purchase_price > 0 ? ((val - topProp.purchase_price) / topProp.purchase_price) * 100 : 0;
+                  return (
+                    <></>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+
+          {/* Secondary Assets List - Mini */}
+          {sorted.length > 1 && (
+            <div className="px-4 pb-4 pt-1 flex flex-col gap-2">
+              <div className="h-px bg-border/10 w-full mb-1" />
+              <div className="flex flex-col gap-2">
+                {sorted.slice(1, 2).map(p => (
+                  <div key={p._id} className="flex items-center justify-between gap-3 group/item">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-5 h-5 bg-muted flex items-center justify-center border border-border/20 text-[8px] font-black opacity-40">SQ</div>
+                      <p className="text-[10px] font-black truncate text-muted-foreground/60 group-hover/item:text-foreground transition-colors">{p.title || p.name}</p>
+                    </div>
+                    <span className="text-[10px] font-bold tabular-nums text-muted-foreground/40">{sym}{Math.round(p.current_value || p.purchase_price).toLocaleString()}</span>
+                  </div>
+                ))}
+                {sorted.length > 2 && (
+                  <button className="text-[8px] font-black uppercase tracking-widest text-emerald-500/60 hover:text-emerald-500 transition-colors mt-1">
+                    + {sorted.length - 1} More Properties
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -309,77 +395,136 @@ function LendBorrowWidget({ sym }: { sym: string }) {
           fetch(`${API_BASE_URL}/lend-borrow/list?direction=lent&is_settled=false`, { headers: { Authorization: `Bearer ${tok}` } }),
           fetch(`${API_BASE_URL}/lend-borrow/list?direction=borrowed&is_settled=false`, { headers: { Authorization: `Bearer ${tok}` } }),
         ]);
-        setSummary(await sR.json());
-        const lj = await lR.json(); setLent((lj.items || []).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime()));
-        const bj = await bR.json(); setBor((bj.items || []).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+        const sj = await sR.json(); setSummary(sj);
+        const lj = await lR.json(); setLent((lj.items || []).sort((a: any, b: any) => b.amount - a.amount));
+        const bj = await bR.json(); setBor((bj.items || []).sort((a: any, b: any) => b.amount - a.amount));
       } catch { }
       setBusy(false);
     })();
   }, []);
 
   const daysSince = (d: string) => Math.floor((Date.now() - new Date(d).getTime()) / 86400000);
+  const maxLent = lent[0];
+  const maxBor = bor[0];
 
   return (
-    <div className="bg-card border border-border flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border/40">
-        <div className="flex items-center gap-1.5">
-          <HandCoins className="w-3.5 h-3.5 text-orange-500" />
-          <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em]">Money Tracker</span>
+    <div className="bg-card border border-border flex flex-col overflow-hidden group h-full">
+      {/* ── High-Impact Split Header ── */}
+      <div className="grid grid-cols-2 divide-x divide-border/20 border-b border-border/40">
+        <div className="p-4 bg-emerald-500/[0.02]">
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="w-5 h-5 rounded-none bg-emerald-500/10 flex items-center justify-center text-emerald-500 border border-emerald-500/20">
+              <ArrowDownRight className="w-3.5 h-3.5" />
+            </div>
+            <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest leading-none">Receivables</span>
+          </div>
+          <p className="text-xl font-black tabular-nums transition-transform group-hover:translate-x-1 duration-500 leading-none">
+            {sym}{Math.round(summary?.pending_lent || 0).toLocaleString()}
+          </p>
+        </div>
+        <div className="p-4 bg-red-500/[0.02]">
+          <div className="flex items-center gap-2 mb-1.5 justify-end">
+            <span className="text-[10px] font-black text-red-500 uppercase tracking-widest leading-none text-right">Payables</span>
+            <div className="w-5 h-5 rounded-none bg-red-500/10 flex items-center justify-center text-red-500 border border-red-500/20">
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <p className="text-xl font-black tabular-nums text-right transition-transform group-hover:-translate-x-1 duration-500 leading-none text-red-500">
+            {sym}{Math.round(summary?.pending_borrowed || 0).toLocaleString()}
+          </p>
         </div>
       </div>
 
       {busy ? (
-        <div className="flex items-center justify-center py-5">
-          <Activity className="w-4 h-4 text-orange-500 animate-spin" />
-        </div>
+        <div className="h-[200px] bg-muted/20 animate-pulse" />
       ) : (
-        <>
-          <div className="grid grid-cols-2 border-b border-border/20">
-            <div className="px-3 py-2 border-r border-border/20 min-w-0">
-              <p className="text-[7px] font-black text-emerald-500 uppercase tracking-widest">They owe me</p>
-              <p className="text-sm font-black tabular-nums break-all">{sym}{Math.round(summary?.pending_lent || 0).toLocaleString()}</p>
-              <p className="text-[7px] text-muted-foreground/40 font-bold">{lent.length} people</p>
+        <div className="flex flex-col flex-1 divide-y divide-border/10">
+          {/* ── HERO: Top Person Who Owes Me ── */}
+          {maxLent && (
+            <div className="p-4 flex items-center justify-between hover:bg-emerald-500/[0.03] transition-colors group/item">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 border border-emerald-500/20 bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-black text-base shadow-inner">
+                  {maxLent.name.charAt(0)}
+                </div>
+                <div>
+                  <p className="text-[8px] font-black text-emerald-500/60 uppercase tracking-[0.2em] mb-0.5">Top Debtor</p>
+                  <h4 className="text-xs font-black tracking-tight truncate max-w-[120px]">{maxLent.name}</h4>
+                  <p className="text-[8px] font-bold text-muted-foreground/40 mt-0.5">{daysSince(maxLent.date)}d since loan</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-lg font-black text-emerald-500 tabular-nums leading-none">
+                  {sym}{Math.round(maxLent.amount).toLocaleString()}
+                </p>
+                <div className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 mt-2">
+                  <Clock className="w-2.5 h-2.5 text-emerald-500" />
+                  <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Active</span>
+                </div>
+              </div>
             </div>
-            <div className="px-3 py-2 min-w-0">
-              <p className="text-[7px] font-black text-destructive uppercase tracking-widest">I owe them</p>
-              <p className="text-sm font-black text-destructive tabular-nums break-all">{sym}{Math.round(summary?.pending_borrowed || 0).toLocaleString()}</p>
-              <p className="text-[7px] text-muted-foreground/40 font-bold">{bor.length} people</p>
-            </div>
-          </div>
+          )}
 
-          <div className="divide-y divide-border/10">
-            {lent.slice(0, 4).map((item: any) => {
-              const d = daysSince(item.date); const old = d > 30;
-              return (
-                <div key={item._id} className={cn("flex items-center justify-between px-3 py-1.5", old && "bg-red-500/5")}>
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    {old && <AlertCircle className="w-3 h-3 text-red-500 shrink-0" />}
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-black truncate">{item.name}</p>
-                      <p className="text-[7px] text-muted-foreground/40 font-bold">{d}d ago</p>
+          {/* ── HERO: Top Person I Owe ── */}
+          {maxBor && (
+            <div className="p-4 flex items-center justify-between hover:bg-red-500/[0.03] transition-colors group/item">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 border border-red-500/20 bg-red-500/10 flex items-center justify-center text-red-500 font-black text-base shadow-inner">
+                  {maxBor.name.charAt(0)}
+                </div>
+                <div>
+                  <p className="text-[8px] font-black text-red-500/60 uppercase tracking-[0.15em] mb-0.5">Major Liability</p>
+                  <h4 className="text-xs font-black tracking-tight truncate max-w-[120px]">{maxBor.name}</h4>
+                  <p className="text-[8px] font-bold text-muted-foreground/40 mt-0.5">{daysSince(maxBor.date)}d overdue</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-lg font-black text-red-500 tabular-nums leading-none">
+                  {sym}{Math.round(maxBor.amount).toLocaleString()}
+                </p>
+                <div className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-red-500/10 border border-red-500/20 mt-2">
+                  <AlertCircle className="w-2.5 h-2.5 text-red-500" />
+                  <span className="text-[8px] font-black text-red-500 uppercase tracking-widest">Urgent</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Secondary List - Quick Peek ── */}
+          {(lent.length > 1 || bor.length > 1) && (
+            <div className="p-4 mt-auto">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1 h-px bg-border/20" />
+                <span className="text-[7px] font-black text-muted-foreground/40 uppercase tracking-[0.3em] shrink-0">Other Pending Trades</span>
+                <div className="flex-1 h-px bg-border/20" />
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-3">
+                <div className="flex flex-col gap-1.5">
+                  {lent.slice(1, 3).map(i => (
+                    <div key={i._id} className="flex items-center justify-between text-[9px] font-bold text-muted-foreground truncate">
+                      <span>{i.name}</span>
+                      <span className="text-emerald-500 tabular-nums">{sym}{Math.round(i.amount).toLocaleString()}</span>
                     </div>
-                  </div>
-                  <span className="text-[11px] font-black text-emerald-500 tabular-nums shrink-0 ml-2">{sym}{Math.round(item.amount).toLocaleString()}</span>
+                  ))}
                 </div>
-              );
-            })}
-            {bor.slice(0, 3).map((item: any) => (
-              <div key={item._id} className="flex items-center justify-between px-3 py-1.5 bg-destructive/5">
-                <div className="min-w-0">
-                  <p className="text-[10px] font-black truncate">{item.name}</p>
-                  <p className="text-[7px] text-muted-foreground/40 font-bold">{daysSince(item.date)}d ago</p>
+                <div className="flex flex-col gap-1.5">
+                  {bor.slice(1, 3).map(i => (
+                    <div key={i._id} className="flex items-center justify-between text-[9px] font-bold text-muted-foreground truncate">
+                      <span>{i.name}</span>
+                      <span className="text-red-500 tabular-nums">{sym}{Math.round(i.amount).toLocaleString()}</span>
+                    </div>
+                  ))}
                 </div>
-                <span className="text-[11px] font-black text-destructive tabular-nums shrink-0 ml-2">-{sym}{Math.round(item.amount).toLocaleString()}</span>
               </div>
-            ))}
-            {lent.length === 0 && bor.length === 0 && (
-              <div className="py-4 flex flex-col items-center gap-1 opacity-30">
-                <CheckCircle2 className="w-5 h-5" />
-                <p className="text-[8px] font-black uppercase tracking-widest">All settled!</p>
-              </div>
-            )}
-          </div>
-        </>
+            </div>
+          )}
+
+          {lent.length === 0 && bor.length === 0 && (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 opacity-20">
+              <CheckCircle2 className="w-10 h-10 mb-2" />
+              <p className="text-[10px] font-black uppercase tracking-widest">All Accounts Clear</p>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
@@ -513,192 +658,7 @@ function EMIWidget({ sym }: { sym: string }) {
   );
 }
 
-// ─── Goals Widget ──────────────────────────────────────────────────────────────
-function GoalsWidget({ sym }: { sym: string }) {
-  const [goals, setGoals] = useState<any[]>([]);
-  const [metrics, setMetrics] = useState<any>({ current_monthly_savings: 0, total_saved: 0, total_target: 0 });
-  const [busy, setBusy] = useState(true);
 
-  useEffect(() => {
-    const tok = localStorage.getItem("token"); if (!tok) return;
-    fetch(`${API_BASE_URL}/goals/`, { headers: { Authorization: `Bearer ${tok}` } })
-      .then(r => r.json()).then(j => { setGoals(j.goals || []); setMetrics(j.metrics || {}); setBusy(false); })
-      .catch(() => setBusy(false));
-  }, []);
-
-  const overallPct = metrics.total_target > 0 ? Math.min(100, (metrics.total_saved / metrics.total_target) * 100) : 0;
-
-  return (
-    <div className="bg-card border border-border flex flex-col overflow-hidden">
-      <div className="flex flex-wrap items-start justify-between px-4 py-3 border-b border-border/40 shrink-0 gap-2">
-        <div className="flex items-center gap-2">
-          <PiggyBank className="w-4 h-4 text-pink-500" />
-          <span className="text-[10px] font-black text-pink-500 uppercase tracking-[0.2em]">Savings Goals</span>
-        </div>
-        <div className="text-right min-w-0">
-          <p className="text-[7px] font-black text-muted-foreground/40 uppercase">Total</p>
-          <p className="text-xs font-black tabular-nums text-pink-400 break-all">{sym}{Math.round(metrics.total_saved || 0).toLocaleString()} / {sym}{Math.round(metrics.total_target || 0).toLocaleString()}</p>
-        </div>
-      </div>
-      {busy ? (
-        <div className="flex items-center justify-center p-6 min-h-[100px]"><Activity className="w-5 h-5 text-pink-500 animate-spin" /></div>
-      ) : goals.length === 0 ? (
-        <div className="py-8 flex flex-col items-center gap-2 opacity-30">
-          <PiggyBank className="w-8 h-8" />
-          <p className="text-[8px] font-black uppercase tracking-widest">No goals yet</p>
-        </div>
-      ) : (
-        <div className="p-4 flex flex-col gap-4">
-          {/* Overall ring */}
-          <div className="flex items-center gap-4 p-3 bg-pink-500/5 border border-pink-500/20">
-            <div className="relative w-14 h-14 shrink-0">
-              <svg viewBox="0 0 36 36" className="w-14 h-14 -rotate-90">
-                <circle cx="18" cy="18" r="15" fill="none" stroke="currentColor" strokeWidth="3" className="text-muted/30" />
-                <circle cx="18" cy="18" r="15" fill="none" stroke="currentColor" strokeWidth="3"
-                  strokeDasharray={`${overallPct * 0.942} 94.2`} className="text-pink-500 transition-all duration-1000" />
-              </svg>
-              <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-pink-400">{Math.round(overallPct)}%</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[7px] font-black text-muted-foreground/40 uppercase">Overall Progress</p>
-              <p className="text-lg font-black tabular-nums">{sym}{Math.round(metrics.total_saved || 0).toLocaleString()}</p>
-              <p className="text-[8px] text-muted-foreground/40">of {sym}{Math.round(metrics.total_target || 0).toLocaleString()} target</p>
-            </div>
-            {(metrics.current_monthly_savings || 0) > 0 && (
-              <div className="text-right shrink-0">
-                <p className="text-[7px] font-black text-muted-foreground/40 uppercase">Saving</p>
-                <p className="text-xs font-black text-emerald-400 tabular-nums">{sym}{Math.round(metrics.current_monthly_savings).toLocaleString()}<span className="text-[7px]">/mo</span></p>
-              </div>
-            )}
-          </div>
-          {/* Individual goals */}
-          {goals.map((g: any) => {
-            const pct = g.percentage || 0;
-            const done = pct >= 100;
-            return (
-              <div key={g.id} className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className={cn("w-2 h-2 shrink-0", done ? "bg-emerald-500" : "bg-pink-500")} />
-                    <p className="text-[11px] font-black truncate">{g.name}</p>
-                    {done && <span className="text-[8px] font-black text-emerald-500 shrink-0">✓</span>}
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-[10px] font-black tabular-nums">{sym}{Math.round(g.current_amount).toLocaleString()}</p>
-                    <p className="text-[7px] text-muted-foreground/40">{Math.round(pct)}%</p>
-                  </div>
-                </div>
-                <div className="w-full bg-muted/30 h-1.5 overflow-hidden">
-                  <div className={cn("h-1.5 transition-all duration-1000", done ? "bg-emerald-500" : "bg-pink-500")} style={{ width: `${pct}%` }} />
-                </div>
-                {g.eta_date && !done && (
-                  <p className="text-[7px] text-muted-foreground/30 font-bold">ETA: {g.eta_date} &middot; {sym}{Math.round(g.target_amount - g.current_amount).toLocaleString()} left</p>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Subscriptions Widget ──────────────────────────────────────────────────────
-function SubscriptionsWidget({ sym }: { sym: string }) {
-  const [subs, setSubs] = useState<any[]>([]);
-  const [totalMonthly, setTotal] = useState(0);
-  const [busy, setBusy] = useState(true);
-
-  useEffect(() => {
-    const tok = localStorage.getItem("token"); if (!tok) return;
-    fetch(`${API_BASE_URL}/my-subscriptions/`, { headers: { Authorization: `Bearer ${tok}` } })
-      .then(r => r.json()).then(j => { setSubs(j.items || []); setTotal(j.total_monthly || 0); setBusy(false); })
-      .catch(() => setBusy(false));
-  }, []);
-
-  const sorted = [...subs].filter(s => s.is_active).sort((a, b) => (a.days_until_billing ?? 999) - (b.days_until_billing ?? 999));
-  const renewingSoon = sorted.filter(s => (s.days_until_billing ?? 999) <= 7);
-  const CAT_COLORS: Record<string, string> = {
-    Streaming: "bg-purple-500/20 text-purple-400 border-purple-500/30",
-    Utilities: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-    Food: "bg-orange-500/20 text-orange-400 border-orange-500/30",
-    Software: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
-    Finance: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-    Other: "bg-muted/40 text-muted-foreground border-border/40",
-  };
-
-  return (
-    <div className="bg-card border border-border flex flex-col overflow-hidden">
-      <div className="flex flex-wrap items-center justify-between px-4 py-3 border-b border-border/40 shrink-0 gap-2">
-        <div className="flex items-center gap-2">
-          <RefreshCw className="w-4 h-4 text-purple-500" />
-          <span className="text-[10px] font-black text-purple-500 uppercase tracking-[0.2em]">Subscriptions</span>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap justify-end">
-          {renewingSoon.length > 0 && (
-            <span className="flex items-center gap-1 text-[8px] font-black text-amber-500 animate-pulse">
-              <BellRing className="w-3 h-3" />{renewingSoon.length} renewing soon
-            </span>
-          )}
-          <div className="text-right">
-            <p className="text-[7px] font-black text-muted-foreground/40 uppercase">Monthly</p>
-            <p className="text-xs font-black tabular-nums text-purple-400">{sym}{Math.round(totalMonthly).toLocaleString()}</p>
-          </div>
-        </div>
-      </div>
-      {busy ? (
-        <div className="flex items-center justify-center p-6 min-h-[80px]"><Activity className="w-5 h-5 text-purple-500 animate-spin" /></div>
-      ) : sorted.length === 0 ? (
-        <div className="py-6 flex flex-col items-center gap-1 opacity-30">
-          <RefreshCw className="w-6 h-6" />
-          <p className="text-[8px] font-black uppercase tracking-widest">No subscriptions</p>
-        </div>
-      ) : (
-        <>
-          {renewingSoon.length > 0 && (
-            <div className="px-3 pt-3 flex flex-col gap-1.5 shrink-0">
-              {renewingSoon.map(s => (
-                <div key={s._id} className="relative overflow-hidden border border-amber-500/30 bg-amber-500/5 px-3 py-2">
-                  <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-amber-500" />
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <BellRing className="w-3 h-3 text-amber-500 shrink-0" />
-                      <p className="text-[10px] font-black truncate">{s.name}</p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[8px] font-bold text-amber-500">{s.days_until_billing === 0 ? "TODAY" : `in ${s.days_until_billing}d`}</span>
-                      <span className="text-[11px] font-black tabular-nums">{sym}{s.amount.toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          <div className="divide-y divide-border/10 max-h-[280px] overflow-y-auto custom-scrollbar">
-            {sorted.map(s => {
-              const catKey = Object.keys(CAT_COLORS).find(k => s.category?.toLowerCase().includes(k.toLowerCase())) || "Other";
-              return (
-                <div key={s._id} className="flex items-center gap-2.5 px-4 py-2.5 hover:bg-muted/10 transition-colors">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <p className="text-[10px] font-black truncate">{s.name}</p>
-                      <span className={cn("text-[7px] font-bold px-1 py-0.5 border shrink-0", CAT_COLORS[catKey])}>{s.category}</span>
-                    </div>
-                    <p className="text-[7px] text-muted-foreground/40 mt-0.5">Day {s.billing_day} every month</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-[11px] font-black tabular-nums">{sym}{s.amount.toLocaleString()}</p>
-                    <p className="text-[7px] text-muted-foreground/30">{s.days_until_billing}d away</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
 
 // ─── Bank Breakdown Widget ─────────────────────────────────────────────────────
 function BankBreakdownWidget({ banks, sym, loading }: { banks: any[]; sym: string; loading: boolean }) {
@@ -970,7 +930,7 @@ function BountyBoard({ items, sym, loading }: { items: any[]; sym: string; loadi
         <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1 bg-amber-600 text-black">
           <Skull className="w-3 h-3 shrink-0" />
           <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] leading-none">
-            <span className="hidden sm:inline">Most Expensive Habits</span>
+            <span className="hidden sm:inline">Most Wanted Montly</span>
             <span className="sm:hidden">Top Habits</span>
           </span>
           <Crosshair className="w-3 h-3 shrink-0" />
@@ -998,7 +958,161 @@ function BountyBoard({ items, sym, loading }: { items: any[]; sym: string; loadi
   );
 }
 
+// ─── Subscriptions Widget ──────────────────────────────────────────────────────
+function SubscriptionsWidget({ sym }: { sym: string }) {
+  const [subs, setSubs] = useState<any[]>([]);
+  const [totalMonthly, setTotal] = useState(0);
+  const [busy, setBusy] = useState(true);
+
+  useEffect(() => {
+    const tok = localStorage.getItem("token"); if (!tok) return;
+    fetch(`${API_BASE_URL}/my-subscriptions/`, { headers: { Authorization: `Bearer ${tok}` } })
+      .then(r => r.json()).then(j => { setSubs(j.items || []); setTotal(j.total_monthly || 0); setBusy(false); })
+      .catch(() => setBusy(false));
+  }, []);
+
+  const sorted = [...subs].filter(s => s.is_active).sort((a, b) => (a.days_until_billing ?? 999) - (b.days_until_billing ?? 999));
+
+  if (busy) return <div className="h-40 bg-card/50 animate-pulse border border-border rounded-xl" />;
+  if (sorted.length === 0) return null;
+
+  return (
+    <div className="flex flex-col lg:flex-row bg-card border border-border overflow-hidden group">
+      {/* ── Summary Section ── */}
+      <div className="w-full lg:w-1/3 p-6 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-border/50 bg-muted/10 relative overflow-hidden shrink-0">
+        <div className="absolute -right-10 -bottom-10 opacity-5 pointer-events-none group-hover:scale-110 transition-transform duration-700">
+           <RefreshCw className="w-48 h-48" />
+        </div>
+        
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="p-2 bg-purple-500/10 rounded-lg border border-purple-500/20 text-purple-500">
+               <RefreshCw className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground leading-none">Subscriptions</h3>
+              <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Monthly Recurring</p>
+            </div>
+          </div>
+          
+          <div>
+            <p className="text-4xl font-black tabular-nums tracking-tighter text-foreground">
+              {sym}{Math.round(totalMonthly).toLocaleString()}
+            </p>
+            <p className="text-[10px] font-bold text-muted-foreground mt-1 uppercase tracking-widest">Total Monthly</p>
+          </div>
+        </div>
+
+        <div className="relative z-10 flex items-center justify-between mt-8 pt-4 border-t border-border/50">
+          <div>
+             <p className="text-lg font-black text-foreground">{sorted.length}</p>
+             <p className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Active Links</p>
+          </div>
+          <div className="text-right">
+             <p className="text-lg font-black text-purple-500">
+               {sym}{Math.round(totalMonthly / 30).toLocaleString()}
+             </p>
+             <p className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Daily Average</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Timeline Section ── */}
+      <div className="flex-1 p-4 lg:p-6 bg-card flex flex-col">
+         <div className="flex items-center justify-between mb-4">
+            <h4 className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground">Upcoming Renewals</h4>
+         </div>
+
+         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[160px] lg:max-h-[220px] overflow-y-auto custom-scrollbar pr-2">
+            {sorted.map(s => {
+               const isUrgent = (s.days_until_billing ?? 999) <= 3;
+               const initials = s.name.substring(0, 2).toUpperCase();
+               
+               return (
+                  <div key={s._id} className="flex items-center p-3 border border-border/40 rounded-xl bg-card hover:bg-muted/30 hover:border-border/80 transition-all group/sub relative overflow-hidden">
+                     {isUrgent && <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500" />}
+                     
+                     <div className={cn(
+                        "w-9 h-9 rounded-lg flex items-center justify-center text-[10px] font-black shrink-0 border transition-colors",
+                        isUrgent ? "bg-red-500/10 text-red-500 border-red-500/20" : "bg-purple-500/5 text-purple-600 border-purple-500/10 group-hover/sub:bg-purple-500/10 group-hover/sub:border-purple-500/30"
+                     )}>
+                        {initials}
+                     </div>
+                     
+                     <div className="ml-3 flex-1 min-w-0 flex flex-col justify-center">
+                        <div className="flex items-center justify-between mb-1">
+                           <p className="text-[11px] font-black text-foreground truncate pl-0.5">{s.name}</p>
+                           <p className="text-[11px] font-black tabular-nums text-foreground shrink-0">{sym}{s.amount.toLocaleString()}</p>
+                        </div>
+                        <div className="flex items-center justify-between">
+                           <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest pl-0.5 truncate">{s.category}</p>
+                           <p className={cn("text-[8px] font-black uppercase tracking-widest shrink-0", isUrgent ? "text-red-500" : "text-muted-foreground")}>
+                              {s.days_until_billing === 0 ? "Today" : `In ${s.days_until_billing}d`}
+                           </p>
+                        </div>
+                     </div>
+                  </div>
+               )
+            })}
+         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Financial Marquee ────────────────────────────────────────────────────────
+function FinancialMarquee({ sym }: { sym: string }) {
+  const [items, setItems] = useState<any[]>([]);
+
+  useEffect(() => {
+    const tok = localStorage.getItem("token"); if (!tok) return;
+    
+    Promise.all([
+      fetch(`${API_BASE_URL}/my-subscriptions/`, { headers: { Authorization: `Bearer ${tok}` } }).then(r => r.json()).catch(() => ({items:[]})),
+      fetch(`${API_BASE_URL}/emis/`, { headers: { Authorization: `Bearer ${tok}` } }).then(r => r.json()).catch(() => ({items:[]}))
+    ]).then(([subRes, emiRes]) => {
+      const subs = (subRes.items || []).filter((s:any) => s.is_active && (s.days_until_billing ?? 999) <= 30).map((s:any) => ({
+        id: `sub-${s._id}`, type: "Subscription", name: s.name, amount: s.amount, days: s.days_until_billing
+      }));
+      const emis = (emiRes.items || []).filter((e:any) => e.status === "active" && (e.days_until_emi ?? 999) <= 30).map((e:any) => ({
+        id: `emi-${e._id}`, type: "EMI", name: e.name || e.loan_name, amount: e.emi_amount, days: e.days_until_emi
+      }));
+      
+      const merged = [...subs, ...emis].sort((a, b) => a.days - b.days);
+      setItems(merged);
+    });
+  }, []);
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="w-full overflow-hidden bg-card border border-border py-2 flex items-center relative mb-1 -mt-2 group">
+       <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-card to-transparent z-10 pointer-events-none" />
+       <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-card to-transparent z-10 pointer-events-none" />
+       
+       <div className="flex whitespace-nowrap animate-marquee w-max group-hover:[animation-play-state:paused]">
+         {/* Duplicate twice to allow seamless 50% translation */}
+         {[...items, ...items].map((item, idx) => (
+           <div key={`${item.id}-${idx}`} className="flex items-center mx-6 gap-2.5">
+              <span className={cn(
+                 "text-[8px] font-black uppercase px-1.5 py-0.5 rounded-sm tracking-widest",
+                 item.type === "EMI" ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" : "bg-purple-500/10 text-purple-500 border border-purple-500/20"
+              )}>{item.type}</span>
+              <span className="text-[11px] font-bold text-foreground">{item.name}</span>
+              <span className="text-[11px] font-black tabular-nums">{sym}{item.amount.toLocaleString()}</span>
+              <span className={cn("text-[9px] font-black uppercase tracking-widest", item.days <= 3 ? "text-red-500" : "text-muted-foreground")}>
+                 {item.days === 0 ? "Due Today" : `in ${item.days}d`}
+              </span>
+              <span className="text-muted-foreground/20 ml-6 text-xs">•</span>
+           </div>
+         ))}
+       </div>
+    </div>
+  );
+}
+
 // ─── Main Page ─────────────────────────────────────────────────────────────────
+
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [banks, setBanks] = useState<any[]>([]);
@@ -1078,6 +1192,9 @@ export default function DashboardPage() {
     >
       <div className="flex flex-col gap-3 w-full pb-6">
 
+        {/* ── Financial Ticker ────────────────────────────────────────────── */}
+        <FinancialMarquee sym={sym} />
+
         {/* ── KPI cards + Wallet ────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
           <StatCard title="Balance" value={fmt(totalBalance, sym)} icon={<Wallet className="w-4 h-4" />} colorType="primary" loading={loading} />
@@ -1110,9 +1227,11 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* ── Asset widgets (1-col mobile → 2-col sm → 4-col xl) ─────────────── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
-          <MetalsWidget sym={sym} />
+        {/* ── Metals Section (Promoted to 3-card Row) ────────────────────── */}
+        <MetalsWidget sym={sym} />
+
+        {/* ── Other Asset widgets ─────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
           <PropertyWidget sym={sym} />
           <LendBorrowWidget sym={sym} />
           <EMIWidget sym={sym} />
@@ -1166,11 +1285,9 @@ export default function DashboardPage() {
             <MiniCard title="Top Contact" value={stats?.frequent_spender?.name || "N/A"} sub={`${stats?.frequent_spender?.count} txns`} icon={<Target className="w-4 h-4 text-indigo-500" />} border="border-l-indigo-500/50" loading={loading} />
           </div>
         </div>
-
-        {/* ── Goals + Subscriptions ─────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <GoalsWidget sym={sym} />
-          <SubscriptionsWidget sym={sym} />
+        {/* ── Subscriptions Row ────────────────────────────────────────────── */}
+        <div className="w-full">
+           <SubscriptionsWidget sym={sym} />
         </div>
 
         {/* ── Bank balance breakdown ────────────────────────────────────────── */}
@@ -1183,6 +1300,14 @@ export default function DashboardPage() {
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(120, 120, 120, 0.4); border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(120, 120, 120, 0.8); }
+        
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+          animation: marquee 30s linear infinite;
+        }
       `}</style>
     </AdminPageLayout>
   );

@@ -36,7 +36,7 @@ export function SpendingPulseGraph({ totalSpend, currencySymbol, loading, trendD
 
   // Show every other label on very tight views using CSS
   return (
-    <div className="w-full bg-card border border-border flex flex-col overflow-hidden">
+    <div className="w-full bg-gradient-to-br from-red-500/5 via-card to-background border border-border flex flex-col overflow-hidden group">
       {/* Header — normal flow, no absolute */}
       <div className="flex items-start justify-between px-4 py-3 border-b border-border/40 shrink-0">
         <div>

@@ -80,7 +80,7 @@ export function BudgetComparisonGraph({ budgetData, currencySymbol, loading }: B
   );
 
   return (
-    <div className="w-full bg-card border border-border flex flex-col overflow-hidden">
+    <div className="w-full bg-gradient-to-br from-violet-500/5 via-card to-background border border-border flex flex-col overflow-hidden group">
       {/* Header */}
       <div className="px-4 py-3 border-b border-border/50 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
@@ -139,20 +139,20 @@ export function BudgetComparisonGraph({ budgetData, currencySymbol, loading }: B
               <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: "currentColor", fontSize: 8, fontWeight: 900, opacity: 0.3 }} dy={6} />
               <YAxis axisLine={false} tickLine={false} tick={{ fill: "currentColor", fontSize: 7, fontWeight: 700, opacity: 0.3 }}
                 tickFormatter={v => `${currencySymbol}${Intl.NumberFormat("en-US", { notation: "compact" }).format(v)}`} width={40} />
-              <Tooltip cursor={{ fill: "hsla(var(--primary),0.03)" }}
+              <Tooltip cursor={false}
                 content={({ active, payload }) => {
                   if (!active || !payload || payload.length < 2) return null;
                   const inc = Number(payload[0]?.value || 0);
                   const exp = Number(payload[1]?.value || 0);
                   return (
-                    <div className="bg-popover border border-border p-3 shadow-xl min-w-[150px] border-l-4 border-l-violet-500 text-xs">
+                    <div className="bg-card/80 backdrop-blur-md border border-border/50 p-3 shadow-2xl min-w-[150px] border-l-4 border-l-violet-500 text-xs">
                       <p className="text-[9px] font-black uppercase text-muted-foreground mb-2">{selectedKey}</p>
                       <div className="space-y-1">
                         <div className="flex justify-between gap-4"><span className="text-emerald-500 font-bold">In</span><span className="font-black">{currencySymbol}{inc.toLocaleString()}</span></div>
                         <div className="flex justify-between gap-4"><span className="text-violet-500 font-bold">Plan</span><span className="font-black">{currencySymbol}{exp.toLocaleString()}</span></div>
                         <div className="flex justify-between gap-4 pt-1 border-t border-border/40">
                           <span className="font-black">Balance</span>
-                          <span className={cn("font-black", inc >= exp ? "text-emerald-500" : "text-destructive")}>
+                          <span className={cn("font-black", inc >= exp ? "text-emerald-400" : "text-red-400")}>
                             {inc >= exp ? "+" : "-"}{currencySymbol}{Math.abs(inc - exp).toLocaleString()}
                           </span>
                         </div>
