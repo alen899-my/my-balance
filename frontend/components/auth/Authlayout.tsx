@@ -184,11 +184,7 @@ export function AuthLayout({
              <div className="h-px w-12 bg-border mt-4" />
           </div>
 
-          {/* Brand logo instead of step indicator */}
-          <div className="mb-10">
-            <BrandMark name={brandName} />
-          </div>
-
+         
           {(heading || subheading) && (
             <div className="mb-8">
               {heading && (
