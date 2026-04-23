@@ -1201,7 +1201,7 @@ export default function DashboardPage() {
           <StatCard title="Money In" value={fmt(txData.total_credit, sym)} icon={<ArrowDownRight className="w-4 h-4" />} colorType="emerald" loading={loading} />
           <StatCard title="Money Out" value={fmt(txData.total_debit, sym)} icon={<ArrowUpRight className="w-4 h-4" />} colorType="destructive" loading={loading} />
           <StatCard title="Transactions" value={fmt(txData.count, "")} icon={<Activity className="w-4 h-4" />} colorType="amber" loading={loading} />
-          <div className="col-span-2 sm:col-span-1 min-h-[130px]">
+          <div className="col-span-1 sm:col-span-1 min-h-[130px]">
             <WalletCard balance={walletBalance} currencySymbol={sym} loading={loading} />
           </div>
         </div>
