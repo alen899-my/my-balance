@@ -1196,7 +1196,7 @@ export default function DashboardPage() {
         <FinancialMarquee sym={sym} />
 
         {/* ── KPI cards + Wallet ────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-2">
           <StatCard title="Balance" value={fmt(totalBalance, sym)} icon={<Wallet className="w-4 h-4" />} colorType="primary" loading={loading} />
           <StatCard title="Money In" value={fmt(txData.total_credit, sym)} icon={<ArrowDownRight className="w-4 h-4" />} colorType="emerald" loading={loading} />
           <StatCard title="Money Out" value={fmt(txData.total_debit, sym)} icon={<ArrowUpRight className="w-4 h-4" />} colorType="destructive" loading={loading} />
