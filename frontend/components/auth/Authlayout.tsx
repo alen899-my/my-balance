@@ -66,7 +66,11 @@ function DefaultLeftPanel({
   if (imageSrc) {
     return (
       <div className="relative w-full h-full bg-foreground">
-        <Image src={imageSrc} alt={imageAlt ?? ""} fill className="object-cover" priority />
+        <Image src={imageSrc} alt={imageAlt ?? ""} fill className="object-cover opacity-60" priority />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+        <div className="absolute bottom-8 left-8 z-10 max-w-xs">
+           <p className="text-white/80 text-lg font-medium leading-relaxed drop-shadow-md">{tagline}</p>
+        </div>
       </div>
     );
   }
@@ -93,11 +97,6 @@ function DefaultLeftPanel({
           backgroundSize: "48px 48px",
         }}
       />
-
-      {/* Brand */}
-      <div className="relative z-10 p-8">
-        <BrandMark name={brandName} light />
-      </div>
 
       {/* Central content */}
       <div className="relative z-10 flex-1 flex flex-col justify-center px-8 gap-8">
@@ -143,7 +142,7 @@ export function AuthLayout({
   className,
   formPanelClassName,
 }: AuthLayoutProps) {
-  const imagePanel = leftPanel ?? (
+  const bgPanel = leftPanel ?? (
     <DefaultLeftPanel
       imageSrc={imageSrc}
       imageAlt={imageAlt}
@@ -153,54 +152,50 @@ export function AuthLayout({
   );
 
   return (
-    <div className={cn("min-h-screen w-full flex flex-col lg:flex-row bg-background", className)}>
-      {/* Image panel */}
-      <div
-        className={cn(
-          "hidden lg:flex lg:w-[60%] xl:w-[65%] shrink-0",
-          imageSide === "left"
-            ? "lg:rounded-r-2xl overflow-hidden"
-            : "lg:order-2 lg:rounded-l-2xl overflow-hidden"
-        )}
-      >
-        {imagePanel}
+    <div className={cn("min-h-screen w-full relative flex flex-col bg-background text-foreground", className)}>
+      {/* Background layer for desktop */}
+      <div className="hidden lg:block absolute inset-0 z-0">
+        {bgPanel}
       </div>
 
-
-
-      {/* Form panel */}
-      <div
-        className={cn(
-          "flex-1 flex flex-col items-center justify-center",
-          "px-5 py-12 sm:px-8 md:px-12 lg:px-14 xl:px-20",
-          imageSide === "right" && "lg:order-1",
-          formPanelClassName
-        )}
-      >
-        <div className="w-full max-w-md">
-          {/* Mobile-only brand identifier */}
-          <div className="lg:hidden mb-12">
-             <BrandMark name={brandName} small />
-             <div className="h-px w-12 bg-border mt-4" />
-          </div>
-
-         
-          {(heading || subheading) && (
-            <div className="mb-8">
-              {heading && (
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                  {heading}
-                </h1>
-              )}
-              {subheading && (
-                <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
-                  {subheading}
-                </p>
-              )}
-            </div>
+      {/* Main container */}
+      <div className="relative z-10 flex-1 flex items-center justify-center w-full min-h-screen">
+        <div 
+          className={cn(
+            "w-full flex flex-col lg:items-center lg:justify-center px-5 py-12 sm:px-8",
+            "lg:bg-transparent"
           )}
+        >
+          {/* The Sharp Card */}
+          <div className={cn(
+            "w-full max-w-md transition-all duration-500",
+            "lg:bg-card lg:border lg:border-border lg:p-10 lg:rounded-2xl lg:shadow-[0_40px_100px_rgba(0,0,0,0.15)]",
+            "dark:lg:shadow-[0_40px_100px_rgba(0,0,0,0.8)]",
+            formPanelClassName
+          )}>
+            {/* Brand identifier */}
+            <div className="mb-8 lg:mb-10">
+               <BrandMark name={brandName} small />
+               <div className="h-px w-12 bg-border mt-4" />
+            </div>
 
-          {children}
+            {(heading || subheading) && (
+              <div className="mb-8">
+                {heading && (
+                  <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-card-foreground">
+                    {heading}
+                  </h1>
+                )}
+                {subheading && (
+                  <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
+                    {subheading}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {children}
+          </div>
         </div>
       </div>
     </div>
