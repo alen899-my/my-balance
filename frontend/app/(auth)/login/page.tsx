@@ -13,15 +13,14 @@ export default function LoginPage() {
 
   return (
     <AuthLayout
-      brandName="YourApp"
-      tagline="Everything your team needs — in one place."
+      brandName="MyBalance"
+      tagline="Everything your finances need — in one place."
       heading="Welcome back"
       subheading="Sign in to your account to continue."
       imageSrc="/images/auth/login.jpg"
     >
       <AuthForm
         mode="login"
-        showGoogle
         onSubmit={async (values) => {
           const res = await fetch(`${API_BASE_URL}/auth/login`, {
             method: "POST",
@@ -45,9 +44,6 @@ export default function LoginPage() {
           }
 
           router.push("/dashboard");
-        }}
-        onGoogleClick={() => {
-          // TODO: signIn("google")
         }}
       />
     </AuthLayout>

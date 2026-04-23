@@ -9,7 +9,16 @@ const Page = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
-      <h1 className="text-4xl font-bold mb-4">Welcome to BankApplication</h1>
+      <div className="mb-6">
+        <div className="h-16 w-16 flex items-center justify-center">
+          <img
+            src="/images/logos/wallet.png"
+            alt="MyBalance"
+            className="h-full w-full object-contain"
+          />
+        </div>
+      </div>
+      <h1 className="text-4xl font-bold mb-4">Welcome to <span className="text-primary">MyBalance</span></h1>
       <p className="text-xl mb-8 text-muted-foreground">The most secure way to manage your finances.</p>
       <div className="flex gap-4">
         <Link 

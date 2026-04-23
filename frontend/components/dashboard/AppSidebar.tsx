@@ -196,7 +196,7 @@ function SidebarContent({
         <LogoMark />
         {!collapsed && (
           <span className="text-base font-bold tracking-tight text-white truncate">
-            Vaultly
+            MyBalance
           </span>
         )}
       </div>
@@ -384,27 +384,25 @@ function NavItem({
 
 function LogoMark() {
   return (
-    <span className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center shrink-0 shadow-md">
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        className="h-3.5 w-3.5 text-primary-foreground"
-        aria-hidden="true"
-      >
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 7v5l3 3" />
-      </svg>
+    <span
+      className="h-8 w-8 flex items-center justify-center shrink-0 overflow-hidden"
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/images/logos/wallet.png"
+        alt="MyBalance"
+        className="h-full w-full object-contain"
+        draggable={false}
+      />
     </span>
   );
 }
 
 function BrandMark() {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2.5">
       <LogoMark />
-      <span className="text-sm font-bold tracking-tight text-white">Vaultly</span>
+      <span className="text-sm font-bold tracking-tight text-white">MyBalance</span>
     </div>
   );
 }

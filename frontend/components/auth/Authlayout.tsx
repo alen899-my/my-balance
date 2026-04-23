@@ -20,25 +20,26 @@ export interface AuthLayoutProps {
 
 /* ─── Brand mark ─────────────────────────────────────────── */
 
-const BrandMark = ({ name = "Vaultly", small = false }: { name?: string; small?: boolean }) => (
+const BrandMark = ({ name = "MyBalance", small = false, light = false }: { name?: string; small?: boolean; light?: boolean }) => (
   <div className={cn("flex items-center gap-2.5", small && "gap-2")}>
     <span
       className={cn(
-        "rounded-lg bg-primary flex items-center justify-center shrink-0",
+        "flex items-center justify-center shrink-0 overflow-hidden",
         small ? "h-7 w-7" : "h-9 w-9"
       )}
     >
-      {/* Currency / vault icon */}
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
-        className={cn("text-primary-foreground", small ? "h-3.5 w-3.5" : "h-4.5 w-4.5")}
-        aria-hidden="true"
-      >
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 7v5l3 3" />
-        <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" opacity="0.4" />
-      </svg>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/images/logos/wallet.png"
+        alt="MyBalance"
+        className="h-full w-full object-contain drop-shadow-sm"
+        draggable={false}
+      />
     </span>
-    <span className={cn("font-bold tracking-tight text-white", small ? "text-base" : "text-xl")}>
+    <span className={cn(
+      "font-bold tracking-tight text-primary",
+      small ? "text-base" : "text-xl"
+    )}>
       {name}
     </span>
   </div>
@@ -59,7 +60,7 @@ const StatCard = ({ label, value, delta }: { label: string; value: string; delta
 function DefaultLeftPanel({
   imageSrc,
   imageAlt = "Authentication visual",
-  brandName = "Vaultly",
+  brandName = "MyBalance",
   tagline = "Unify all your accounts. Track every dollar. Move money faster.",
 }: Pick<AuthLayoutProps, "imageSrc" | "imageAlt" | "brandName" | "tagline">) {
   if (imageSrc) {
@@ -95,7 +96,7 @@ function DefaultLeftPanel({
 
       {/* Brand */}
       <div className="relative z-10 p-8">
-        <BrandMark name={brandName} />
+        <BrandMark name={brandName} light />
       </div>
 
       {/* Central content */}
@@ -134,7 +135,7 @@ export function AuthLayout({
   leftPanel,
   imageSrc,
   imageAlt,
-  brandName = "Vaultly",
+  brandName = "MyBalance",
   tagline,
   heading,
   subheading,
@@ -183,11 +184,9 @@ export function AuthLayout({
              <div className="h-px w-12 bg-border mt-4" />
           </div>
 
-          {/* Step indicator (decorative) */}
-          <div className="flex items-center gap-1.5 mb-8">
-            <span className="h-0.5 w-8 rounded-full bg-primary" />
-            <span className="h-0.5 w-2 rounded-full bg-border" />
-            <span className="h-0.5 w-2 rounded-full bg-border" />
+          {/* Brand logo instead of step indicator */}
+          <div className="mb-10">
+            <BrandMark name={brandName} />
           </div>
 
           {(heading || subheading) && (

@@ -13,8 +13,8 @@ export default function SignupPage() {
 
   return (
     <AuthLayout
-      brandName="YourApp"
-      tagline="Join thousands of teams already moving faster."
+      brandName="MyBalance"
+      tagline="Take control of your money. Track every rupee."
       heading="Create your account"
       subheading="Get started for free — no credit card required."
       imageSide="left"
@@ -22,7 +22,6 @@ export default function SignupPage() {
     >
       <AuthForm
         mode="signup"
-        showGoogle
         onSubmit={async (values) => {
           const res = await fetch(`${API_BASE_URL}/auth/signup`, {
             method: "POST",
@@ -44,9 +43,6 @@ export default function SignupPage() {
           }
 
           router.push("/login");
-        }}
-        onGoogleClick={() => {
-          // TODO: signIn("google")
         }}
       />
     </AuthLayout>
