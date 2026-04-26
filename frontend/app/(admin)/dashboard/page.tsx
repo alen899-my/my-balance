@@ -8,7 +8,7 @@ import {
   Sparkles, Star, Skull, Crosshair, Building2, Gem, HandCoins,
   CreditCard, AlertCircle, CheckCircle2, Clock, MoveRight,
   PiggyBank, RefreshCw, Gauge, BarChart3, Flame, BellRing,
-  Home, ArrowDownLeft,
+  Home, ArrowDownLeft, BarChart2, DollarSign, Layers,
 } from "lucide-react";
 import { AdminPageLayout } from "@/components/layout/Adminpagelayout";
 import { StatCard } from "@/components/ui/StatCard";
@@ -16,7 +16,7 @@ import { WalletCard } from "@/components/dashboard/WalletCard";
 import { SpendingPulseGraph } from "@/components/dashboard/SpendingPulseGraph";
 import { IncomeTrendGraph } from "@/components/dashboard/IncomeTrendGraph";
 import { BudgetComparisonGraph } from "@/components/dashboard/BudgetComparisonGraph";
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
 import { cn } from "@/lib/utils";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -1199,6 +1199,492 @@ function AllTimeStatsBar({ txData, totalBalance, sym, loading }: { txData: { tot
   );
 }
 
+// ─── Upcoming Payments Timeline ────────────────────────────────────────────────
+function UpcomingPaymentsWidget({ sym }: { sym: string }) {
+  const [items, setItems] = useState<any[]>([]);
+  const [busy, setBusy] = useState(true);
+  const [totals, setTotals] = useState({ emi: 0, sub: 0 });
+
+  useEffect(() => {
+    const tok = localStorage.getItem("token"); if (!tok) return;
+    const headers = { Authorization: `Bearer ${tok}` };
+    Promise.all([
+      fetch(`${API_BASE_URL}/emi/`, { headers }).then(r => r.json()).catch(() => ({ items: [] })),
+      fetch(`${API_BASE_URL}/my-subscriptions/`, { headers }).then(r => r.json()).catch(() => ({ items: [] })),
+    ]).then(([emiRes, subRes]) => {
+      const emiItems = (emiRes.items || [])
+        .filter((e: any) => e.is_active && e.months_remaining > 0 && e.days_until_payment != null)
+        .map((e: any) => ({
+          id: `emi-${e._id}`, type: "EMI", name: e.name, amount: e.monthly_emi,
+          daysLeft: e.days_until_payment, nextDate: e.next_payment_date,
+          sub: e.bank_name || e.category, outstanding: e.outstanding_balance,
+          progress: e.progress_pct,
+        }));
+      const subItems = (subRes.items || [])
+        .filter((s: any) => s.is_active && s.days_until_billing != null)
+        .map((s: any) => ({
+          id: `sub-${s._id}`, type: "Subscription", name: s.name, amount: s.amount,
+          daysLeft: s.days_until_billing, nextDate: s.next_billing_date,
+          sub: s.category, outstanding: null, progress: null,
+        }));
+      const merged = [...emiItems, ...subItems].sort((a, b) => a.daysLeft - b.daysLeft).slice(0, 12);
+      setItems(merged);
+      setTotals({
+        emi: emiItems.reduce((s: number, e: any) => s + e.amount, 0),
+        sub: subItems.reduce((s: number, e: any) => s + e.amount, 0),
+      });
+      setBusy(false);
+    });
+  }, []);
+
+  const urgencyStyle = (days: number) => {
+    if (days === 0) return { badge: "bg-red-500 text-white", row: "bg-red-500/5 border-l-2 border-l-red-500", label: "TODAY" };
+    if (days <= 3) return { badge: "bg-red-500/10 text-red-500 border border-red-500/30", row: "bg-red-500/[0.03] border-l-2 border-l-red-400", label: `${days}d` };
+    if (days <= 7) return { badge: "bg-amber-500/10 text-amber-500 border border-amber-500/30", row: "hover:bg-muted/20", label: `${days}d` };
+    return { badge: "bg-muted/30 text-muted-foreground border border-border/30", row: "hover:bg-muted/10", label: `${days}d` };
+  };
+
+  if (busy) return <div className="h-56 bg-muted/20 animate-pulse border border-border rounded-xl" />;
+  if (items.length === 0) return (
+    <div className="bg-card border border-border rounded-xl flex flex-col items-center justify-center p-8 text-center shadow-sm">
+      <BellRing className="w-8 h-8 text-muted-foreground/30 mb-3" />
+      <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">No upcoming payments</p>
+      <p className="text-[10px] text-muted-foreground/50 mt-1">Your schedule is clear</p>
+    </div>
+  );
+
+  const typeColor: Record<string, string> = {
+    "EMI": "bg-blue-500/10 text-blue-500 border border-blue-500/20",
+    "Subscription": "bg-purple-500/10 text-purple-500 border border-purple-500/20",
+  };
+
+  return (
+    <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/40 bg-muted/5">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 bg-orange-500/10 border border-orange-500/20 flex items-center justify-center rounded-lg text-orange-500">
+            <BellRing className="w-4 h-4" />
+          </div>
+          <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em]">Upcoming Payments</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-[9px] font-black px-2 py-0.5 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full">
+            EMI {sym}{Math.round(totals.emi).toLocaleString()}/mo
+          </span>
+          <span className="text-[9px] font-black px-2 py-0.5 bg-purple-500/10 text-purple-500 border border-purple-500/20 rounded-full">
+            Subs {sym}{Math.round(totals.sub).toLocaleString()}/mo
+          </span>
+        </div>
+      </div>
+
+      {/* Timeline list */}
+      <div className="divide-y divide-border/10">
+        {items.map(item => {
+          const style = urgencyStyle(item.daysLeft);
+          return (
+            <div key={item.id} className={`flex items-center gap-3 px-4 py-3 transition-colors ${style.row}`}>
+              {/* Day badge */}
+              <div className={`shrink-0 w-10 h-10 rounded-xl flex flex-col items-center justify-center text-center ${style.badge}`}>
+                <span className="text-[9px] font-black leading-none">{style.label}</span>
+                {item.daysLeft > 0 && <span className="text-[7px] font-bold opacity-60 leading-none mt-0.5">left</span>}
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <p className="text-[11px] font-black truncate text-foreground">{item.name}</p>
+                  <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md shrink-0 ${typeColor[item.type]}`}>{item.type}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <p className="text-[9px] font-bold text-muted-foreground/50 uppercase">{item.sub}</p>
+                  {item.nextDate && (
+                    <span className="text-[8px] text-muted-foreground/30">· {item.nextDate}</span>
+                  )}
+                </div>
+                {item.progress != null && (
+                  <div className="w-full bg-muted/20 h-1 rounded-full mt-1.5 overflow-hidden">
+                    <div className="h-full bg-blue-500 rounded-full" style={{ width: `${item.progress}%` }} />
+                  </div>
+                )}
+              </div>
+
+              {/* Amount */}
+              <div className="text-right shrink-0">
+                <p className="text-sm font-black tabular-nums text-foreground">{sym}{Math.round(item.amount).toLocaleString()}</p>
+                {item.outstanding != null && (
+                  <p className="text-[8px] font-bold text-red-400/70">{sym}{Math.round(item.outstanding).toLocaleString()} left</p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Footer */}
+      <div className="px-4 py-2.5 border-t border-border/20 bg-muted/5 flex items-center justify-between">
+        <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/40">{items.length} upcoming payments</span>
+        <span className="text-[9px] font-black tabular-nums text-foreground">
+          Total/mo: {sym}{Math.round(totals.emi + totals.sub).toLocaleString()}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Pending Debt Widget ────────────────────────────────────────────────────────
+function PendingDebtWidget({ sym }: { sym: string }) {
+  const [lent, setLent] = useState<any[]>([]);
+  const [borrowed, setBorrowed] = useState<any[]>([]);
+  const [busy, setBusy] = useState(true);
+
+  useEffect(() => {
+    const tok = localStorage.getItem("token"); if (!tok) return;
+    const headers = { Authorization: `Bearer ${tok}` };
+    Promise.all([
+      fetch(`${API_BASE_URL}/lend-borrow/list?direction=lent&is_settled=false`, { headers }).then(r => r.json()).catch(() => ({ items: [] })),
+      fetch(`${API_BASE_URL}/lend-borrow/list?direction=borrowed&is_settled=false`, { headers }).then(r => r.json()).catch(() => ({ items: [] })),
+    ]).then(([lR, bR]) => {
+      setLent((lR.items || []).sort((a: any, b: any) => b.amount - a.amount));
+      setBorrowed((bR.items || []).sort((a: any, b: any) => b.amount - a.amount));
+      setBusy(false);
+    });
+  }, []);
+
+  const daysSince = (d: string) => Math.floor((Date.now() - new Date(d).getTime()) / 86400000);
+
+  if (busy) return <div className="h-40 bg-muted/20 animate-pulse border border-border rounded-xl" />;
+  if (lent.length === 0 && borrowed.length === 0) return (
+    <div className="bg-card border border-border rounded-xl flex flex-col items-center justify-center p-8 text-center shadow-sm">
+      <HandCoins className="w-8 h-8 text-muted-foreground/30 mb-3" />
+      <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">No pending debt</p>
+      <p className="text-[10px] text-muted-foreground/50 mt-1">All lend/borrow items are settled</p>
+    </div>
+  );
+
+  const totalLent = lent.reduce((s, e) => s + e.amount, 0);
+  const totalBorrowed = borrowed.reduce((s, e) => s + e.amount, 0);
+
+  const Row = ({ e, color }: { e: any; color: "emerald" | "red" }) => {
+    const days = daysSince(e.date);
+    const isOld = days > 30;
+    return (
+      <div className={`flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/10 group/row`}>
+        <div className={`w-8 h-8 shrink-0 rounded-lg flex items-center justify-center font-black text-sm border
+          ${color === "emerald" ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-red-500/10 border-red-500/20 text-red-500"}`}>
+          {e.name.charAt(0).toUpperCase()}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] font-black truncate">{e.name}</p>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full ${isOld ? "bg-red-500/10 text-red-400" : "bg-muted/30 text-muted-foreground/50"}`}>
+              {days}d ago
+            </span>
+            {e.note && <span className="text-[8px] text-muted-foreground/30 truncate">{e.note}</span>}
+          </div>
+        </div>
+        <p className={`text-sm font-black tabular-nums shrink-0 ${color === "emerald" ? "text-emerald-500" : "text-red-500"}`}>
+          {sym}{Math.round(e.amount).toLocaleString()}
+        </p>
+      </div>
+    );
+  };
+
+  return (
+    <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+      {/* Header */}
+      <div className="grid grid-cols-2 divide-x divide-border/20 border-b border-border/40">
+        <div className="px-4 py-3 bg-emerald-500/[0.03] flex items-center gap-2">
+          <ArrowDownRight className="w-4 h-4 text-emerald-500" />
+          <div>
+            <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">They Owe Me</p>
+            <p className="text-base font-black tabular-nums">{sym}{Math.round(totalLent).toLocaleString()}</p>
+          </div>
+        </div>
+        <div className="px-4 py-3 bg-red-500/[0.03] flex items-center justify-end gap-2">
+          <div className="text-right">
+            <p className="text-[9px] font-black text-red-500 uppercase tracking-widest">I Owe Them</p>
+            <p className="text-base font-black tabular-nums text-red-500">{sym}{Math.round(totalBorrowed).toLocaleString()}</p>
+          </div>
+          <ArrowUpRight className="w-4 h-4 text-red-500" />
+        </div>
+      </div>
+
+      {/* Rows */}
+      <div className="max-h-[260px] overflow-y-auto custom-scrollbar">
+        {lent.length > 0 && (
+          <>
+            <div className="px-4 pt-2 pb-1">
+              <span className="text-[8px] font-black uppercase tracking-widest text-emerald-500/60">Receivables ({lent.length})</span>
+            </div>
+            {lent.map(e => <Row key={e._id} e={e} color="emerald" />)}
+          </>
+        )}
+        {borrowed.length > 0 && (
+          <>
+            <div className="px-4 pt-2 pb-1 border-t border-border/10 mt-1">
+              <span className="text-[8px] font-black uppercase tracking-widest text-red-500/60">Payables ({borrowed.length})</span>
+            </div>
+            {borrowed.map(e => <Row key={e._id} e={e} color="red" />)}
+          </>
+        )}
+      </div>
+
+      {/* Net */}
+      <div className="px-4 py-2.5 border-t border-border/20 bg-muted/5 flex items-center justify-between">
+        <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/40">Net Position</span>
+        <span className={`text-sm font-black tabular-nums ${totalLent - totalBorrowed >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+          {totalLent - totalBorrowed >= 0 ? "+" : ""}{sym}{Math.round(Math.abs(totalLent - totalBorrowed)).toLocaleString()}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Goals Progress Widget ────────────────────────────────────────────────────
+function GoalsWidget({ sym }: { sym: string }) {
+  const [goals, setGoals] = useState<any[]>([]);
+  const [metrics, setMetrics] = useState<any>(null);
+  const [busy, setBusy] = useState(true);
+
+  useEffect(() => {
+    const tok = localStorage.getItem("token"); if (!tok) return;
+    fetch(`${API_BASE_URL}/goals/`, { headers: { Authorization: `Bearer ${tok}` } })
+      .then(r => r.json())
+      .then(j => { setGoals(j.goals || []); setMetrics(j.metrics || null); setBusy(false); })
+      .catch(() => setBusy(false));
+  }, []);
+
+  if (busy) return <div className="h-48 bg-muted/20 animate-pulse border border-border rounded-xl" />;
+  if (!goals || goals.length === 0) return (
+    <div className="bg-card border border-border rounded-xl flex flex-col items-center justify-center p-8 text-center shadow-sm">
+      <Target className="w-8 h-8 text-muted-foreground/30 mb-3" />
+      <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">No savings goals</p>
+      <p className="text-[10px] text-muted-foreground/50 mt-1">Set up goals to track your progress</p>
+    </div>
+  );
+
+  return (
+    <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/40 bg-muted/5">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 bg-violet-500/10 border border-violet-500/20 flex items-center justify-center rounded-lg text-violet-500">
+            <Target className="w-4 h-4" />
+          </div>
+          <span className="text-[10px] font-black text-violet-500 uppercase tracking-[0.2em]">Savings Goals</span>
+        </div>
+        {metrics && (
+          <div className="flex items-center gap-3">
+            <span className="text-[9px] font-black text-muted-foreground/40 uppercase tracking-widest">
+              Monthly savings: <span className="text-emerald-500">{sym}{Math.round(metrics.current_monthly_savings).toLocaleString()}</span>
+            </span>
+          </div>
+        )}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 p-4">
+        {goals.map((g: any) => {
+          const pct = Math.min(100, g.percentage || 0);
+          const radius = 28;
+          const circumference = 2 * Math.PI * radius;
+          const offset = circumference - (pct / 100) * circumference;
+          const isComplete = pct >= 100;
+          return (
+            <div key={g.id} className={cn(
+              "relative flex flex-col items-center p-4 border rounded-xl gap-2 group hover:-translate-y-1 transition-all duration-300",
+              isComplete ? "border-emerald-500/30 bg-emerald-500/5" : "border-border/40 bg-card hover:border-violet-500/30"
+            )}>
+              {/* Radial ring */}
+              <div className="relative w-16 h-16">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 72 72">
+                  <circle cx="36" cy="36" r={radius} fill="none" stroke="currentColor" strokeWidth="5" className="text-muted/20" />
+                  <circle
+                    cx="36" cy="36" r={radius} fill="none"
+                    stroke={isComplete ? "#10b981" : "#8b5cf6"}
+                    strokeWidth="5" strokeLinecap="round"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={offset}
+                    style={{ transition: "stroke-dashoffset 1s ease" }}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  {isComplete
+                    ? <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                    : <span className="text-[11px] font-black text-foreground">{Math.round(pct)}%</span>
+                  }
+                </div>
+              </div>
+              <p className="text-[11px] font-black text-center leading-tight truncate w-full text-center">{g.name}</p>
+              <div className="text-center">
+                <p className={cn("text-sm font-black tabular-nums", isComplete ? "text-emerald-500" : "text-violet-500")}>
+                  {sym}{Math.round(g.current_amount).toLocaleString()}
+                </p>
+                <p className="text-[8px] font-bold text-muted-foreground/40 uppercase">of {sym}{Math.round(g.target_amount).toLocaleString()}</p>
+              </div>
+              {g.eta_date && !isComplete && (
+                <span className="text-[8px] font-black px-2 py-0.5 bg-violet-500/10 text-violet-500 border border-violet-500/20 rounded-full uppercase tracking-widest">
+                  ETA: {g.eta_date}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Income Sources Widget ─────────────────────────────────────────────────────
+function IncomeSourcesWidget({ sym }: { sym: string }) {
+  const [items, setItems] = useState<any[]>([]);
+  const [busy, setBusy] = useState(true);
+
+  useEffect(() => {
+    const tok = localStorage.getItem("token"); if (!tok) return;
+    fetch(`${API_BASE_URL}/income/`, { headers: { Authorization: `Bearer ${tok}` } })
+      .then(r => r.json())
+      .then(j => {
+        // Group by source
+        const map: Record<string, { source: string; total: number; count: number; freq: string }> = {};
+        for (const e of (j.items || [])) {
+          if (!map[e.source]) map[e.source] = { source: e.source, total: 0, count: 0, freq: e.frequency };
+          map[e.source].total += e.amount;
+          map[e.source].count += 1;
+        }
+        const sorted = Object.values(map).sort((a, b) => b.total - a.total).slice(0, 8);
+        setItems(sorted);
+        setBusy(false);
+      })
+      .catch(() => setBusy(false));
+  }, []);
+
+  if (busy) return <div className="h-48 bg-muted/20 animate-pulse border border-border rounded-xl" />;
+  if (!items || items.length === 0) return (
+    <div className="bg-card border border-border rounded-xl flex flex-col items-center justify-center p-8 text-center shadow-sm">
+      <DollarSign className="w-8 h-8 text-muted-foreground/30 mb-3" />
+      <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">No income data</p>
+      <p className="text-[10px] text-muted-foreground/50 mt-1">Add income entries to see breakdown</p>
+    </div>
+  );
+
+  const COLORS = ["#10b981", "#3b82f6", "#8b5cf6", "#f59e0b", "#06b6d4", "#ec4899", "#f97316", "#6366f1"];
+  const maxVal = items[0]?.total || 1;
+
+  return (
+    <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/40 bg-muted/5">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center rounded-lg text-emerald-500">
+            <DollarSign className="w-4 h-4" />
+          </div>
+          <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">Income Sources</span>
+        </div>
+        <span className="text-[9px] font-black text-muted-foreground/40 uppercase tracking-widest">{items.length} sources</span>
+      </div>
+      <div className="p-4 flex flex-col gap-3">
+        {items.map((item, i) => (
+          <div key={item.source} className="flex items-center gap-3 group/bar">
+            <div className="w-2 h-2 rounded-full shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-[10px] font-black truncate text-foreground">{item.source}</p>
+                <p className="text-[10px] font-black tabular-nums shrink-0 ml-2" style={{ color: COLORS[i % COLORS.length] }}>
+                  {sym}{item.total >= 1000 ? new Intl.NumberFormat("en-IN", { notation: "compact", maximumFractionDigits: 1 }).format(item.total) : item.total.toLocaleString()}
+                </p>
+              </div>
+              <div className="w-full bg-muted/20 h-1.5 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-1000"
+                  style={{ width: `${(item.total / maxVal) * 100}%`, background: COLORS[i % COLORS.length] }}
+                />
+              </div>
+              <p className="text-[8px] text-muted-foreground/40 mt-0.5 uppercase font-bold">{item.freq} · {item.count} entries</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Subscription Category Widget ─────────────────────────────────────────────
+function SubCategoryWidget({ sym }: { sym: string }) {
+  const [cats, setCats] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
+  const [busy, setBusy] = useState(true);
+
+  useEffect(() => {
+    const tok = localStorage.getItem("token"); if (!tok) return;
+    fetch(`${API_BASE_URL}/my-subscriptions/`, { headers: { Authorization: `Bearer ${tok}` } })
+      .then(r => r.json())
+      .then(j => {
+        const map: Record<string, number> = {};
+        for (const s of (j.items || []).filter((s: any) => s.is_active)) {
+          map[s.category] = (map[s.category] || 0) + s.amount;
+        }
+        const sorted = Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+        setCats(sorted);
+        setTotal(sorted.reduce((s, x) => s + x.value, 0));
+        setBusy(false);
+      })
+      .catch(() => setBusy(false));
+  }, []);
+
+  if (busy) return <div className="h-40 bg-muted/20 animate-pulse border border-border rounded-xl" />;
+  if (!cats || cats.length === 0) return (
+    <div className="bg-card border border-border rounded-xl flex flex-col items-center justify-center p-8 text-center shadow-sm">
+      <Layers className="w-8 h-8 text-muted-foreground/30 mb-3" />
+      <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">No subscriptions</p>
+      <p className="text-[10px] text-muted-foreground/50 mt-1">Add subscriptions to see category split</p>
+    </div>
+  );
+
+  const COLORS = ["#8b5cf6", "#3b82f6", "#10b981", "#f59e0b", "#ec4899", "#f97316", "#06b6d4", "#6366f1"];
+
+  return (
+    <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/40 bg-muted/5">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 bg-purple-500/10 border border-purple-500/20 flex items-center justify-center rounded-lg text-purple-500">
+            <Layers className="w-4 h-4" />
+          </div>
+          <span className="text-[10px] font-black text-purple-500 uppercase tracking-[0.2em]">Subscriptions by Category</span>
+        </div>
+        <span className="text-[9px] font-black text-muted-foreground/40 uppercase tracking-widest">
+          {sym}{Math.round(total).toLocaleString()}/mo
+        </span>
+      </div>
+      <div className="flex items-center gap-4 p-4">
+        {/* Donut */}
+        <div className="relative shrink-0" style={{ width: 100, height: 100 }}>
+          <ResponsiveContainer width={100} height={100}>
+            <PieChart>
+              <Pie data={cats} cx="50%" cy="50%" innerRadius={28} outerRadius={44} paddingAngle={2} dataKey="value" startAngle={90} endAngle={-270}>
+                {cats.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} stroke="transparent" />)}
+              </Pie>
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            <p className="text-[9px] font-black tabular-nums">{sym}{Math.round(total).toLocaleString()}</p>
+            <p className="text-[7px] font-black uppercase text-muted-foreground/40">total</p>
+          </div>
+        </div>
+        {/* Legend */}
+        <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+          {cats.map((c, i) => (
+            <div key={c.name} className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <div className="w-2 h-2 rounded-full shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
+                <p className="text-[9px] font-bold truncate text-muted-foreground">{c.name}</p>
+              </div>
+              <p className="text-[9px] font-black tabular-nums shrink-0">{sym}{Math.round(c.value).toLocaleString()}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
@@ -1398,7 +1884,18 @@ export default function DashboardPage() {
               <RecentList txs={recentCredit} sym={sym} loading={loading} title="Recent Income" sub="Last 10 transactions" color="green" />
             </div>
 
-            {/* ROW 6: Subscriptions */}
+            {/* ROW 6: Upcoming Payments + Pending Debt */}
+            <UpcomingPaymentsWidget sym={sym} />
+            <PendingDebtWidget sym={sym} />
+
+            {/* ROW 7: Goals + Income Sources + Subscriptions by Category */}
+            <GoalsWidget sym={sym} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <IncomeSourcesWidget sym={sym} />
+              <SubCategoryWidget sym={sym} />
+            </div>
+
+            {/* ROW 8: Subscriptions */}
             <SubscriptionsWidget sym={sym} />
 
           </div>

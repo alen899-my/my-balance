@@ -119,7 +119,7 @@ export function StatCard({
             {title}
           </span>
           <div className={cn("w-9 h-9 flex items-center justify-center rounded-full transition-transform group-hover:scale-110", config.bg, config.text)}>
-            {React.cloneElement(icon as React.ReactElement, { className: "w-4 h-4" })}
+            {React.cloneElement(icon as React.ReactElement<any>, { className: "w-4 h-4" })}
           </div>
         </div>
 
