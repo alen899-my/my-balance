@@ -10,116 +10,176 @@ interface StatCardProps {
   colorType?: "primary" | "emerald" | "destructive" | "amber" | "indigo" | "violet" | "default";
   loading?: boolean;
   tooltip?: string;
+  data?: number[];
 }
 
-export function StatCard({ 
-  title, 
+export function StatCard({
+  title,
   subtitle,
-  value, 
-  icon, 
-  colorType = "default", 
-  loading, 
-  tooltip 
+  value,
+  icon,
+  colorType = "default",
+  loading,
+  tooltip,
+  data = [],
 }: StatCardProps) {
 
-  const wrapperClasses = {
-    primary: "bg-gradient-to-br from-primary/5 via-card to-background border-primary/20 hover:border-primary/40 dark:from-primary/10",
-    emerald: "bg-gradient-to-br from-emerald-500/5 via-card to-background border-emerald-500/20 hover:border-emerald-500/40 dark:from-emerald-500/10",
-    destructive: "bg-gradient-to-br from-destructive/5 via-card to-background border-destructive/20 hover:border-destructive/40 dark:from-destructive/10",
-    amber: "bg-gradient-to-br from-amber-500/5 via-card to-background border-amber-500/20 hover:border-amber-500/40 dark:from-amber-500/10",
-    indigo: "bg-gradient-to-br from-indigo-500/5 via-card to-background border-indigo-500/20 hover:border-indigo-500/40 dark:from-indigo-500/10",
-    violet: "bg-gradient-to-br from-violet-500/5 via-card to-background border-violet-500/20 hover:border-violet-500/40 dark:from-violet-500/10",
-    default: "bg-gradient-to-br from-muted/5 via-card to-background border-border hover:border-muted-foreground/30 dark:from-muted/10",
+  const colorConfig = {
+    primary: {
+      border: "border-primary/10",
+      bg: "bg-blue-500/10",
+      text: "text-blue-500",
+      sparkline: "#3b82f6"
+    },
+    emerald: {
+      border: "border-emerald-500/10",
+      bg: "bg-emerald-500/10",
+      text: "text-emerald-500",
+      sparkline: "#10b981"
+    },
+    destructive: {
+      border: "border-red-500/10",
+      bg: "bg-red-500/10",
+      text: "text-red-500",
+      sparkline: "#ef4444"
+    },
+    amber: {
+      border: "border-amber-500/10",
+      bg: "bg-amber-500/10",
+      text: "text-amber-500",
+      sparkline: "#f59e0b"
+    },
+    indigo: {
+      border: "border-indigo-500/10",
+      bg: "bg-indigo-500/10",
+      text: "text-indigo-500",
+      sparkline: "#6366f1"
+    },
+    violet: {
+      border: "border-violet-500/10",
+      bg: "bg-violet-500/10",
+      text: "text-violet-500",
+      sparkline: "#8b5cf6"
+    },
+    default: {
+      border: "border-border/50",
+      bg: "bg-muted/10",
+      text: "text-muted-foreground",
+      sparkline: "#94a3b8"
+    }
   };
 
-  const topAccentClasses = {
-    primary: "bg-primary",
-    emerald: "bg-emerald-500",
-    destructive: "bg-destructive",
-    amber: "bg-amber-500",
-    indigo: "bg-indigo-500",
-    violet: "bg-violet-500",
-    default: "bg-muted-foreground",
+  const config = colorConfig[colorType];
+
+  // Helper to generate dynamic smooth path
+  const generatePath = (points: number[]) => {
+    if (!points || points.length < 2) {
+      // Default placeholder path if no data
+      return "M 0 50 Q 10 40 20 50 T 40 30 T 60 50 T 80 20 T 100 40";
+    }
+    
+    const max = Math.max(...points);
+    const min = Math.min(...points);
+    const range = max - min;
+    
+    const h = 25; // actual graph height
+    const off = 15; // top offset
+    
+    const pts = points.map((p, i) => {
+      const x = (i / (points.length - 1)) * 100;
+      const normalizedY = range === 0 ? 0.5 : (p - min) / range;
+      const y = off + (h - normalizedY * h);
+      return { x, y };
+    });
+
+    let d = `M ${pts[0].x} ${pts[0].y}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const curr = pts[i];
+      const next = pts[i + 1];
+      const midX = (curr.x + next.x) / 2;
+      d += ` Q ${curr.x} ${curr.y}, ${midX} ${(curr.y + next.y) / 2} T ${next.x} ${next.y}`;
+    }
+    return d;
   };
 
-  const glowClasses = {
-    primary: "bg-primary",
-    emerald: "bg-emerald-500",
-    destructive: "bg-destructive",
-    amber: "bg-amber-500",
-    indigo: "bg-indigo-500",
-    violet: "bg-violet-500",
-    default: "bg-muted-foreground",
-  };
-
-  const iconColorClasses = {
-    primary: "bg-primary/10 text-primary border-primary/20",
-    emerald: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 dark:text-emerald-400",
-    destructive: "bg-destructive/10 text-destructive border-destructive/20 dark:text-destructive",
-    amber: "bg-amber-500/10 text-amber-500 border-amber-500/20 dark:text-amber-400",
-    indigo: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20 dark:text-indigo-400",
-    violet: "bg-violet-500/10 text-violet-500 border-violet-500/20 dark:text-violet-400",
-    default: "bg-muted/10 text-muted-foreground border-border",
-  };
-
-  const textColorClasses = {
-    primary: "text-foreground drop-shadow-sm",
-    emerald: "text-emerald-600 dark:text-emerald-400 drop-shadow-sm",
-    destructive: "text-destructive drop-shadow-sm",
-    amber: "text-foreground drop-shadow-sm", 
-    indigo: "text-indigo-600 dark:text-indigo-400 drop-shadow-sm",
-    violet: "text-violet-600 dark:text-violet-400 drop-shadow-sm",
-    default: "text-foreground drop-shadow-sm"
-  };
+  const sparklinePath = generatePath(data);
 
   return (
-    <div 
+    <div
       className={cn(
-        "w-full h-full text-card-foreground p-5 md:p-6 rounded-none flex flex-col justify-between min-h-[130px]",
-        "border border-white/5 shadow-md hover:shadow-xl transition-all duration-500",
-        "relative group overflow-hidden hover:-translate-y-1",
-        wrapperClasses[colorType]
+        "relative flex flex-col bg-white dark:bg-zinc-900 border transition-all duration-300 hover:shadow-lg group h-[160px]",
+        config.border,
+        "rounded-2xl"
       )}
+      title={tooltip}
     >
-      {/* Accent top line */}
-      <div className={cn(
-        "absolute top-0 left-0 right-0 h-[3px] opacity-40 transition-opacity duration-500 group-hover:opacity-100",
-        topAccentClasses[colorType]
-      )} />
+      <div className="flex flex-col flex-1 p-5 pb-0 relative z-10">
+        <div className="flex items-start justify-between w-full">
+          <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/50">
+            {title}
+          </span>
+          <div className={cn("w-9 h-9 flex items-center justify-center rounded-full transition-transform group-hover:scale-110", config.bg, config.text)}>
+            {React.cloneElement(icon as React.ReactElement, { className: "w-4 h-4" })}
+          </div>
+        </div>
 
-      {/* Decorative ambient glow */}
-      <div className={cn(
-        "absolute -bottom-8 -right-8 w-32 h-32 blur-[50px] rounded-full pointer-events-none opacity-20 transition-opacity duration-500 group-hover:opacity-40",
-        glowClasses[colorType]
-      )} />
-
-      <div className="flex items-start justify-between mb-2 relative z-10">
-        <div className="flex flex-col gap-1">
-          <h3 className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.15em] opacity-80">{title}</h3>
+        <div className="flex flex-col mt-1">
+          {loading ? (
+            <div className="h-8 w-24 bg-muted/20 animate-pulse rounded" />
+          ) : (
+            <h2 className={cn(
+              "font-black tracking-tighter text-foreground leading-none transition-all duration-300",
+              typeof value === "string" && value.length > 12 ? "text-lg sm:text-xl" : 
+              typeof value === "string" && value.length > 9 ? "text-xl sm:text-2xl" : 
+              "text-2xl sm:text-[28px]"
+            )}>
+              {value}
+            </h2>
+          )}
           {subtitle && (
-            <p className="text-[10px] font-bold text-foreground/60 uppercase tracking-tight line-clamp-1 max-w-[140px]">{subtitle}</p>
+            <p className="text-[10px] font-bold text-muted-foreground/40 mt-2 uppercase tracking-wider">
+              {subtitle}
+            </p>
           )}
         </div>
-        <div className={cn(
-          "w-10 h-10 rounded-none flex items-center justify-center border shadow-sm transition-colors duration-300", 
-          iconColorClasses[colorType]
-        )}>
-          {icon}
-        </div>
       </div>
-      
-      <div className="flex-1 flex items-end relative z-10 mt-4">
-        {loading ? (
-          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground/50 mb-1" />
-        ) : (
-          <span 
-            className={cn("text-[2rem] leading-none font-black tabular-nums tracking-tighter truncate w-full", textColorClasses[colorType])} 
-            title={tooltip}
-          >
-            {value}
-          </span>
-        )}
+
+      <div className="h-16 w-full mt-auto relative overflow-hidden rounded-b-2xl">
+        <svg className="w-full h-full" viewBox="0 0 100 60" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id={`grad-${colorType}`} x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor={config.sparkline} stopOpacity="0.1" />
+              <stop offset="100%" stopColor={config.sparkline} stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          
+          <path
+            d={`${sparklinePath} L 100 60 L 0 60 Z`}
+            fill={`url(#grad-${colorType})`}
+          />
+
+          <path
+            d={sparklinePath}
+            fill="none"
+            stroke={config.sparkline}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="pulse-path"
+          />
+        </svg>
       </div>
+
+      <style jsx>{`
+        .pulse-path {
+          stroke-dasharray: 200;
+          animation: pulse-flow 10s linear infinite;
+        }
+        @keyframes pulse-flow {
+          from { stroke-dashoffset: 400; }
+          to { stroke-dashoffset: 0; }
+        }
+      `}</style>
     </div>
   );
 }

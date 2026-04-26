@@ -1,10 +1,8 @@
 "use client";
 
 import React, { useMemo, useState, useEffect } from "react";
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-} from "recharts";
-import { Target, Search, Activity } from "lucide-react";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { Target, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BudgetComparisonGraphProps {
@@ -12,17 +10,6 @@ interface BudgetComparisonGraphProps {
   currencySymbol: string;
   loading: boolean;
 }
-
-const CustomBar = (props: any) => {
-  const { fill, x, y, width, height } = props;
-  if (!height || height <= 0) return null;
-  return (
-    <g>
-      <rect x={x} y={y} width={width} height={height} fill={fill} rx={3} ry={3} />
-      <rect x={x} y={y} width={width} height={3} fill="white" fillOpacity={0.3} rx={3} />
-    </g>
-  );
-};
 
 export function BudgetComparisonGraph({ budgetData, currencySymbol, loading }: BudgetComparisonGraphProps) {
   const availableMonths = useMemo<string[]>(() => {
@@ -47,6 +34,11 @@ export function BudgetComparisonGraph({ budgetData, currencySymbol, loading }: B
     const [yr, mo] = v.split("-");
     return `${Number(mo)}/${yr}`;
   };
+  const monthLabel = (v: string) => {
+    if (!v) return "";
+    const [yr, mo] = v.split("-");
+    return new Date(Number(yr), Number(mo) - 1, 1).toLocaleString("default", { month: "long", year: "numeric" });
+  };
 
   const defaultInputVal = useMemo(() => {
     if (availableMonths.length === 0) return "";
@@ -62,13 +54,18 @@ export function BudgetComparisonGraph({ budgetData, currencySymbol, loading }: B
     if (!budgetData || budgetData.length === 0) return [];
     return budgetData
       .filter(d => !selectedKey || d.month === selectedKey)
-      .map(d => ({ ...d, income: Number(d.income || 0), need: Number(d.need || 0), label: "Budget" }));
+      .map(d => ({ ...d, income: Number(d.income || 0), need: Number(d.need || 0) }));
   }, [budgetData, selectedKey]);
 
+  const totalBudget = data.reduce((a, d) => a + d.need, 0);
   const totalIncome = data.reduce((a, d) => a + d.income, 0);
-  const totalNeed = data.reduce((a, d) => a + d.need, 0);
-  const surplus = totalIncome - totalNeed;
+  const surplus = totalIncome - totalBudget;
+  const usedPct = totalIncome > 0 ? Math.min(100, Math.round((totalBudget / totalIncome) * 100)) : 0;
 
+  const pieData = [
+    { name: "Budget", value: totalBudget > 0 ? totalBudget : 0, color: "#8b5cf6" },
+    { name: "Income", value: totalIncome > 0 ? totalIncome : 0, color: "#10b981" },
+  ];
   const minVal = availableMonths.length ? toInputVal(availableMonths[0]) : "";
   const maxVal = availableMonths.length ? toInputVal(availableMonths[availableMonths.length - 1]) : "";
 
@@ -80,7 +77,7 @@ export function BudgetComparisonGraph({ budgetData, currencySymbol, loading }: B
   );
 
   return (
-    <div className="w-full bg-gradient-to-br from-violet-500/5 via-card to-background border border-border flex flex-col overflow-hidden group">
+    <div className="w-full bg-card border border-border flex flex-col overflow-hidden group">
       {/* Header */}
       <div className="px-4 py-3 border-b border-border/50 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
@@ -89,7 +86,7 @@ export function BudgetComparisonGraph({ budgetData, currencySymbol, loading }: B
           </div>
           <div className="min-w-0">
             <h3 className="text-[10px] font-black text-violet-500 uppercase tracking-[0.2em] leading-none">Budget vs Income</h3>
-            <p className="text-[8px] text-muted-foreground/50 uppercase font-bold mt-0.5 hidden sm:block">Monthly plan vs what came in</p>
+            <p className="text-[8px] text-muted-foreground/50 uppercase font-bold mt-0.5">Monthly plan vs what came in</p>
           </div>
         </div>
         <input
@@ -106,70 +103,76 @@ export function BudgetComparisonGraph({ budgetData, currencySymbol, loading }: B
 
       {/* Summary pills */}
       <div className="grid grid-cols-3 border-b border-border/20">
-        <div className="px-2 sm:px-3 py-2 border-r border-border/20 min-w-0">
-          <p className="text-[7px] font-black text-emerald-500 uppercase tracking-widest">In</p>
-          <p className="text-xs sm:text-sm font-black tabular-nums break-all">{currencySymbol}{totalIncome.toLocaleString()}</p>
+        <div className="px-3 py-2 border-r border-border/20 min-w-0">
+          <p className="text-[7px] font-black text-emerald-500 uppercase tracking-widest">Budget</p>
+          <p className="text-xs font-black tabular-nums break-all">{currencySymbol}{totalBudget.toLocaleString()}</p>
         </div>
-        <div className="px-2 sm:px-3 py-2 border-r border-border/20 min-w-0">
+        <div className="px-3 py-2 border-r border-border/20 min-w-0">
           <p className="text-[7px] font-black text-violet-500 uppercase tracking-widest">Planned</p>
-          <p className="text-xs sm:text-sm font-black tabular-nums break-all">{currencySymbol}{totalNeed.toLocaleString()}</p>
+          <p className="text-xs font-black tabular-nums break-all">{currencySymbol}{totalIncome.toLocaleString()}</p>
         </div>
-        <div className="px-2 sm:px-3 py-2 min-w-0">
+        <div className="px-3 py-2 min-w-0">
           <p className="text-[7px] font-black text-muted-foreground/40 uppercase tracking-widest">{surplus >= 0 ? "Left" : "Short"}</p>
-          <p className={cn("text-xs sm:text-sm font-black tabular-nums break-all", surplus >= 0 ? "text-emerald-500" : "text-destructive")}>
+          <p className={cn("text-xs font-black tabular-nums break-all", surplus >= 0 ? "text-emerald-500" : "text-destructive")}>
             {surplus >= 0 ? "+" : "-"}{currencySymbol}{Math.abs(surplus).toLocaleString()}
           </p>
         </div>
       </div>
 
-      {/* Chart */}
-      <div className="h-44 w-full px-2 py-3">
-        {data.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 2, right: 4, left: -22, bottom: 0 }} barGap={10} barCategoryGap="40%">
-              <defs>
-                <linearGradient id="bgIncome" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10b981" /><stop offset="100%" stopColor="#065f46" />
-                </linearGradient>
-                <linearGradient id="bgNeed" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#8b5cf6" /><stop offset="100%" stopColor="#4c1d95" />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="2 4" vertical={false} stroke="hsla(var(--border),0.4)" />
-              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: "currentColor", fontSize: 8, fontWeight: 900, opacity: 0.3 }} dy={6} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fill: "currentColor", fontSize: 7, fontWeight: 700, opacity: 0.3 }}
-                tickFormatter={v => `${currencySymbol}${Intl.NumberFormat("en-US", { notation: "compact" }).format(v)}`} width={40} />
-              <Tooltip cursor={false}
-                content={({ active, payload }) => {
-                  if (!active || !payload || payload.length < 2) return null;
-                  const inc = Number(payload[0]?.value || 0);
-                  const exp = Number(payload[1]?.value || 0);
-                  return (
-                    <div className="bg-card/80 backdrop-blur-md border border-border/50 p-3 shadow-2xl min-w-[150px] border-l-4 border-l-violet-500 text-xs">
-                      <p className="text-[9px] font-black uppercase text-muted-foreground mb-2">{selectedKey}</p>
-                      <div className="space-y-1">
-                        <div className="flex justify-between gap-4"><span className="text-emerald-500 font-bold">In</span><span className="font-black">{currencySymbol}{inc.toLocaleString()}</span></div>
-                        <div className="flex justify-between gap-4"><span className="text-violet-500 font-bold">Plan</span><span className="font-black">{currencySymbol}{exp.toLocaleString()}</span></div>
-                        <div className="flex justify-between gap-4 pt-1 border-t border-border/40">
-                          <span className="font-black">Balance</span>
-                          <span className={cn("font-black", inc >= exp ? "text-emerald-400" : "text-red-400")}>
-                            {inc >= exp ? "+" : "-"}{currencySymbol}{Math.abs(inc - exp).toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                }}
-              />
-              <Bar name="Income" dataKey="income" fill="url(#bgIncome)" shape={<CustomBar />} animationDuration={900} />
-              <Bar name="Need" dataKey="need" fill="url(#bgNeed)" shape={<CustomBar />} animationDuration={900} />
-            </BarChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="h-full flex flex-col items-center justify-center gap-2 opacity-20">
-            <Search className="w-8 h-8" />
-            <p className="text-[10px] font-black uppercase tracking-widest">No data</p>
+      {/* Donut Chart */}
+      <div className="flex-1 flex flex-col items-center justify-center px-2 py-2 relative min-h-[150px]">
+        {totalBudget === 0 && totalIncome === 0 ? (
+          <div className="flex flex-col items-center justify-center opacity-20 gap-2">
+            <Target className="w-8 h-8" />
+            <p className="text-[9px] font-black uppercase tracking-widest">No data</p>
           </div>
+        ) : (
+          <>
+            <ResponsiveContainer width="100%" height={140}>
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={42}
+                  outerRadius={60}
+                  paddingAngle={3}
+                  dataKey="value"
+                  startAngle={90}
+                  endAngle={-270}
+                >
+                  {pieData.map((entry, index) => (
+                    <Cell key={index} fill={entry.color} stroke="transparent" />
+                  ))}
+                </Pie>
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null;
+                    const d = payload[0];
+                    return (
+                      <div className="bg-card border border-border/50 p-2 text-[10px] font-black shadow-xl">
+                        <span style={{ color: d.payload.color }}>{d.name}</span>: {currencySymbol}{Number(d.value).toLocaleString()}
+                      </div>
+                    );
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            {/* Center label */}
+            <div className="absolute flex flex-col items-center justify-center pointer-events-none" style={{ top: "50%", transform: "translateY(-50%)" }}>
+              <span className="text-lg font-black tabular-nums text-violet-500 leading-none">{usedPct}%</span>
+              <span className="text-[7px] font-black uppercase tracking-widest text-muted-foreground/50 mt-0.5">Budget Used</span>
+            </div>
+            {/* Legend */}
+            <div className="flex items-center gap-4 mt-1">
+              {pieData.map(d => (
+                <div key={d.name} className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full" style={{ background: d.color }} />
+                  <span className="text-[9px] font-bold text-muted-foreground/60 uppercase">{d.name}</span>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

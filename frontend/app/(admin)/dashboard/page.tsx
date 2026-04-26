@@ -8,6 +8,7 @@ import {
   Sparkles, Star, Skull, Crosshair, Building2, Gem, HandCoins,
   CreditCard, AlertCircle, CheckCircle2, Clock, MoveRight,
   PiggyBank, RefreshCw, Gauge, BarChart3, Flame, BellRing,
+  Home, ArrowDownLeft,
 } from "lucide-react";
 import { AdminPageLayout } from "@/components/layout/Adminpagelayout";
 import { StatCard } from "@/components/ui/StatCard";
@@ -15,6 +16,7 @@ import { WalletCard } from "@/components/dashboard/WalletCard";
 import { SpendingPulseGraph } from "@/components/dashboard/SpendingPulseGraph";
 import { IncomeTrendGraph } from "@/components/dashboard/IncomeTrendGraph";
 import { BudgetComparisonGraph } from "@/components/dashboard/BudgetComparisonGraph";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { cn } from "@/lib/utils";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -94,18 +96,18 @@ function IndividualMetalCard({ g, sym, busy }: { g: any; sym: string; busy?: boo
 
   if (busy) {
     return (
-      <div className={cn("h-32 border border-border bg-muted/20 animate-pulse")} />
+      <div className="h-32 border border-border bg-muted/20 animate-pulse rounded-xl" />
     );
   }
 
   return (
     <div className={cn(
-      "relative h-32 overflow-hidden border flex flex-col justify-between p-4 group transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl cursor-default",
+      "relative h-32 overflow-hidden border flex flex-col justify-between p-4 group transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl cursor-default rounded-xl shadow-sm",
       `bg-gradient-to-br ${cfg.bg}`, cfg.border
     )}>
       {/* Dynamic Shine Effect */}
       <div className={cn("absolute inset-0 bg-gradient-to-br opacity-50 pointer-events-none", cfg.shine)} />
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-xl">
         <div className="absolute -inset-x-full top-0 bottom-0 w-[200%] translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-[1.5s] ease-in-out bg-gradient-to-r from-transparent via-white/10 to-transparent" />
       </div>
 
@@ -117,7 +119,7 @@ function IndividualMetalCard({ g, sym, busy }: { g: any; sym: string; busy?: boo
       <div className="relative z-10 flex justify-between items-start">
         <div className="flex flex-col">
           <div className="flex items-center gap-2 mb-1">
-            <div className={cn("w-7 h-7 flex items-center justify-center border text-base bg-black/40 backdrop-blur-md", cfg.border)}>
+            <div className={cn("w-7 h-7 flex items-center justify-center border text-base bg-black/40 backdrop-blur-md rounded-lg", cfg.border)}>
               {cfg.icon}
             </div>
             <span className={cn("text-[9px] font-black uppercase tracking-[0.2em]", cfg.text)}>{cfg.label}</span>
@@ -129,18 +131,18 @@ function IndividualMetalCard({ g, sym, busy }: { g: any; sym: string; busy?: boo
           </div>
         </div>
         <div className="text-right">
-          <span className={cn("text-[10px] font-black tabular-nums flex items-center justify-end gap-0.5", isGain ? "text-emerald-400" : "text-red-400")}>
+          <span className={cn("text-[10px] font-black tabular-nums flex items-center justify-end gap-0.5 px-2 py-0.5 rounded-full", isGain ? "bg-emerald-500/20 text-emerald-400" : "bg-red-400/20 text-red-400")}>
             {isGain ? "▲" : "▼"} {Math.abs(Number(pct))}%
           </span>
-          <p className={cn("text-[10px] font-bold mt-1", cfg.sub)}>
+          <p className={cn("text-[10px] font-bold mt-2", cfg.sub)}>
             {g.grams >= 1000 ? `${(g.grams / 1000).toFixed(2)}kg` : `${g.grams.toFixed(1)}g`}
           </p>
         </div>
       </div>
 
       <div className="relative z-10 mt-auto">
-        <div className="w-full bg-black/20 h-[2px] overflow-hidden">
-          <div className={cn("h-full transition-all duration-1000", isGain ? "bg-emerald-500" : "bg-red-500")} style={{ width: isGain ? "100%" : "30%" }} />
+        <div className="w-full bg-black/20 h-[3px] overflow-hidden rounded-full">
+          <div className={cn("h-full transition-all duration-1000 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.2)]", isGain ? "bg-emerald-500" : "bg-red-500")} style={{ width: isGain ? "100%" : "30%" }} />
         </div>
       </div>
     </div>
@@ -151,24 +153,24 @@ function TotalMetalCard({ totalVal, totalGain, sym, busy }: { totalVal: number; 
   const isGain = totalGain >= 0;
 
   if (busy) {
-    return <div className="h-32 border border-border bg-muted/20 animate-pulse" />;
+    return <div className="h-32 border border-border bg-muted/20 animate-pulse rounded-xl" />;
   }
 
   return (
     <div className={cn(
-      "relative h-32 overflow-hidden border flex flex-col justify-between p-4 bg-zinc-950 border-white/10 group",
+      "relative h-32 overflow-hidden border flex flex-col justify-between p-4 bg-zinc-950 border-white/10 group rounded-xl shadow-lg",
       "hover:border-yellow-500/30 transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl cursor-default"
     )}>
       {/* Luxury Gradient Background */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(234,179,8,0.15),transparent_60%)] pointer-events-none" />
-      <div className="absolute inset-0 bg-[linear-gradient(110deg,#09090b_0%,#18181b_100%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(234,179,8,0.15),transparent_60%)] pointer-events-none rounded-xl" />
+      <div className="absolute inset-0 bg-[linear-gradient(110deg,#09090b_0%,#18181b_100%)] pointer-events-none rounded-xl" />
 
       {/* Decorative corners */}
-      <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-yellow-500/20 group-hover:border-yellow-500/50 transition-colors pointer-events-none" />
+      <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-yellow-500/20 group-hover:border-yellow-500/50 transition-colors pointer-events-none rounded-tl-xl" />
 
       <div className="relative z-10">
         <div className="flex items-center gap-2 mb-2">
-          <div className="p-1 bg-yellow-500 text-black">
+          <div className="p-1 bg-yellow-500 text-black rounded-sm shadow-lg shadow-yellow-500/20">
             <Gem className="w-3.5 h-3.5" />
           </div>
           <span className="text-[10px] font-black uppercase tracking-[0.3em] text-yellow-500/80">Net Worth: Metals</span>
@@ -181,13 +183,13 @@ function TotalMetalCard({ totalVal, totalGain, sym, busy }: { totalVal: number; 
       <div className="relative z-10 flex items-center justify-between mt-auto">
         <div className="min-w-0">
           <p className="text-[7px] font-black uppercase tracking-widest text-muted-foreground/40 mb-0.5">Overall Performance</p>
-          <p className={cn("text-xs font-black tabular-nums flex items-center gap-1", isGain ? "text-emerald-500" : "text-destructive")}>
-            {isGain ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+          <p className={cn("text-sm font-black tabular-nums flex items-center gap-1", isGain ? "text-emerald-500" : "text-destructive")}>
+            {isGain ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
             {isGain ? "+" : "-"}{sym}{Math.round(Math.abs(totalGain)).toLocaleString()}
           </p>
         </div>
         <div className={cn(
-          "px-3 py-1 text-[8px] font-black border transition-all duration-500",
+          "px-3 py-1 text-[9px] font-black border transition-all duration-500 rounded-md shadow-inner",
           isGain
             ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500 group-hover:bg-emerald-500 group-hover:text-black"
             : "bg-destructive/10 border-destructive/20 text-destructive group-hover:bg-destructive group-hover:text-white"
@@ -284,92 +286,83 @@ function PropertyWidget({ sym }: { sym: string }) {
       .catch(() => setBusy(false));
   }, []);
 
-  const totalPortfolio = props.reduce((s, p) => s + (p.current_value || p.purchase_price), 0);
   const sorted = [...props].sort((a, b) => (b.current_value || b.purchase_price) - (a.current_value || a.purchase_price));
   const topProp = sorted[0];
 
   return (
-    <div className="bg-card border border-border flex flex-col overflow-hidden group">
+    <div className="bg-card border border-border flex flex-col overflow-hidden group rounded-xl shadow-sm hover:shadow-md transition-all duration-300 h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2.5 border-b border-border/40 shrink-0 bg-muted/5">
-        <div className="flex items-center gap-1.5">
-          <Building2 className="w-3.5 h-3.5 text-emerald-500" />
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/40 shrink-0 bg-muted/5">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center rounded-lg text-emerald-500">
+            <Building2 className="w-4 h-4" />
+          </div>
           <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">Properties</span>
         </div>
-        <div className="text-right">
-
-
-        </div>
+        <span className="text-[9px] font-black text-muted-foreground/40 uppercase tracking-widest">{props.length} Assets</span>
       </div>
 
       {busy ? (
-        <div className="h-[280px] bg-muted/20 animate-pulse" />
+        <div className="flex-1 bg-muted/20 animate-pulse" />
       ) : !topProp ? (
-        <div className="flex items-center justify-center py-12 opacity-30">
-          <p className="text-[9px] font-black uppercase tracking-widest text-center">No properties<br />tracked in portfolio</p>
+        <div className="flex-1 flex flex-col items-center justify-center py-12 opacity-30">
+          <Building2 className="w-12 h-12 mb-3 text-muted-foreground/30" />
+          <p className="text-[10px] font-black uppercase tracking-widest text-center">No properties<br />tracked in portfolio</p>
         </div>
       ) : (
-        <div className="flex flex-col">
-          {/* Top Property Hero "Sharp Card" */}
-          <div className="relative aspect-[16/10] overflow-hidden border-b border-border/20">
+        <div className="flex flex-col flex-1">
+          {/* Top Property Hero */}
+          <div className="relative aspect-[16/10] overflow-hidden">
             {topProp.image_url ? (
-              <img src={topProp.image_url} alt={topProp.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out" />
+              <img src={topProp.image_url} alt={topProp.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2s] ease-out" />
             ) : (
-              <div className="w-full h-full bg-emerald-500/10 flex items-center justify-center">
-                <Building2 className="w-12 h-12 text-emerald-500/20" />
+              <div className="w-full h-full bg-emerald-500/5 flex items-center justify-center">
+                <Building2 className="w-16 h-16 text-emerald-500/10" />
               </div>
             )}
 
-            {/* Luxury Badges and Overlays */}
-            <div className="absolute top-3 left-3 flex flex-col gap-1 items-start">
-              <div className="px-2 py-0.5 bg-emerald-500 text-black text-[8px] font-black uppercase tracking-widest shadow-2xl">
+            <div className="absolute top-3 left-3 flex flex-col gap-1 items-start z-10">
+              <div className="px-2.5 py-1 bg-emerald-500 text-black text-[9px] font-black uppercase tracking-widest shadow-xl rounded-md">
                 Prime Asset
               </div>
             </div>
 
-            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex items-end justify-between gap-4">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent flex items-end justify-between p-5 gap-4">
               <div className="min-w-0">
-                <h4 className="text-lg font-black text-white truncate leading-tight group-hover:text-emerald-400 transition-colors">{topProp.title || topProp.name}</h4>
-                <div className="flex items-center gap-2 mt-1">
-                  <p className="text-[9px] font-bold text-emerald-400/80 uppercase tracking-widest truncate">{topProp.type}</p>
-                  <div className="w-1 h-1 rounded-full bg-white/20" />
-                  <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest truncate">Highest Valuable Property</p>
+                <h4 className="text-xl font-black text-white truncate leading-tight group-hover:text-emerald-400 transition-colors">{topProp.title || topProp.name}</h4>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <p className="text-[10px] font-bold text-emerald-400/90 uppercase tracking-widest">{topProp.type}</p>
+                  <div className="w-1 h-1 rounded-full bg-white/30" />
+                  <p className="text-[9px] font-bold text-white/50 uppercase tracking-widest">Highest Valuation</p>
                 </div>
               </div>
-              <div className="text-right shrink-0 pb-0.5">
-                <p className="text-base font-black tabular-nums text-white leading-none">
+              <div className="text-right shrink-0">
+                <p className="text-xl font-black tabular-nums text-white leading-none">
                   {sym}{Math.round(topProp.current_value || topProp.purchase_price).toLocaleString()}
                 </p>
-                {(() => {
-                  const val = topProp.current_value || topProp.purchase_price;
-                  const gain = topProp.purchase_price > 0 ? ((val - topProp.purchase_price) / topProp.purchase_price) * 100 : 0;
-                  return (
-                    <></>
-                  );
-                })()}
               </div>
             </div>
           </div>
 
-          {/* Secondary Assets List - Mini */}
+          {/* Secondary Assets */}
           {sorted.length > 1 && (
-            <div className="px-4 pb-4 pt-1 flex flex-col gap-2">
-              <div className="h-px bg-border/10 w-full mb-1" />
-              <div className="flex flex-col gap-2">
-                {sorted.slice(1, 2).map(p => (
+            <div className="p-4 flex flex-col gap-3 mt-auto">
+              <div className="flex items-center justify-between text-[8px] font-black uppercase tracking-widest text-muted-foreground/40">
+                <span>Other Assets</span>
+                <div className="flex-1 h-px bg-border/20 mx-3" />
+              </div>
+              <div className="flex flex-col gap-2.5">
+                {sorted.slice(1, 3).map(p => (
                   <div key={p._id} className="flex items-center justify-between gap-3 group/item">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-5 h-5 bg-muted flex items-center justify-center border border-border/20 text-[8px] font-black opacity-40">SQ</div>
-                      <p className="text-[10px] font-black truncate text-muted-foreground/60 group-hover/item:text-foreground transition-colors">{p.title || p.name}</p>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 bg-muted/30 rounded-lg flex items-center justify-center border border-border/20 group-hover/item:border-emerald-500/30 transition-colors">
+                        <Building2 className="w-3.5 h-3.5 text-muted-foreground/30 group-hover/item:text-emerald-500/60" />
+                      </div>
+                      <p className="text-[11px] font-black truncate text-muted-foreground group-hover/item:text-foreground transition-colors">{p.title || p.name}</p>
                     </div>
-                    <span className="text-[10px] font-bold tabular-nums text-muted-foreground/40">{sym}{Math.round(p.current_value || p.purchase_price).toLocaleString()}</span>
+                    <span className="text-[11px] font-black tabular-nums text-foreground">{sym}{Math.round(p.current_value || p.purchase_price).toLocaleString()}</span>
                   </div>
                 ))}
-                {sorted.length > 2 && (
-                  <button className="text-[8px] font-black uppercase tracking-widest text-emerald-500/60 hover:text-emerald-500 transition-colors mt-1">
-                    + {sorted.length - 1} More Properties
-                  </button>
-                )}
               </div>
             </div>
           )}
@@ -408,120 +401,91 @@ function LendBorrowWidget({ sym }: { sym: string }) {
   const maxBor = bor[0];
 
   return (
-    <div className="bg-card border border-border flex flex-col overflow-hidden group h-full">
+    <div className="bg-card border border-border flex flex-col overflow-hidden group h-full rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
       {/* ── High-Impact Split Header ── */}
       <div className="grid grid-cols-2 divide-x divide-border/20 border-b border-border/40">
-        <div className="p-4 bg-emerald-500/[0.02]">
-          <div className="flex items-center gap-2 mb-1.5">
-            <div className="w-5 h-5 rounded-none bg-emerald-500/10 flex items-center justify-center text-emerald-500 border border-emerald-500/20">
-              <ArrowDownRight className="w-3.5 h-3.5" />
+        <div className="p-5 bg-emerald-500/[0.03]">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 border border-emerald-500/20">
+              <ArrowDownRight className="w-4 h-4" />
             </div>
-            <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest leading-none">Receivables</span>
+            <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Receivables</span>
           </div>
-          <p className="text-xl font-black tabular-nums transition-transform group-hover:translate-x-1 duration-500 leading-none">
+          <p className="text-2xl font-black tabular-nums transition-transform group-hover:translate-x-1 duration-500">
             {sym}{Math.round(summary?.pending_lent || 0).toLocaleString()}
           </p>
         </div>
-        <div className="p-4 bg-red-500/[0.02]">
-          <div className="flex items-center gap-2 mb-1.5 justify-end">
-            <span className="text-[10px] font-black text-red-500 uppercase tracking-widest leading-none text-right">Payables</span>
-            <div className="w-5 h-5 rounded-none bg-red-500/10 flex items-center justify-center text-red-500 border border-red-500/20">
-              <ArrowUpRight className="w-3.5 h-3.5" />
+        <div className="p-5 bg-red-500/[0.03]">
+          <div className="flex items-center gap-2 mb-2 justify-end">
+            <span className="text-[10px] font-black text-red-500 uppercase tracking-widest text-right">Payables</span>
+            <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center text-red-500 border border-red-500/20">
+              <ArrowUpRight className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-xl font-black tabular-nums text-right transition-transform group-hover:-translate-x-1 duration-500 leading-none text-red-500">
+          <p className="text-2xl font-black tabular-nums text-right transition-transform group-hover:-translate-x-1 duration-500 text-red-500">
             {sym}{Math.round(summary?.pending_borrowed || 0).toLocaleString()}
           </p>
         </div>
       </div>
 
       {busy ? (
-        <div className="h-[200px] bg-muted/20 animate-pulse" />
+        <div className="flex-1 bg-muted/20 animate-pulse" />
       ) : (
         <div className="flex flex-col flex-1 divide-y divide-border/10">
-          {/* ── HERO: Top Person Who Owes Me ── */}
+          {/* HERO: Top Person Who Owes Me */}
           {maxLent && (
-            <div className="p-4 flex items-center justify-between hover:bg-emerald-500/[0.03] transition-colors group/item">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 border border-emerald-500/20 bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-black text-base shadow-inner">
+            <div className="p-5 flex items-center justify-between hover:bg-emerald-500/[0.05] transition-colors group/item">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl border border-emerald-500/20 bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-black text-xl shadow-inner">
                   {maxLent.name.charAt(0)}
                 </div>
                 <div>
-                  <p className="text-[8px] font-black text-emerald-500/60 uppercase tracking-[0.2em] mb-0.5">Top Debtor</p>
-                  <h4 className="text-xs font-black tracking-tight truncate max-w-[120px]">{maxLent.name}</h4>
-                  <p className="text-[8px] font-bold text-muted-foreground/40 mt-0.5">{daysSince(maxLent.date)}d since loan</p>
+                  <p className="text-[9px] font-black text-emerald-500/60 uppercase tracking-[0.2em] mb-1">Top Debtor</p>
+                  <h4 className="text-sm font-black tracking-tight truncate max-w-[140px]">{maxLent.name}</h4>
+                  <p className="text-[9px] font-bold text-muted-foreground/40 mt-1">{daysSince(maxLent.date)}d since loan</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-lg font-black text-emerald-500 tabular-nums leading-none">
+                <p className="text-xl font-black text-emerald-500 tabular-nums leading-none">
                   {sym}{Math.round(maxLent.amount).toLocaleString()}
                 </p>
-                <div className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 mt-2">
-                  <Clock className="w-2.5 h-2.5 text-emerald-500" />
-                  <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Active</span>
+                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full mt-3">
+                  <Clock className="w-3 h-3 text-emerald-500" />
+                  <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Active</span>
                 </div>
               </div>
             </div>
           )}
 
-          {/* ── HERO: Top Person I Owe ── */}
+          {/* HERO: Top Person I Owe */}
           {maxBor && (
-            <div className="p-4 flex items-center justify-between hover:bg-red-500/[0.03] transition-colors group/item">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 border border-red-500/20 bg-red-500/10 flex items-center justify-center text-red-500 font-black text-base shadow-inner">
+            <div className="p-5 flex items-center justify-between hover:bg-red-500/[0.05] transition-colors group/item">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl border border-red-500/20 bg-red-500/10 flex items-center justify-center text-red-500 font-black text-xl shadow-inner">
                   {maxBor.name.charAt(0)}
                 </div>
                 <div>
-                  <p className="text-[8px] font-black text-red-500/60 uppercase tracking-[0.15em] mb-0.5">Major Liability</p>
-                  <h4 className="text-xs font-black tracking-tight truncate max-w-[120px]">{maxBor.name}</h4>
-                  <p className="text-[8px] font-bold text-muted-foreground/40 mt-0.5">{daysSince(maxBor.date)}d overdue</p>
+                  <p className="text-[9px] font-black text-red-500/60 uppercase tracking-[0.2em] mb-1">Major Liability</p>
+                  <h4 className="text-sm font-black tracking-tight truncate max-w-[140px]">{maxBor.name}</h4>
+                  <p className="text-[9px] font-bold text-muted-foreground/40 mt-1">{daysSince(maxBor.date)}d overdue</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-lg font-black text-red-500 tabular-nums leading-none">
+                <p className="text-xl font-black text-red-500 tabular-nums leading-none">
                   {sym}{Math.round(maxBor.amount).toLocaleString()}
                 </p>
-                <div className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-red-500/10 border border-red-500/20 mt-2">
-                  <AlertCircle className="w-2.5 h-2.5 text-red-500" />
-                  <span className="text-[8px] font-black text-red-500 uppercase tracking-widest">Urgent</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ── Secondary List - Quick Peek ── */}
-          {(lent.length > 1 || bor.length > 1) && (
-            <div className="p-4 mt-auto">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex-1 h-px bg-border/20" />
-                <span className="text-[7px] font-black text-muted-foreground/40 uppercase tracking-[0.3em] shrink-0">Other Pending Trades</span>
-                <div className="flex-1 h-px bg-border/20" />
-              </div>
-              <div className="grid grid-cols-2 gap-4 mt-3">
-                <div className="flex flex-col gap-1.5">
-                  {lent.slice(1, 3).map(i => (
-                    <div key={i._id} className="flex items-center justify-between text-[9px] font-bold text-muted-foreground truncate">
-                      <span>{i.name}</span>
-                      <span className="text-emerald-500 tabular-nums">{sym}{Math.round(i.amount).toLocaleString()}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  {bor.slice(1, 3).map(i => (
-                    <div key={i._id} className="flex items-center justify-between text-[9px] font-bold text-muted-foreground truncate">
-                      <span>{i.name}</span>
-                      <span className="text-red-500 tabular-nums">{sym}{Math.round(i.amount).toLocaleString()}</span>
-                    </div>
-                  ))}
+                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-red-500/10 border border-red-500/20 rounded-full mt-3">
+                  <AlertCircle className="w-3 h-3 text-red-500" />
+                  <span className="text-[9px] font-black text-red-500 uppercase tracking-widest">Urgent</span>
                 </div>
               </div>
             </div>
           )}
 
           {lent.length === 0 && bor.length === 0 && (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 opacity-20">
-              <CheckCircle2 className="w-10 h-10 mb-2" />
-              <p className="text-[10px] font-black uppercase tracking-widest">All Accounts Clear</p>
+            <div className="flex-1 flex flex-col items-center justify-center p-12 opacity-20">
+              <CheckCircle2 className="w-12 h-12 mb-3 text-emerald-500" />
+              <p className="text-[11px] font-black uppercase tracking-widest">All Accounts Clear</p>
             </div>
           )}
         </div>
@@ -551,108 +515,76 @@ function EMIWidget({ sym }: { sym: string }) {
   const urgent = emis.filter(e => (e.days_until_payment ?? 999) <= 7);
 
   return (
-    <div className="bg-card border border-border flex flex-col overflow-hidden">
+    <div className="bg-card border border-border flex flex-col overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2.5 border-b border-border/40 shrink-0">
-        <div className="flex items-center gap-1.5">
-          <CreditCard className="w-3.5 h-3.5 text-blue-500" />
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/40 shrink-0 bg-muted/5">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 bg-blue-500/10 border border-blue-500/20 flex items-center justify-center rounded-lg text-blue-500">
+            <CreditCard className="w-4 h-4" />
+          </div>
           <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">Loans & EMIs</span>
         </div>
         <div className="flex items-center gap-2">
           {urgent.length > 0 && (
-            <span className="flex items-center gap-1 text-[8px] font-black text-red-500 animate-pulse">
-              <AlertCircle className="w-3 h-3" />{urgent.length} due soon
+            <span className="flex items-center gap-1 text-[9px] font-black text-red-500 animate-pulse bg-red-500/10 px-2 py-0.5 rounded-full">
+              <AlertCircle className="w-3.5 h-3.5" />{urgent.length} due
             </span>
           )}
-          <span className="text-[8px] font-black text-muted-foreground/40">{total.count} active</span>
+          <span className="text-[9px] font-black text-muted-foreground/40 uppercase tracking-widest">{total.count} active</span>
         </div>
       </div>
 
       {busy ? (
-        <div className="flex items-center justify-center py-5">
-          <Activity className="w-5 h-5 text-blue-500 animate-spin" />
-        </div>
+        <div className="flex-1 bg-muted/20 animate-pulse" />
       ) : (
-        <>
-          {/* ── Summary pills ── */}
-          <div className="grid grid-cols-2 border-b border-border/20 shrink-0">
-            <div className="px-3 py-2 border-r border-border/20 min-w-0">
-              <p className="text-[7px] font-black text-blue-500 uppercase tracking-widest truncate">Per Month</p>
-              <p className="text-sm font-black tabular-nums break-all">{sym}{Math.round(total.monthly).toLocaleString()}</p>
+        <div className="flex flex-col flex-1 divide-y divide-border/10">
+          {/* Summary pills */}
+          <div className="grid grid-cols-2 divide-x divide-border/10 shrink-0">
+            <div className="px-5 py-4 bg-blue-500/[0.02]">
+              <p className="text-[8px] font-black text-blue-500 uppercase tracking-widest mb-1">Per Month</p>
+              <p className="text-xl font-black tabular-nums">{sym}{Math.round(total.monthly).toLocaleString()}</p>
             </div>
-            <div className="px-3 py-2 min-w-0">
-              <p className="text-[7px] font-black text-muted-foreground/40 uppercase tracking-widest truncate">Still Left</p>
-              <p className="text-sm font-black text-destructive tabular-nums break-all">{sym}{Math.round(total.outstanding).toLocaleString()}</p>
+            <div className="px-5 py-4 bg-red-500/[0.02]">
+              <p className="text-[8px] font-black text-red-400 uppercase tracking-widest mb-1">Still Left</p>
+              <p className="text-xl font-black text-red-500 tabular-nums">{sym}{Math.round(total.outstanding).toLocaleString()}</p>
             </div>
           </div>
 
-          {/* ── Urgent warning cards (due within 7 days) ── */}
-          {urgent.length > 0 && (
-            <div className="px-3 pt-3 flex flex-col gap-2 shrink-0">
-              {urgent.map(e => (
-                <div key={e._id} className="relative overflow-hidden rounded-md border border-red-500/30 bg-gradient-to-r from-red-500/10 to-transparent p-3">
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500 animate-pulse" />
-
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 pl-1">
-                    <div className="flex items-start gap-2.5 min-w-0">
-                      <div className="mt-0.5 bg-red-500/20 p-1.5 rounded text-red-500">
-                        <AlertCircle className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[11px] font-black text-red-400 break-words whitespace-normal leading-tight">{e.name}</p>
-                        <p className="text-[9px] font-bold text-red-400/80 mt-0.5">
-                          {e.days_until_payment === 0 ? "⚠️ DUE TODAY" : `DUE IN ${e.days_until_payment} DAY${e.days_until_payment === 1 ? "" : "S"}`}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-end sm:items-center sm:text-right shrink-0 mt-1 sm:mt-0 self-end sm:self-auto">
-                      <div className="text-right">
-                        <p className="text-sm font-black text-red-400 tabular-nums">{sym}{Math.round(e.monthly_emi).toLocaleString()}</p>
-                        <p className="text-[8px] text-red-500/60 font-bold uppercase tracking-widest mt-0.5">Immediate Action</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* ── All active loans list ── */}
-          <div className="divide-y divide-border/10">
+          {/* EMI List */}
+          <div className="flex flex-col flex-1 divide-y divide-border/10">
             {emis.length === 0 ? (
-              <div className="py-5 flex flex-col items-center gap-1 opacity-30">
-                <CheckCircle2 className="w-6 h-6" />
-                <p className="text-[8px] font-black uppercase tracking-widest">No active loans</p>
+              <div className="flex-1 flex flex-col items-center justify-center py-12 opacity-20">
+                <CheckCircle2 className="w-12 h-12 mb-3 text-emerald-500" />
+                <p className="text-[11px] font-black uppercase tracking-widest">No active loans</p>
               </div>
             ) : emis.map(e => {
               const isUrgent = (e.days_until_payment ?? 999) <= 7;
               return (
-                <div key={e._id} className="flex flex-wrap sm:flex-nowrap items-center gap-2 px-3 py-2.5 hover:bg-muted/20 transition-colors">
-                  <div className={cn("w-6 h-6 shrink-0 flex items-center justify-center border",
-                    isUrgent ? "border-red-500/30 bg-red-500/10 text-red-500" : "border-blue-500/20 bg-blue-500/5 text-blue-400")}>
-                    {isUrgent ? <AlertCircle className="w-3 h-3" /> : <CreditCard className="w-3 h-3" />}
+                <div key={e._id} className="flex items-center gap-4 px-5 py-4 hover:bg-muted/10 transition-colors group">
+                  <div className={cn("w-10 h-10 shrink-0 flex items-center justify-center rounded-xl border transition-transform group-hover:scale-110",
+                    isUrgent ? "border-red-500/20 bg-red-500/10 text-red-500" : "border-blue-500/20 bg-blue-500/10 text-blue-500")}>
+                    {isUrgent ? <AlertCircle className="w-5 h-5" /> : <CreditCard className="w-5 h-5" />}
                   </div>
                   <div className="flex-1 min-w-0 pr-2">
-                    <p className="text-[10px] font-black truncate">{e.name}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <p className={cn("text-[8px] font-bold shrink-0", isUrgent ? "text-red-500" : "text-muted-foreground/40")}>
-                        {e.days_until_payment != null ? `${e.days_until_payment}d` : "—"}
+                    <p className="text-[12px] font-black truncate">{e.name}</p>
+                    <div className="flex items-center gap-3 mt-1.5">
+                      <p className={cn("text-[9px] font-black shrink-0 px-1.5 py-0.5 rounded-full", isUrgent ? "bg-red-500 text-white" : "bg-blue-500/10 text-blue-500")}>
+                        {e.days_until_payment != null ? `${e.days_until_payment}d left` : "—"}
                       </p>
-                      <div className="flex-1 bg-muted/40 h-1 overflow-hidden">
-                        <div className="bg-blue-500 h-1" style={{ width: `${Math.min(100, e.progress_pct || 0)}%` }} />
+                      <div className="flex-1 bg-muted/40 h-1.5 rounded-full overflow-hidden">
+                        <div className={cn("h-full rounded-full transition-all duration-1000", isUrgent ? "bg-red-500" : "bg-blue-500")} style={{ width: `${Math.min(100, e.progress_pct || 0)}%` }} />
                       </div>
-                      <p className="text-[8px] text-muted-foreground/40 font-bold">{e.months_remaining}mo</p>
+                      <p className="text-[9px] text-muted-foreground/40 font-bold">{e.months_remaining}mo</p>
                     </div>
                   </div>
-                  <div className="w-full sm:w-auto text-right mt-1 sm:mt-0 flex justify-end">
-                    <p className="text-[11px] font-black tabular-nums shrink-0">{sym}{Math.round(e.monthly_emi).toLocaleString()}</p>
+                  <div className="text-right">
+                    <p className="text-lg font-black tabular-nums">{sym}{Math.round(e.monthly_emi).toLocaleString()}</p>
                   </div>
                 </div>
               );
             })}
           </div>
-        </>
+        </div>
       )}
     </div>
   );
@@ -661,53 +593,63 @@ function EMIWidget({ sym }: { sym: string }) {
 
 
 // ─── Bank Breakdown Widget ─────────────────────────────────────────────────────
+const PIE_COLORS = ["#10b981", "#3b82f6", "#8b5cf6", "#f59e0b", "#ec4899", "#06b6d4", "#f97316", "#6366f1"];
+
 function BankBreakdownWidget({ banks, sym, loading }: { banks: any[]; sym: string; loading: boolean }) {
-  if (loading) return <div className="h-28 bg-muted/20 animate-pulse border border-border" />;
+  if (loading) return <div className="bg-card border border-border h-full animate-pulse" />;
   const valid = banks.filter(b => b.current_balance > 0).sort((a, b) => b.current_balance - a.current_balance);
   const total = valid.reduce((s, b) => s + b.current_balance, 0);
-  if (valid.length < 2) return null;
-  const COLORS = ["bg-emerald-500", "bg-blue-500", "bg-purple-500", "bg-amber-500", "bg-pink-500", "bg-cyan-500", "bg-orange-500", "bg-indigo-500"];
+  const pieData = valid.map((b, i) => ({ name: b.bank_name, value: b.current_balance, color: PIE_COLORS[i % PIE_COLORS.length] }));
+
   return (
-    <div className="bg-card border border-border overflow-hidden">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-border/40">
+    <div className="bg-card border border-border flex flex-col overflow-hidden h-full">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border/40 shrink-0">
         <BarChart3 className="w-4 h-4 text-blue-500" />
         <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">Account Balance Breakdown</span>
-        <div className="ml-auto">
-          <p className="text-xs font-black tabular-nums">{sym}{Math.round(total).toLocaleString()}</p>
-        </div>
       </div>
-      <div className="p-4 flex flex-col gap-3">
-        <div className="flex h-4 overflow-hidden bg-muted/20">
-          {valid.map((b, i) => (
-            <div key={b.bank_name} className={cn("h-full first:rounded-l last:rounded-r transition-all", COLORS[i % COLORS.length])}
-              style={{ width: `${(b.current_balance / total) * 100}%` }} title={b.bank_name} />
-          ))}
+      {valid.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center p-6 opacity-20">
+          <BarChart3 className="w-8 h-8 mb-2" />
+          <p className="text-[9px] font-black uppercase tracking-widest">No accounts</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-2">
-          {valid.map((b, i) => (
-            <div key={b.bank_name} className="flex items-center gap-2">
-              <div className={cn("w-2.5 h-2.5 shrink-0", COLORS[i % COLORS.length])} />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-1">
-                  <p className="text-[9px] font-bold truncate text-muted-foreground">{b.bank_name}</p>
-                  <p className="text-[9px] font-black tabular-nums shrink-0">{sym}{Math.round(b.current_balance).toLocaleString()}</p>
-                </div>
-                <p className="text-[7px] text-muted-foreground/30">{((b.current_balance / total) * 100).toFixed(1)}% of total</p>
-              </div>
+      ) : (
+        <div className="flex flex-col items-center flex-1 px-3 py-2">
+          {/* Donut chart */}
+          <div className="relative w-full" style={{ height: 140 }}>
+            <ResponsiveContainer width="100%" height={140}>
+              <PieChart>
+                <Pie data={pieData} cx="50%" cy="50%" innerRadius={38} outerRadius={56} paddingAngle={3} dataKey="value" startAngle={90} endAngle={-270}>
+                  {pieData.map((entry, i) => <Cell key={i} fill={entry.color} stroke="transparent" />)}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            {/* Center total */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <p className="text-sm font-black tabular-nums">{sym}{Math.round(total).toLocaleString()}</p>
+              <p className="text-[7px] font-black uppercase tracking-widest text-muted-foreground/40">Total Balance</p>
             </div>
-          ))}
+          </div>
+          {/* Bank list */}
+          <div className="flex flex-col gap-1.5 w-full mt-1">
+            {valid.map((b, i) => (
+              <div key={b.bank_name} className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <div className="w-2 h-2 rounded-full shrink-0" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
+                  <p className="text-[9px] font-bold truncate text-muted-foreground">{b.bank_name}</p>
+                </div>
+                <p className="text-[9px] font-black tabular-nums shrink-0">{sym}{Math.round(b.current_balance).toLocaleString()}</p>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
 
 // ─── Spending Insights Banner ──────────────────────────────────────────────────
-function SpendingInsightsBanner({ txData, monthlyTrend, sym, loading }: {
-  txData: { total_debit: number; total_credit: number; count: number };
-  monthlyTrend: any[]; sym: string; loading: boolean;
-}) {
-  if (loading) return <div className="h-16 bg-muted/20 animate-pulse border border-border" />;
+function SpendingInsightsBanner({ txData, monthlyTrend, sym, loading }: { txData: { total_debit: number; total_credit: number; count: number }; monthlyTrend: any[]; sym: string; loading: boolean }) {
+  if (loading) return <div className="h-16 bg-muted/20 animate-pulse border border-border rounded-xl" />;
   const today = new Date();
   const dayOfMonth = today.getDate();
   const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
@@ -717,21 +659,23 @@ function SpendingInsightsBanner({ txData, monthlyTrend, sym, loading }: {
   const thisMonth = monthlyTrend[monthlyTrend.length - 1];
   const spendDelta = thisMonth && lastMonth ? ((thisMonth.amount - lastMonth.amount) / (lastMonth.amount || 1)) * 100 : 0;
   const incomeVsSpend = txData.total_credit > 0 ? ((txData.total_credit - txData.total_debit) / txData.total_credit) * 100 : 0;
+  
   const stats = [
-    { label: "Daily Avg Spend", value: fmt(dailyAvg, sym), sub: `Run rate ${fmt(monthlyRunRate, sym)}/mo`, color: "text-orange-400", icon: <Flame className="w-4 h-4" />, border: "border-l-orange-500/50" },
-    { label: "vs Last Month", value: `${spendDelta >= 0 ? "+" : ""}${spendDelta.toFixed(1)}%`, sub: lastMonth ? `vs ${fmt(lastMonth.amount, sym)}` : "No data yet", color: spendDelta > 10 ? "text-red-400" : spendDelta < 0 ? "text-emerald-400" : "text-amber-400", icon: spendDelta > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />, border: spendDelta > 0 ? "border-l-red-500/50" : "border-l-emerald-500/50" },
-    { label: "Savings Rate", value: `${Math.max(0, incomeVsSpend).toFixed(1)}%`, sub: txData.total_credit > 0 ? `${fmt(Math.max(0, txData.total_credit - txData.total_debit), sym)} saved` : "No income yet", color: incomeVsSpend >= 20 ? "text-emerald-400" : incomeVsSpend > 0 ? "text-amber-400" : "text-red-400", icon: <Gauge className="w-4 h-4" />, border: incomeVsSpend >= 20 ? "border-l-emerald-500/50" : incomeVsSpend > 0 ? "border-l-amber-500/50" : "border-l-red-500/50" },
-    { label: "Txn Count", value: txData.count.toLocaleString(), sub: `~${dayOfMonth > 0 ? (txData.count / dayOfMonth).toFixed(1) : "0"} per day`, color: "text-blue-400", icon: <Activity className="w-4 h-4" />, border: "border-l-blue-500/50" },
+    { label: "Daily Avg Spend", value: fmt(dailyAvg, sym), sub: `Est. ${fmt(monthlyRunRate, sym)}/mo`, color: "text-orange-500", icon: <Flame className="w-4 h-4" />, bg: "bg-orange-500/10" },
+    { label: "vs Last Month", value: `${spendDelta >= 0 ? "+" : ""}${spendDelta.toFixed(1)}%`, sub: lastMonth ? "Previous period" : "Initial data", color: spendDelta > 10 ? "text-red-500" : spendDelta < 0 ? "text-emerald-500" : "text-amber-500", icon: spendDelta > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />, bg: spendDelta > 0 ? "bg-red-500/10" : "bg-emerald-500/10" },
+    { label: "Savings Rate", value: `${Math.max(0, incomeVsSpend).toFixed(1)}%`, sub: "Net efficiency", color: incomeVsSpend >= 20 ? "text-emerald-500" : incomeVsSpend > 0 ? "text-amber-500" : "text-red-500", icon: <Gauge className="w-4 h-4" />, bg: incomeVsSpend >= 20 ? "bg-emerald-500/10" : "bg-amber-500/10" },
+    { label: "Txn Count", value: txData.count.toLocaleString(), sub: "Total activity", color: "text-blue-500", icon: <Activity className="w-4 h-4" />, bg: "bg-blue-500/10" },
   ];
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
       {stats.map(s => (
-        <div key={s.label} className={cn("bg-card border border-l-4 border-border/30 px-3 py-3 flex items-center gap-3 group hover:bg-muted/10 transition-colors", s.border)}>
-          <div className={cn("opacity-20 group-hover:opacity-60 transition-opacity shrink-0", s.color)}>{s.icon}</div>
-          <div className="min-w-0">
+        <div key={s.label} className="bg-card border border-border rounded-xl px-4 py-3 flex items-center gap-3 group hover:shadow-sm transition-all duration-300 overflow-hidden relative">
+          <div className={cn("absolute inset-0 opacity-[0.02] pointer-events-none bg-gradient-to-br from-transparent to-current", s.bg)} />
+          <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-110", s.bg, s.color)}>{s.icon}</div>
+          <div className="min-w-0 flex-1">
             <p className="text-[7px] font-black uppercase tracking-widest text-muted-foreground/40 truncate">{s.label}</p>
-            <p className={cn("text-base font-black tabular-nums leading-tight truncate", s.color)}>{s.value}</p>
-            <p className="text-[7px] text-muted-foreground/30 font-bold truncate mt-0.5">{s.sub}</p>
+            <p className={cn("text-sm font-black tabular-nums leading-tight truncate mt-0.5", s.color)}>{s.value}</p>
+            <p className="text-[7px] text-muted-foreground/30 font-bold truncate">{s.sub}</p>
           </div>
         </div>
       ))}
@@ -741,7 +685,7 @@ function SpendingInsightsBanner({ txData, monthlyTrend, sym, loading }: {
 
 // ─── Top Spenders / Income Bars ────────────────────────────────────────────────
 function SpendBarWidget({ data, sym, loading, type }: { data: any[]; sym: string; loading: boolean; type: "debit" | "credit" }) {
-  if (loading) return <div className="h-64 bg-muted/20 animate-pulse border border-border" />;
+  if (loading) return <div className="h-64 bg-muted/20 animate-pulse border border-border rounded-xl" />;
   if (!data || data.length === 0) return null;
   const top = data.slice(0, 8);
   const total = top.reduce((s, d) => s + d.amount, 0);
@@ -750,31 +694,32 @@ function SpendBarWidget({ data, sym, loading, type }: { data: any[]; sym: string
     ? ["from-red-600 to-red-400", "from-orange-600 to-orange-400", "from-amber-600 to-amber-400", "from-pink-600 to-pink-400", "from-rose-600 to-rose-400", "from-violet-600 to-violet-400", "from-purple-600 to-purple-400", "from-fuchsia-600 to-fuchsia-400"]
     : ["from-emerald-600 to-emerald-400", "from-teal-600 to-teal-400", "from-green-600 to-green-400", "from-cyan-600 to-cyan-400", "from-sky-600 to-sky-400", "from-lime-600 to-lime-400", "from-emerald-700 to-emerald-300", "from-green-700 to-green-300"];
   return (
-    <div className="bg-card border border-border flex flex-col overflow-hidden">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-border/40 shrink-0">
-        {isDebit ? <Flame className="w-4 h-4 text-red-500" /> : <Sparkles className="w-4 h-4 text-emerald-500" />}
+    <div className="bg-card border border-border flex flex-col overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border/40 shrink-0 bg-muted/5">
+        <div className={cn("w-7 h-7 flex items-center justify-center rounded-lg border", isDebit ? "bg-red-500/10 border-red-500/20 text-red-500" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-500")}>
+          {isDebit ? <Flame className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+        </div>
         <span className={cn("text-[10px] font-black uppercase tracking-[0.2em]", isDebit ? "text-red-500" : "text-emerald-500")}>
           {isDebit ? "Top Spend Payees" : "Top Income Sources"}
         </span>
-        <span className="ml-auto text-[8px] font-black text-muted-foreground/30">{top.length} entries</span>
+        <span className="ml-auto text-[8px] font-black text-muted-foreground/30 uppercase tracking-widest">{top.length} Items</span>
       </div>
-      <div className="p-4 flex flex-col gap-3">
+      <div className="p-4 flex flex-col gap-4">
         {top.map((item, i) => (
-          <div key={item._id} className="flex items-center gap-3">
-            <span className="text-[8px] font-black text-muted-foreground/30 w-4 shrink-0 text-right">#{i + 1}</span>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-1 gap-2">
-                <p className="text-[10px] font-black truncate">{item._id || "Other"}</p>
-                <p className={cn("text-[10px] font-black tabular-nums shrink-0", isDebit ? "text-red-400" : "text-emerald-400")}>
-                  {sym}{item.amount >= 1000 ? new Intl.NumberFormat("en-IN", { notation: "compact", maximumFractionDigits: 1 }).format(item.amount) : item.amount.toLocaleString()}
-                </p>
-              </div>
-              <div className="w-full bg-muted/20 h-1.5 overflow-hidden">
-                <div className={cn("h-1.5 bg-gradient-to-r", GRADIENTS[i % GRADIENTS.length])}
-                  style={{ width: `${total > 0 ? (item.amount / total) * 100 : 0}%` }} />
-              </div>
+          <div key={item._id} className="flex flex-col gap-1.5 group/bar">
+            <div className="flex items-center justify-between gap-3">
+               <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-[8px] font-black text-muted-foreground/30 w-4 shrink-0">#{i + 1}</span>
+                  <p className="text-[10px] font-black truncate text-foreground group-hover/bar:text-primary transition-colors">{item._id || "Other"}</p>
+               </div>
+               <p className={cn("text-[11px] font-black tabular-nums shrink-0", isDebit ? "text-red-500" : "text-emerald-500")}>
+                 {sym}{item.amount >= 1000 ? new Intl.NumberFormat("en-IN", { notation: "compact", maximumFractionDigits: 1 }).format(item.amount) : item.amount.toLocaleString()}
+               </p>
             </div>
-            <span className="text-[8px] text-muted-foreground/30 shrink-0 w-7 text-right">{total > 0 ? ((item.amount / total) * 100).toFixed(0) : 0}%</span>
+            <div className="w-full bg-muted/20 h-2 rounded-full overflow-hidden relative">
+              <div className={cn("h-full bg-gradient-to-r rounded-full transition-all duration-1000 ease-out shadow-sm", GRADIENTS[i % GRADIENTS.length])}
+                style={{ width: `${total > 0 ? (item.amount / total) * 100 : 0}%` }} />
+            </div>
           </div>
         ))}
       </div>
@@ -784,15 +729,16 @@ function SpendBarWidget({ data, sym, loading, type }: { data: any[]; sym: string
 
 // ─── Mini stat card ────────────────────────────────────────────────────────────
 function MiniCard({ title, value, sub, icon, border, loading }: { title: string; value: string; sub?: string; icon: React.ReactNode; border: string; loading: boolean }) {
-  if (loading) return <div className="h-14 bg-muted/40 animate-pulse border border-border/40" />;
+  if (loading) return <div className="h-16 bg-muted/40 animate-pulse border border-border/40 rounded-xl" />;
   return (
-    <div className={cn("px-3 py-3 border-l-4 bg-card flex items-center justify-between gap-2 group border border-border/20 hover:bg-muted/20 transition-colors w-full overflow-hidden", border)}>
-      <div className="flex flex-col min-w-0 flex-1">
+    <div className={cn("px-4 py-4 rounded-xl bg-card border border-border flex items-center justify-between gap-3 group hover:shadow-md transition-all duration-300 w-full overflow-hidden relative", border)}>
+      <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-gradient-to-br from-transparent to-current" />
+      <div className="flex flex-col min-w-0 flex-1 relative z-10">
         <p className="text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 truncate">{title}</p>
-        <p className="text-[13px] font-black break-all leading-tight mt-0.5">{value}</p>
-        {sub && <p className="text-[8px] font-bold text-muted-foreground/40 uppercase break-words mt-0.5">{sub}</p>}
+        <p className="text-[13px] font-black break-all leading-tight mt-1 text-foreground">{value}</p>
+        {sub && <p className="text-[8px] font-bold text-muted-foreground/40 uppercase break-words mt-1 truncate">{sub}</p>}
       </div>
-      <div className="opacity-10 group-hover:opacity-60 transition-opacity shrink-0 flex-none">{icon}</div>
+      <div className="opacity-20 group-hover:opacity-100 transition-opacity shrink-0 flex-none bg-muted/10 p-2 rounded-lg relative z-10">{icon}</div>
     </div>
   );
 }
@@ -800,78 +746,64 @@ function MiniCard({ title, value, sub, icon, border, loading }: { title: string;
 // ─── Leaderboard ───────────────────────────────────────────────────────────────
 function LeaderboardWidget({ data, sym, loading, title, type }: { data: any[]; sym: string; loading: boolean; title: string; type: "debit" | "credit" }) {
   const total = data.reduce((s, x) => s + (x.amount || 0), 0);
-  if (loading) return <div className="bg-card border border-border h-[380px] animate-pulse" />;
+  if (loading) return <div className="bg-card border border-border h-[400px] animate-pulse rounded-xl" />;
+  const isDebit = type === "debit";
+
   return (
-    <div className="bg-card border border-border flex flex-col overflow-hidden h-[380px]">
-      {/* Top accent */}
-      <div className={cn("h-0.5 shrink-0", type === "debit" ? "bg-gradient-to-r from-red-500 to-amber-500" : "bg-gradient-to-r from-emerald-500 to-teal-400")} />
-
+    <div className="bg-card border border-border flex flex-col overflow-hidden h-[400px] rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/40 bg-muted/5 shrink-0">
-        <div className="flex items-center gap-2">
-          <div className={cn("w-6 h-6 border flex items-center justify-center",
-            type === "debit" ? "bg-destructive/10 border-destructive/20" : "bg-emerald-500/10 border-emerald-500/20")}>
-            {type === "debit" ? <TrendingDown className="w-3 h-3 text-destructive" /> : <TrendingUp className="w-3 h-3 text-emerald-600" />}
+      <div className="flex items-center justify-between px-5 py-4 border-b border-border/40 bg-muted/5 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center border",
+            isDebit ? "bg-red-500/10 border-red-500/20 text-red-500" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-500")}>
+            {isDebit ? <TrendingDown className="w-4 h-4" /> : <TrendingUp className="w-4 h-4" />}
           </div>
-          <span className="text-[10px] font-black uppercase tracking-[0.15em]">{title}</span>
+          <div>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground leading-none">{title}</h3>
+            <p className="text-[8px] font-bold text-muted-foreground/40 uppercase mt-1">Ranking by total volume</p>
+          </div>
         </div>
-        <Trophy className="w-3.5 h-3.5 text-amber-500" />
+        <Trophy className="w-4 h-4 text-amber-500" />
       </div>
 
-      {/* Column headers */}
-      <div className="grid grid-cols-[auto_1fr_auto_auto] gap-0 px-4 py-1.5 border-b border-border/20 bg-muted/5 shrink-0">
-        <span className="text-[7px] font-black text-muted-foreground/40 uppercase tracking-widest w-6">#</span>
-        <span className="text-[7px] font-black text-muted-foreground/40 uppercase tracking-widest">Name / Description</span>
-        <span className="text-[7px] font-black text-muted-foreground/40 uppercase tracking-widest text-center w-8">Txns</span>
-        <span className="text-[7px] font-black text-muted-foreground/40 uppercase tracking-widest text-right w-20">Total</span>
-      </div>
-
-      {/* Scrollable list */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
+      {/* List */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar divide-y divide-border/5">
         {data.length === 0 ? (
-          <div className="py-12 text-center text-[9px] font-black text-muted-foreground/20 uppercase tracking-widest">No data</div>
+          <div className="py-20 flex flex-col items-center opacity-20">
+             <Trophy className="w-12 h-12 mb-2" />
+             <p className="text-[10px] font-black uppercase tracking-widest">No data available</p>
+          </div>
         ) : data.map((item, i) => {
           const isTop = i < 3;
-          const mc = ["text-amber-400", "text-slate-300", "text-orange-400"];
+          const mc = ["text-amber-500", "text-slate-400", "text-orange-600"];
           return (
-            <div key={i}
-              className={cn(
-                "grid grid-cols-[24px_1fr_32px_80px] items-start px-4 py-2.5 border-b border-border/[0.07] last:border-0 transition-colors",
-                isTop ? "bg-muted/10" : "hover:bg-muted/20"
-              )}
-            >
-              {/* Rank */}
-              <div className="pt-0.5">
-                {isTop
-                  ? <Medal className={cn("w-3.5 h-3.5", mc[i])} />
-                  : <span className="text-[8px] font-black text-muted-foreground/20">#{i + 1}</span>
-                }
+            <div key={i} className={cn("flex items-center gap-4 px-5 py-3.5 transition-colors", isTop ? "bg-muted/10" : "hover:bg-muted/20")}>
+              <div className="w-6 shrink-0 flex justify-center">
+                {isTop ? <Medal className={cn("w-4 h-4", mc[i])} /> : <span className="text-[9px] font-black text-muted-foreground/30">#{i + 1}</span>}
               </div>
-
-              {/* Name — wraps freely, no truncation */}
-              <span className="text-[11px] font-semibold leading-snug pr-2 break-words whitespace-normal min-w-0">
-                {item._id || "—"}
-              </span>
-
-              {/* Count */}
-              <span className="text-[10px] font-black tabular-nums text-center text-muted-foreground/60 pt-0.5">{item.count}</span>
-
-              {/* Amount */}
-              <span className={cn("text-[12px] font-black tabular-nums text-right pt-0.5",
-                type === "debit" ? "text-destructive" : "text-emerald-600")}>
-                {sym}{item.amount >= 1000
-                  ? new Intl.NumberFormat("en-IN", { notation: "compact", maximumFractionDigits: 1 }).format(item.amount)
-                  : item.amount.toLocaleString()}
-              </span>
+              <div className="flex-1 min-w-0 pr-2">
+                <p className="text-[11px] font-black leading-snug break-words text-foreground group-hover:text-primary transition-colors">{item._id || "—"}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-[8px] font-black text-muted-foreground/30 uppercase tracking-widest">{item.count} Transactions</span>
+                  <div className="flex-1 h-[2px] bg-muted/20 rounded-full">
+                     <div className={cn("h-full rounded-full opacity-40", isDebit ? "bg-red-500" : "bg-emerald-500")} style={{ width: `${(item.amount / (data[0].amount || 1)) * 100}%` }} />
+                  </div>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <p className={cn("text-[12px] font-black tabular-nums", isDebit ? "text-red-500" : "text-emerald-500")}>
+                  {sym}{item.amount >= 1000 ? new Intl.NumberFormat("en-IN", { notation: "compact", maximumFractionDigits: 1 }).format(item.amount) : item.amount.toLocaleString()}
+                </p>
+              </div>
             </div>
           );
         })}
       </div>
 
-      {/* Footer total */}
-      <div className="px-4 py-2 border-t border-border/30 bg-muted/5 flex justify-between items-center shrink-0">
-        <span className="text-[7px] font-black uppercase tracking-widest text-muted-foreground/40">Total ({data.length} entries)</span>
-        <span className={cn("text-sm font-black tabular-nums", type === "debit" ? "text-destructive" : "text-emerald-600")}>
+      {/* Footer */}
+      <div className="px-5 py-3 border-t border-border/30 bg-muted/5 flex justify-between items-center shrink-0">
+        <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/40">Total Volume</span>
+        <span className={cn("text-base font-black tabular-nums", isDebit ? "text-red-500" : "text-emerald-500")}>
           {sym}{new Intl.NumberFormat("en-IN", { notation: "compact", maximumFractionDigits: 1 }).format(total)}
         </span>
       </div>
@@ -884,34 +816,44 @@ function RecentList({ txs, sym, loading, title, sub, color }: {
   txs: any[]; sym: string; loading: boolean; title: string; sub: string; color: "red" | "green";
 }) {
   const isRed = color === "red";
-  if (loading) return <div className="bg-card border border-border h-[300px] animate-pulse" />;
+  if (loading) return <div className="bg-card border border-border h-[320px] animate-pulse rounded-xl" />;
   return (
-    // Fixed height so inner scroll always works on any screen size
-    <div className="bg-card border border-border flex flex-col overflow-hidden h-[300px]">
-      <div className={cn("h-0.5 shrink-0", isRed ? "bg-destructive/40" : "bg-emerald-500/40")} />
-      <div className="px-4 py-2.5 border-b border-border/30 bg-muted/5 shrink-0">
-        <h3 className={cn("text-[10px] font-black uppercase tracking-[0.15em]", isRed ? "text-destructive" : "text-emerald-600")}>{title}</h3>
-        <p className="text-[7px] font-bold text-muted-foreground/40 uppercase mt-0.5">{sub}</p>
+    <div className="bg-card border border-border flex flex-col overflow-hidden h-[320px] rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+      <div className="px-5 py-4 border-b border-border/40 bg-muted/5 shrink-0 flex items-center justify-between">
+        <div>
+          <h3 className={cn("text-[11px] font-black uppercase tracking-[0.15em]", isRed ? "text-red-500" : "text-emerald-500")}>{title}</h3>
+          <p className="text-[8px] font-bold text-muted-foreground/40 uppercase mt-1 tracking-widest">{sub}</p>
+        </div>
+        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center border", isRed ? "bg-red-500/10 border-red-500/20 text-red-500" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-500")}>
+           <Clock className="w-4 h-4" />
+        </div>
       </div>
-      {/* flex-1 + overflow-y-auto = scrollable list fills remaining height */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar divide-y divide-border/10 min-h-0">
+      <div className="flex-1 overflow-y-auto custom-scrollbar divide-y divide-border/10">
         {txs.length === 0 ? (
-          <div className="py-8 text-center text-[9px] font-black text-muted-foreground/20 uppercase tracking-widest">No transactions</div>
+          <div className="py-20 flex flex-col items-center opacity-20">
+             <Activity className="w-10 h-10 mb-2" />
+             <p className="text-[10px] font-black uppercase tracking-widest">No Recent Activity</p>
+          </div>
         ) : txs.map((tx, i) => {
           const debit = (tx.debit || 0) > 0;
           return (
-            <div key={tx._id || i} className="flex items-center gap-2.5 px-3 py-2 hover:bg-muted/30 transition-colors">
-              <div className={cn("w-7 h-7 shrink-0 flex items-center justify-center border",
-                debit ? "bg-destructive/5 border-destructive/10 text-destructive" : "bg-emerald-500/5 border-emerald-500/10 text-emerald-600")}>
-                {debit ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />}
+            <div key={tx._id || i} className="flex items-center gap-4 px-5 py-3.5 hover:bg-muted/10 transition-colors group/item">
+              <div className={cn("w-10 h-10 shrink-0 flex items-center justify-center rounded-xl border transition-transform group-hover/item:scale-110",
+                debit ? "bg-red-500/5 border-red-500/10 text-red-500" : "bg-emerald-500/5 border-emerald-500/10 text-emerald-500")}>
+                {debit ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-black leading-snug break-words whitespace-normal">{tx.description || tx.payee}</p>
-                <p className="text-[7px] font-bold text-muted-foreground/40 uppercase mt-0.5">{tx.date} · {tx.bank}</p>
+              <div className="flex-1 min-w-0 pr-2">
+                <p className="text-[12px] font-black leading-snug break-words text-foreground">{tx.description || tx.payee}</p>
+                <p className="text-[9px] font-bold text-muted-foreground/40 uppercase mt-1 tracking-widest">{tx.date} · {tx.bank}</p>
               </div>
-              <span className={cn("shrink-0 text-[11px] font-black tabular-nums", debit ? "text-destructive" : "text-emerald-600")}>
-                {sym}{(tx.debit || tx.credit).toLocaleString()}
-              </span>
+              <div className="text-right shrink-0">
+                <p className={cn("text-[13px] font-black tabular-nums", debit ? "text-red-500" : "text-emerald-500")}>
+                  {sym}{(tx.debit || tx.credit).toLocaleString()}
+                </p>
+                <div className={cn("w-full h-1 mt-2 rounded-full", debit ? "bg-red-500/10" : "bg-emerald-500/10")}>
+                   <div className={cn("h-full rounded-full opacity-40", debit ? "bg-red-500" : "bg-emerald-500")} style={{ width: "60%" }} />
+                </div>
+              </div>
             </div>
           );
         })}
@@ -1086,27 +1028,173 @@ function FinancialMarquee({ sym }: { sym: string }) {
   if (items.length === 0) return null;
 
   return (
-    <div className="w-full overflow-hidden bg-card border border-border py-2 flex items-center relative mb-1 -mt-2 group">
-       <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-card to-transparent z-10 pointer-events-none" />
-       <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-card to-transparent z-10 pointer-events-none" />
+    <div className="w-full overflow-hidden bg-card border border-border py-3 flex items-center relative mb-2 -mt-2 group rounded-xl shadow-sm">
+       <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-card via-card/80 to-transparent z-10 pointer-events-none" />
+       <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-card via-card/80 to-transparent z-10 pointer-events-none" />
        
        <div className="flex whitespace-nowrap animate-marquee w-max group-hover:[animation-play-state:paused]">
-         {/* Duplicate twice to allow seamless 50% translation */}
          {[...items, ...items].map((item, idx) => (
-           <div key={`${item.id}-${idx}`} className="flex items-center mx-6 gap-2.5">
+           <div key={`${item.id}-${idx}`} className="flex items-center mx-8 gap-4 group/marqueeitem">
               <span className={cn(
-                 "text-[8px] font-black uppercase px-1.5 py-0.5 rounded-sm tracking-widest",
-                 item.type === "EMI" ? "bg-primary/10 text-primary border border-primary/20" : "bg-accent text-accent-foreground border border-border"
+                 "text-[9px] font-black uppercase px-2 py-1 rounded-md tracking-widest shadow-inner transition-transform group-hover/marqueeitem:scale-105",
+                 item.type === "EMI" ? "bg-primary/10 text-primary border border-primary/20" : "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
               )}>{item.type}</span>
-              <span className="text-[11px] font-bold text-foreground">{item.name}</span>
-              <span className="text-[11px] font-black tabular-nums text-foreground">{sym}{item.amount.toLocaleString()}</span>
-              <span className={cn("text-[9px] font-black uppercase tracking-widest", item.days <= 3 ? "text-destructive" : "text-muted-foreground")}>
-                 {item.days === 0 ? "Due Today" : `in ${item.days}d`}
-              </span>
-              <span className="text-muted-foreground/30 ml-6 text-xs">•</span>
+              <span className="text-[12px] font-black text-foreground">{item.name}</span>
+              <span className="text-[12px] font-black tabular-nums text-foreground">{sym}{item.amount.toLocaleString()}</span>
+              <div className={cn(
+                "flex items-center gap-1.5 px-2 py-0.5 rounded-full border",
+                item.days <= 3 ? "bg-red-500/10 border-red-500/20 text-red-500" : "bg-muted/10 border-border/40 text-muted-foreground"
+              )}>
+                 <Clock className="w-3 h-3" />
+                 <span className="text-[9px] font-black uppercase tracking-widest">
+                    {item.days === 0 ? "Due Today" : `in ${item.days}d`}
+                 </span>
+              </div>
+              <span className="text-muted-foreground/20 ml-4 text-sm font-black">•</span>
            </div>
          ))}
        </div>
+    </div>
+  );
+}
+
+// ─── Quick Overview Panel ──────────────────────────────────────────────────────
+function QuickOverviewPanel({ sym, banks, loading }: { sym: string; banks: any[]; loading: boolean }) {
+  const [emiTotal, setEmiTotal] = useState({ monthly: 0, outstanding: 0 });
+  const [lendSummary, setLendSummary] = useState({ lent: 0, borrowed: 0 });
+  const [propCount, setPropCount] = useState(0);
+
+  useEffect(() => {
+    const tok = localStorage.getItem("token"); if (!tok) return;
+    Promise.all([
+      fetch(`${API_BASE_URL}/emi/`, { headers: { Authorization: `Bearer ${tok}` } }).then(r => r.json()).catch(() => ({})),
+      fetch(`${API_BASE_URL}/lend-borrow/summary`, { headers: { Authorization: `Bearer ${tok}` } }).then(r => r.json()).catch(() => ({})),
+      fetch(`${API_BASE_URL}/properties/`, { headers: { Authorization: `Bearer ${tok}` } }).then(r => r.json()).catch(() => ({})),
+    ]).then(([emiJ, lbJ, propJ]) => {
+      setEmiTotal({ monthly: emiJ.total_monthly_burden || 0, outstanding: emiJ.total_outstanding || 0 });
+      setLendSummary({ lent: lbJ.pending_lent || 0, borrowed: lbJ.pending_borrowed || 0 });
+      setPropCount((propJ.items || []).length);
+    });
+  }, []);
+
+  const rows = [
+    { icon: <Home className="w-4 h-4" />, label: "Properties", value: propCount === 0 ? "No properties" : `${propCount} owned`, color: "text-zinc-500", bg: "bg-zinc-100 dark:bg-zinc-800" },
+    { icon: <ArrowDownLeft className="w-4 h-4" />, label: "Receivables", value: lendSummary.lent === 0 ? `${sym}0` : fmt(lendSummary.lent, sym), color: "text-emerald-500", bg: "bg-emerald-50/50 dark:bg-emerald-500/10" },
+    { icon: <ArrowUpRight className="w-4 h-4" />, label: "Payables", value: lendSummary.borrowed === 0 ? `${sym}0` : fmt(lendSummary.borrowed, sym), color: "text-red-500", bg: "bg-red-50/50 dark:bg-red-500/10" },
+    { icon: <CreditCard className="w-4 h-4" />, label: "Loans & EMIs", valuePrimary: `${sym}${Math.round(emiTotal.monthly).toLocaleString()}`, valueSub: `${sym}${Math.round(emiTotal.outstanding).toLocaleString()} left`, color: "text-blue-500", bg: "bg-blue-50/50 dark:bg-blue-500/10" },
+  ];
+
+  return (
+    <div className="bg-white dark:bg-zinc-900 border border-border/40 flex flex-col overflow-hidden rounded-2xl shadow-sm h-full">
+      <div className="px-5 py-4 shrink-0 flex items-center justify-between">
+        <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60">Quick Overview</span>
+      </div>
+      <div className="flex flex-col px-4 gap-2 flex-1">
+        {rows.map((row, i) => (
+          <div key={i} className="flex items-center gap-3 p-3 bg-zinc-50/50 dark:bg-zinc-900/50 border border-border/20 rounded-xl hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50 transition-colors group">
+            <div className={cn("w-9 h-9 shrink-0 flex items-center justify-center rounded-lg transition-transform group-hover:scale-110", row.bg, row.color)}>{row.icon}</div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold text-muted-foreground/60">{row.label}</p>
+              {row.valuePrimary ? (
+                <div className="flex items-center justify-between gap-2 mt-0.5">
+                   <div>
+                      <p className="text-[8px] font-bold text-muted-foreground/40 uppercase">Per month</p>
+                      <p className="text-sm font-black tabular-nums">{row.valuePrimary}</p>
+                   </div>
+                   <div className="text-right">
+                      <p className="text-[8px] font-bold text-muted-foreground/40 uppercase">Total Left</p>
+                      <p className="text-sm font-black tabular-nums">{row.valueSub.split(" ")[0]}</p>
+                   </div>
+                </div>
+              ) : (
+                <p className="text-sm font-black tabular-nums mt-0.5">{row.value}</p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="px-4 py-3 mt-auto border-t border-border/10">
+        <div className="bg-zinc-50 dark:bg-zinc-800/30 flex items-center justify-center gap-2 py-1.5 rounded-lg border border-border/20">
+          <CheckCircle2 className="w-4 h-4 text-primary" />
+          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">All accounts clear</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Bounty Board Column ───────────────────────────────────────────────────────
+function BountyBoardColumn({ items, sym, loading }: { items: any[]; sym: string; loading: boolean }) {
+  if (loading) return <div className="bg-card border border-border h-full animate-pulse rounded-xl" />;
+  if (!items || items.length === 0) return (
+    <div className="bg-card border border-border flex flex-col items-center justify-center p-6 opacity-30 rounded-xl">
+      <Skull className="w-8 h-8 mb-2" />
+      <p className="text-[9px] font-black uppercase tracking-widest text-center">No budget data</p>
+    </div>
+  );
+  return (
+    <div className="bg-amber-500/[0.02] border-2 border-amber-600/20 flex flex-col overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-amber-600/10 bg-amber-500/5 shrink-0">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-600 text-black rounded-md">
+          <Skull className="w-3.5 h-3.5" />
+          <span className="text-[9px] font-black uppercase tracking-[0.2em]">Most Wanted</span>
+        </div>
+        <div className="ml-auto flex gap-1">
+          <div className="w-1 h-1 rounded-full bg-amber-600/40" />
+          <div className="w-1 h-1 rounded-full bg-amber-600/40" />
+          <div className="w-1 h-1 rounded-full bg-amber-600/40" />
+        </div>
+      </div>
+      <div className="flex flex-col gap-3 p-4 flex-1">
+        {items.slice(0, 3).map((item: any, idx: number) => (
+          <div key={idx} className={cn("relative border-2 p-4 rounded-xl flex flex-col gap-1 transition-all hover:translate-x-1",
+            idx === 0 ? "border-amber-600/40 bg-amber-500/5" : "border-border/40 bg-card")}>
+            <div className="absolute -top-2 -left-2 w-6 h-6 bg-amber-600 rounded-full flex items-center justify-center text-black text-[10px] font-black shadow-lg shadow-amber-600/20">{idx + 1}</div>
+            <p className="text-[8px] font-black text-amber-600/60 uppercase tracking-widest">Budget Item</p>
+            <h4 className="text-sm font-black break-words leading-tight">{item.name}</h4>
+            <div className="flex items-end justify-between gap-1 mt-1">
+              <p className="text-xl font-black text-amber-600 tabular-nums">{sym}{Math.round(item.amount).toLocaleString()}</p>
+              <span className="text-[8px] font-bold text-muted-foreground/40 shrink-0 pb-0.5">{item.count} months left</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── All-Time Stats Bar ────────────────────────────────────────────────────────
+function AllTimeStatsBar({ txData, totalBalance, sym, loading }: { txData: { total_debit: number; total_credit: number; count: number }; totalBalance: number; sym: string; loading: boolean }) {
+  const savings = txData.total_credit - txData.total_debit;
+  const stats = [
+    { label: "Total Transactions", value: txData.count.toLocaleString(), sub: "All time", icon: <Activity className="w-5 h-5" />, color: "text-blue-500", bg: "bg-blue-500/10", sparkColor: "bg-blue-500" },
+    { label: "Total Income", value: fmt(txData.total_credit, sym), sub: "All time", icon: <ArrowDownRight className="w-5 h-5" />, color: "text-emerald-500", bg: "bg-emerald-500/10", sparkColor: "bg-emerald-500" },
+    { label: "Total Expenses", value: fmt(txData.total_debit, sym), sub: "All time", icon: <ArrowUpRight className="w-5 h-5" />, color: "text-red-500", bg: "bg-red-500/10", sparkColor: "bg-red-500" },
+    { label: "Savings", value: fmt(Math.max(0, savings), sym), sub: "All time", icon: <PiggyBank className="w-5 h-5" />, color: savings >= 0 ? "text-amber-500" : "text-red-500", bg: savings >= 0 ? "bg-amber-500/10" : "bg-red-500/10", sparkColor: savings >= 0 ? "bg-amber-500" : "bg-red-500" },
+  ];
+  return (
+    <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
+      {stats.map(s => (
+        <div key={s.label} className="bg-card border border-border rounded-xl px-5 py-4 flex items-center gap-4 group hover:shadow-md transition-all duration-300 relative overflow-hidden">
+          <div className={cn("absolute inset-0 opacity-[0.02] pointer-events-none bg-gradient-to-br", s.bg, "from-transparent to-current")} />
+          {loading
+            ? <div className="w-full h-12 bg-muted/30 animate-pulse rounded-lg" />
+            : <>
+              <div className={cn("w-10 h-10 flex items-center justify-center rounded-xl transition-transform group-hover:scale-110", s.bg, s.color)}>{s.icon}</div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/50 truncate">{s.label}</p>
+                <p className={cn("text-lg font-black tabular-nums leading-tight truncate mt-0.5", s.color)}>{s.value}</p>
+                <p className="text-[8px] text-muted-foreground/30 font-bold truncate">{s.sub}</p>
+              </div>
+              <div className="shrink-0 flex items-end gap-[2px] h-8 mb-1">
+                {[40, 70, 50, 90, 60].map((h, i) => (
+                  <div key={i} className={cn("w-1.5 rounded-full opacity-20 group-hover:opacity-60 transition-all duration-500", s.sparkColor)} style={{ height: `${h * 0.3}px` }} />
+                ))}
+              </div>
+            </>
+          }
+        </div>
+      ))}
     </div>
   );
 }
@@ -1178,6 +1266,7 @@ export default function DashboardPage() {
 
   const net = txData.total_credit - txData.total_debit;
 
+
   return (
     <AdminPageLayout
       title="Dashboard"
@@ -1192,106 +1281,139 @@ export default function DashboardPage() {
     >
       <div className="flex flex-col gap-3 w-full pb-6">
 
-        {/* ── Financial Ticker ────────────────────────────────────────────── */}
+        {/* Financial Ticker */}
         <FinancialMarquee sym={sym} />
 
-        {/* ── KPI cards + Wallet ────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-2">
-          <StatCard title="Balance" value={fmt(totalBalance, sym)} icon={<Wallet className="w-4 h-4" />} colorType="primary" loading={loading} />
-          <StatCard title="Money In" value={fmt(txData.total_credit, sym)} icon={<ArrowDownRight className="w-4 h-4" />} colorType="emerald" loading={loading} />
-          <StatCard title="Money Out" value={fmt(txData.total_debit, sym)} icon={<ArrowUpRight className="w-4 h-4" />} colorType="destructive" loading={loading} />
-          <StatCard title="Transactions" value={fmt(txData.count, "")} icon={<Activity className="w-4 h-4" />} colorType="amber" loading={loading} />
-          <div className="col-span-1 sm:col-span-1 min-h-[130px]">
-            <WalletCard balance={walletBalance} currencySymbol={sym} loading={loading} />
-          </div>
-        </div>
+        {/* MAIN: left column + right sidebar */}
+        <div className="flex flex-col xl:flex-row gap-3 items-start w-full">
 
-        {/* ── Net insight banner ───────────────────────────────────────────── */}
-        <div className={cn("w-full border px-4 py-3 flex flex-col xs:flex-row items-start xs:items-center justify-between gap-3 relative overflow-hidden",
-          net >= 0 ? "border-emerald-500/20 bg-emerald-500/5" : "border-destructive/20 bg-destructive/5")}>
-          <div className="absolute right-3 opacity-5 pointer-events-none">
-            {net >= 0 ? <TrendingUp className="w-16 h-16 text-emerald-500" /> : <TrendingDown className="w-16 h-16 text-destructive" />}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/50">Overall</p>
-            <h3 className="text-sm font-black mt-0.5 break-words">{net >= 0 ? "✅ You're saving money" : "⚠️ Spent more than earned"}</h3>
-            <p className="text-[9px] text-muted-foreground/60 font-bold break-words">
-              {net >= 0 ? `${sym}${Math.abs(net).toLocaleString()} more earned than spent` : `${sym}${Math.abs(net).toLocaleString()} more spent than earned`}
-            </p>
-          </div>
-          <div className="shrink-0">
-            <p className="text-[7px] font-black text-muted-foreground/40 uppercase">Net</p>
-            <p className={cn("text-2xl font-black tabular-nums", net >= 0 ? "text-emerald-500" : "text-destructive")}>
-              {net >= 0 ? "+" : "-"}{sym}{Math.abs(net).toLocaleString()}
-            </p>
-          </div>
-        </div>
+          {/* LEFT COLUMN */}
+          <div className="flex flex-col gap-3 flex-1 min-w-0">
 
-        {/* ── Metals Section (Promoted to 3-card Row) ────────────────────── */}
-        <MetalsWidget sym={sym} />
-
-        {/* ── Other Asset widgets ─────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
-          <PropertyWidget sym={sym} />
-          <LendBorrowWidget sym={sym} />
-          <EMIWidget sym={sym} />
-        </div>
-
-        {/* ── 3 charts row ─────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-          <BudgetComparisonGraph budgetData={stats?.budget_trend} currencySymbol={sym} loading={loading} />
-          <SpendingPulseGraph trendData={monthlyTrend} totalSpend={txData.total_debit} currencySymbol={sym} loading={loading} />
-          <IncomeTrendGraph trendData={monthlyTrend} totalIncome={txData.total_credit} currencySymbol={sym} loading={loading} />
-        </div>
-
-        {/* ── Bounty board ────────────────────────────────────────────────────── */}
-        <BountyBoard items={stats?.top_budget_items} sym={sym} loading={loading} />
-
-        {/* ── Income source + Leaderboards ─────────────────────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-          {/* Primary income hero */}
-          <div className="bg-gradient-to-br from-amber-600/20 via-card to-background border-2 border-amber-500/20 p-5 flex flex-col items-center justify-center text-center relative overflow-hidden hover:border-amber-500/50 transition-all duration-500 group min-h-[200px] md:min-h-[260px]">
-            <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none group-hover:opacity-[0.06] transition-all duration-700">
-              <Star className="w-48 h-48 -rotate-12" />
+            {/* ROW 1: 4 KPI stats + Overall */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-2 items-stretch">
+              <StatCard
+                title="Balance"
+                subtitle="Total Balance"
+                value={`${sym}${Math.round(totalBalance).toLocaleString()}`}
+                icon={<Wallet className="w-4 h-4" />}
+                colorType="primary"
+                loading={loading}
+                data={(monthlyTrend || []).map(d => (d.income || 0) - (d.expense || 0))}
+              />
+              <StatCard
+                title="Money In"
+                subtitle="Total Income"
+                value={`${sym}${Math.round(txData.total_credit).toLocaleString()}`}
+                icon={<ArrowDownRight className="w-4 h-4" />}
+                colorType="emerald"
+                loading={loading}
+                data={(monthlyTrend || []).map(d => d.income || d.amount || 0)}
+              />
+              <StatCard
+                title="Money Out"
+                subtitle="Total Expenses"
+                value={`${sym}${Math.round(txData.total_debit).toLocaleString()}`}
+                icon={<ArrowUpRight className="w-4 h-4" />}
+                colorType="destructive"
+                loading={loading}
+                data={(monthlyTrend || []).map(d => d.expense || d.amount || 0)}
+              />
+              <StatCard
+                title="Transactions"
+                subtitle="Total Transactions"
+                value={Math.round(txData.count).toLocaleString()}
+                icon={<Activity className="w-4 h-4" />}
+                colorType="amber"
+                loading={loading}
+                data={(monthlyTrend || []).map(d => (d.income || 0) + (d.expense || d.amount || 0))}
+              />
+              {/* Overall Card */}
+              <div className="bg-white dark:bg-zinc-900 border border-border/40 p-5 flex flex-col justify-between relative overflow-hidden rounded-2xl shadow-sm h-[160px]">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/50">Overall</span>
+                  <p className="text-[11px] font-bold text-foreground mt-1">{net >= 0 ? "You're saving money! 🎉" : "Overspending"}</p>
+                </div>
+                <div>
+                  <p className={cn("text-2xl font-black tabular-nums tracking-tighter", net >= 0 ? "text-emerald-500" : "text-destructive")}>
+                    {sym}{Math.abs(net).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                  <p className="text-[9px] font-bold text-muted-foreground/40 mt-1 uppercase tracking-tight leading-tight">
+                    {Math.abs(net).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
+                    {net >= 0 ? "more earned" : "more spent"} than {net >= 0 ? "spent" : "earned"}
+                  </p>
+                </div>
+                <div className="w-full bg-muted/30 h-1.5 rounded-full overflow-hidden">
+                  <div
+                    className={cn("h-full rounded-full transition-all duration-1000", net >= 0 ? "bg-emerald-500" : "bg-destructive")}
+                    style={{ width: `${Math.min(100, txData.total_credit > 0 ? (Math.min(txData.total_credit, txData.total_debit) / txData.total_credit) * 100 : 0)}%` }}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 flex items-center justify-center rotate-12 group-hover:rotate-0 transition-transform duration-500 mb-3">
-              <Trophy className="w-6 h-6 text-amber-500 -rotate-12 group-hover:rotate-0 transition-transform duration-500" />
+
+            {/* ROW 2: Metals */}
+            <MetalsWidget sym={sym} />
+
+            {/* ROW 3: Spending | Income | Budget charts */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <SpendingPulseGraph trendData={monthlyTrend} totalSpend={txData.total_debit} currencySymbol={sym} loading={loading} />
+              <IncomeTrendGraph trendData={monthlyTrend} totalIncome={txData.total_credit} currencySymbol={sym} loading={loading} />
+              <BudgetComparisonGraph budgetData={stats?.budget_trend} currencySymbol={sym} loading={loading} />
             </div>
-            <p className="text-[8px] font-black uppercase tracking-[0.25em] text-amber-600/60 mb-2">Main Income Source</p>
-            <p className="text-xl font-black tracking-tight mb-3 underline decoration-amber-500/40 underline-offset-4 break-words w-full">
-              {stats?.top_income_source?.source || "N/A"}
-            </p>
-            <p className="text-[7px] font-black uppercase tracking-widest text-foreground/30 mb-1">Total Earned</p>
-            <p className="text-3xl font-black text-amber-600 tabular-nums break-all">{sym}{stats?.top_income_source?.amount?.toLocaleString() || "0"}</p>
+
+            {/* ROW 4: Leaderboards + Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <LeaderboardWidget title="Where Money Goes" data={topDebits} sym={sym} loading={loading} type="debit" />
+              <LeaderboardWidget title="Where Money Comes From" data={topCredits} sym={sym} loading={loading} type="credit" />
+              <div className="flex flex-col gap-2">
+                <div className="bg-gradient-to-br from-amber-600/20 via-card to-background border-2 border-amber-500/20 p-4 flex flex-col items-center justify-center text-center relative overflow-hidden hover:border-amber-500/50 transition-all duration-500 group flex-1 rounded-xl">
+                  <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
+                    <Star className="w-32 h-32 -rotate-12" />
+                  </div>
+                  <div className="w-10 h-10 bg-amber-500/10 border border-amber-500/20 flex items-center justify-center rotate-12 group-hover:rotate-0 transition-transform duration-500 mb-2">
+                    <Trophy className="w-5 h-5 text-amber-500 -rotate-12 group-hover:rotate-0 transition-transform duration-500" />
+                  </div>
+                  <p className="text-[7px] font-black uppercase tracking-[0.25em] text-amber-600/60 mb-1">Main Income Source</p>
+                  <p className="text-sm font-black tracking-tight mb-2 underline decoration-amber-500/40 underline-offset-4 break-words w-full">
+                    {stats?.top_income_source?.source || "N/A"}
+                  </p>
+                  <p className="text-[7px] font-black uppercase tracking-widest text-foreground/30 mb-0.5">Total Earned</p>
+                  <p className="text-2xl font-black text-amber-600 tabular-nums break-all">
+                    {sym}{stats?.top_income_source?.amount?.toLocaleString() || "0"}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <MiniCard title="Biggest Payment" value={fmt(stats?.highest_payment?.amount || 0, sym)} sub={stats?.highest_payment?.name} icon={<Zap className="w-4 h-4 text-destructive" />} border="border-l-destructive/50" loading={loading} />
+                  <MiniCard title="Biggest Income" value={fmt(stats?.highest_income?.amount || 0, sym)} sub={stats?.highest_income?.name} icon={<Sparkles className="w-4 h-4 text-emerald-500" />} border="border-l-emerald-500/50" loading={loading} />
+                  <MiniCard title="Common Amount" value={fmt(stats?.frequent_amount?.amount || 0, sym)} sub={`Used ${stats?.frequent_amount?.count}x`} icon={<Repeat className="w-4 h-4 text-amber-500" />} border="border-l-amber-500/50" loading={loading} />
+                  <MiniCard title="Top Contact" value={stats?.frequent_spender?.name || "N/A"} sub={`${stats?.frequent_spender?.count} txns`} icon={<Target className="w-4 h-4 text-indigo-500" />} border="border-l-indigo-500/50" loading={loading} />
+                </div>
+              </div>
+            </div>
+
+            {/* ROW 5: Recent Payments | Recent Income */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <RecentList txs={recentDebit} sym={sym} loading={loading} title="Recent Payments" sub="Last 10 transactions" color="red" />
+              <RecentList txs={recentCredit} sym={sym} loading={loading} title="Recent Income" sub="Last 10 transactions" color="green" />
+            </div>
+
+            {/* ROW 6: Subscriptions */}
+            <SubscriptionsWidget sym={sym} />
+
           </div>
-          <LeaderboardWidget title="Where Money Goes" data={topDebits} sym={sym} loading={loading} type="debit" />
-          <LeaderboardWidget title="Where Money Comes From" data={topCredits} sym={sym} loading={loading} type="credit" />
-        </div>
+          {/* END LEFT COLUMN */}
 
-        {/* ── Recent txs + quick stats ─────────────────────────────────────── */}
-        {/* Each item is self-contained with its own height — no overlap at any breakpoint */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
-          {/* Recent Payments */}
-          <RecentList txs={recentDebit} sym={sym} loading={loading} title="Recent Payments" sub="Last 15 money-out" color="red" />
-
-          {/* Recent Income */}
-          <RecentList txs={recentCredit} sym={sym} loading={loading} title="Recent Income" sub="Last 15 money-in" color="green" />
-
-          {/* Quick stat cards — always 2-col grid, stacks below lists on small screens */}
-          <div className="grid grid-cols-2 gap-2 content-start sm:col-span-2 xl:col-span-1">
-            <MiniCard title="Biggest Payment" value={fmt(stats?.highest_payment?.amount || 0, sym)} sub={stats?.highest_payment?.name} icon={<Zap className="w-4 h-4 text-destructive" />} border="border-l-destructive/50" loading={loading} />
-            <MiniCard title="Biggest Income" value={fmt(stats?.highest_income?.amount || 0, sym)} sub={stats?.highest_income?.name} icon={<Sparkles className="w-4 h-4 text-emerald-500" />} border="border-l-emerald-500/50" loading={loading} />
-            <MiniCard title="Common Amount" value={fmt(stats?.frequent_amount?.amount || 0, sym)} sub={`Used ${stats?.frequent_amount?.count}x`} icon={<Repeat className="w-4 h-4 text-amber-500" />} border="border-l-amber-500/50" loading={loading} />
-            <MiniCard title="Top Contact" value={stats?.frequent_spender?.name || "N/A"} sub={`${stats?.frequent_spender?.count} txns`} icon={<Target className="w-4 h-4 text-indigo-500" />} border="border-l-indigo-500/50" loading={loading} />
+          {/* RIGHT SIDEBAR */}
+          <div className="flex flex-col gap-3 w-full xl:w-[240px] shrink-0 xl:sticky xl:top-4">
+            <QuickOverviewPanel sym={sym} banks={banks} loading={loading} />
+            <BountyBoardColumn items={stats?.top_budget_items} sym={sym} loading={loading} />
+            <BankBreakdownWidget banks={banks} sym={sym} loading={loading} />
           </div>
-        </div>
-        {/* ── Subscriptions Row ────────────────────────────────────────────── */}
-        <div className="w-full">
-           <SubscriptionsWidget sym={sym} />
-        </div>
+          {/* END RIGHT SIDEBAR */}
 
-        {/* ── Bank balance breakdown ────────────────────────────────────────── */}
-        <BankBreakdownWidget banks={banks} sym={sym} loading={loading} />
+        </div>
+        {/* END MAIN LAYOUT */}
 
       </div>
 
@@ -1300,14 +1422,11 @@ export default function DashboardPage() {
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(120, 120, 120, 0.4); border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(120, 120, 120, 0.8); }
-        
         @keyframes marquee {
           0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
         }
-        .animate-marquee {
-          animation: marquee 30s linear infinite;
-        }
+        .animate-marquee { animation: marquee 30s linear infinite; }
       `}</style>
     </AdminPageLayout>
   );
