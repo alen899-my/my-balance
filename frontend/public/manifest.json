@@ -1,7 +1,7 @@
 {
-  "name": "My Balance",
-  "short_name": "Balance",
-  "description": "My Balance Application",
+  "name": "MyBalance",
+  "short_name": "MyBalance",
+  "description": "Your personal finance dashboard",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -9,12 +9,12 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "/images/logos/wallet.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/images/logos/wallet.png",
       "sizes": "512x512",
       "type": "image/png"
     }
