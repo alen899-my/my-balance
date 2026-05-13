@@ -8,13 +8,16 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = {
   title: "MyBalance",
   description: "Your personal finance dashboard",
+
+  manifest: "/manifest.json",
+
+  themeColor: "#ef4444",
+
   icons: {
-    icon: [
-      { url: "/images/logos/wallet.png", type: "image/png" },
-    ],
+    icon: [{ url: "/images/logos/wallet.png", type: "image/png" }],
     apple: "/images/logos/wallet.png",
   },
-};
+}
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'})
 
